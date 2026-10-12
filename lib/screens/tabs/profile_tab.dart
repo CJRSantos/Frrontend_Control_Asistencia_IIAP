@@ -30,48 +30,23 @@ class ProfileTab extends StatefulWidget {
 class _ProfileTabState extends State<ProfileTab> {
   final ImagePicker _picker = ImagePicker();
 
-  bool _isEditingInstitutionalInfo = false;
-  late final TextEditingController _officeController;
-  late final TextEditingController _areaController;
-  late final TextEditingController _documentController;
-  late final TextEditingController _phoneController;
-  String _documentType = 'DNI';
-  bool _isSavingInstitutionalInfo = false;
-
   @override
   void initState() {
     super.initState();
-    final user = StorageService.currentUser;
-    _officeController = TextEditingController(text: user?.office ?? '');
-    _areaController = TextEditingController(text: user?.area ?? '');
-    _documentController = TextEditingController(text: user?.documentNumber ?? '');
-    _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
-    _documentType = _detectDocumentType(user?.documentNumber);
     _refreshProfile();
   }
 
   Future<void> _refreshProfile() async {
     try {
-      final freshUser = await AuthService.getProfile();
+      await AuthService.getProfile();
       if (mounted) {
-        if (!_isEditingInstitutionalInfo) {
-          _officeController.text = freshUser.office;
-          _areaController.text = freshUser.area;
-          _documentController.text = freshUser.documentNumber ?? '';
-          _phoneController.text = freshUser.phoneNumber ?? '';
-          _documentType = _detectDocumentType(freshUser.documentNumber);
-          setState(() {});
-        }
+        setState(() {});
       }
     } catch (_) {}
   }
 
   @override
   void dispose() {
-    _officeController.dispose();
-    _areaController.dispose();
-    _documentController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -91,69 +66,20 @@ class _ProfileTabState extends State<ProfileTab> {
     return 'DNI';
   }
 
-  void _startEditingInstitutionalInfo(UserModel user) {
-    setState(() {
-      _officeController.text = user.office;
-      _areaController.text = user.area;
-      _documentController.text = user.documentNumber ?? '';
-      _phoneController.text = user.phoneNumber ?? '';
-      _documentType = _detectDocumentType(user.documentNumber);
-      _isEditingInstitutionalInfo = true;
-    });
-  }
-
-  Future<void> _saveInstitutionalInfo(UserModel user) async {
-    final newOffice = _officeController.text.trim();
-    final newArea = _areaController.text.trim();
-    final newDoc = _documentController.text.replaceAll(RegExp(r'''['"\s]'''), '').trim();
-    final newPhone = _phoneController.text.replaceAll(RegExp(r'''['"\s]'''), '').trim();
-
-    // Validar formato de documento si fue ingresado
-    if (newDoc.isNotEmpty) {
-      if (_documentType == 'DNI' && (!RegExp(r'^\d{8}$').hasMatch(newDoc))) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('El DNI debe tener exactamente 8 dígitos numéricos.'),
-            backgroundColor: const Color(0xFFEF4444),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-        return;
-      } else if (_documentType == 'CE' && (!RegExp(r'^[a-zA-Z0-9]{9}$').hasMatch(newDoc))) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('El Carné de Extranjería (CE) debe tener exactamente 9 caracteres.'),
-            backgroundColor: const Color(0xFFEF4444),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-        return;
-      } else if (_documentType == 'Pasaporte' && (newDoc.length < 6 || newDoc.length > 12)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('El Pasaporte debe tener entre 6 y 12 caracteres.'),
-            backgroundColor: const Color(0xFFEF4444),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-        return;
-      }
-    }
-
-    setState(() => _isSavingInstitutionalInfo = true);
-
+  Future<bool> _updateProfileField({
+    required UserModel user,
+    String? position,
+    String? department,
+    String? documentNumber,
+    String? phoneNumber,
+    required String fieldName,
+  }) async {
     try {
-      final finalDoc = newDoc.isNotEmpty ? newDoc : (user.documentNumber ?? '');
-      final finalPhone = newPhone.isNotEmpty ? newPhone : (user.phoneNumber ?? '');
-
       final updatedUser = user.copyWith(
-        position: newOffice.isEmpty ? null : newOffice,
-        department: newArea.isEmpty ? null : newArea,
-        documentNumber: finalDoc.isEmpty ? null : finalDoc,
-        phoneNumber: finalPhone.isEmpty ? null : finalPhone,
+        position: position ?? user.position,
+        department: department ?? user.department,
+        documentNumber: documentNumber ?? user.documentNumber,
+        phoneNumber: phoneNumber ?? user.phoneNumber,
       );
 
       // 1. Guardar y refrescar de inmediato en el almacenamiento y sesión local
@@ -162,10 +88,10 @@ class _ProfileTabState extends State<ProfileTab> {
       // 2. Sincronizar en backend y base de datos
       try {
         final profileData = <String, dynamic>{
-          'position': newOffice,
-          'department': newArea,
-          if (finalDoc.isNotEmpty) 'document_number': finalDoc,
-          if (finalPhone.isNotEmpty) 'phone_number': finalPhone,
+          if (position != null) 'position': position,
+          if (department != null) 'department': department,
+          if (documentNumber != null) 'document_number': documentNumber,
+          if (phoneNumber != null) 'phone_number': phoneNumber,
         };
         final updatedFromApi = await UsersService.updateProfile(profileData);
         await StorageService.updateCurrentUser(updatedFromApi);
@@ -173,52 +99,1200 @@ class _ProfileTabState extends State<ProfileTab> {
         debugPrint('Error sincronizando perfil con backend: $err');
         final errStr = err.toString();
         if (errStr.contains('ya está registrado') || errStr.contains('documento')) {
-          if (!mounted) return;
-          setState(() => _isSavingInstitutionalInfo = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('El número de documento ya está registrado por otro usuario.'),
-              backgroundColor: const Color(0xFFEF4444),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-          return;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('El número de documento ya está registrado por otro usuario.'),
+                backgroundColor: const Color(0xFFEF4444),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            );
+          }
+          return false;
         }
       }
 
-      if (!mounted) return;
-      setState(() {
-        _isEditingInstitutionalInfo = false;
-        _isSavingInstitutionalInfo = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 10),
-              Text('Información actualizada'),
-            ],
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Text('$fieldName actualizado exitosamente'),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          backgroundColor: ThemeService.primaryColor(context),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+        );
+      }
+      return true;
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _isSavingInstitutionalInfo = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al guardar: $e'),
-          backgroundColor: const Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar $fieldName: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+      return false;
     }
+  }
+
+  Future<void> _showEditOfficeDialog(UserModel user) async {
+    final controller = TextEditingController(text: user.office);
+    bool isSaving = false;
+    final primary = ThemeService.primaryColor(context);
+
+    final suggestions = [
+      'Ingeniero de Sistemas',
+      'Administrador de Sistemas',
+      'Director / Jefatura',
+      'Especialista / Investigador',
+      'Asistente Administrativo',
+    ];
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final dialogBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+          final surfaceBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+          final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+          final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 440),
+              decoration: BoxDecoration(
+                color: dialogBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: borderCol, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.15),
+                    blurRadius: 32,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.12 : 0.08),
+                        border: Border(bottom: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.25 : 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
+                            ),
+                            child: const Icon(Icons.business_rounded, color: Color(0xFF10B981), size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Oficina / Cargo',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Actualiza tu cargo o puesto institucional',
+                                  style: TextStyle(fontSize: 11.5, color: textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close_rounded, size: 20, color: textMuted),
+                            splashRadius: 18,
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Cargo o Puesto *',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: controller,
+                              autofocus: true,
+                              decoration: InputDecoration(
+                                hintText: 'Ej. Ingeniero de Sistemas / Administrador',
+                                hintStyle: TextStyle(fontSize: 12.5, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                                prefixIcon: const Icon(Icons.business_rounded, size: 20),
+                                filled: true,
+                                fillColor: surfaceBg,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primary, width: 1.5),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Sugerencias rápidas:',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted),
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: suggestions.map((sug) {
+                                return InkWell(
+                                  onTap: () {
+                                    setDialogState(() => controller.text = sug);
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: controller.text.trim() == sug
+                                          ? const Color(0xFF10B981).withValues(alpha: 0.18)
+                                          : surfaceBg,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: controller.text.trim() == sug ? const Color(0xFF10B981) : borderCol,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      sug,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: controller.text.trim() == sug ? FontWeight.bold : FontWeight.normal,
+                                        color: controller.text.trim() == sug ? const Color(0xFF10B981) : textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+                      decoration: BoxDecoration(
+                        color: surfaceBg,
+                        border: Border(top: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: borderCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                'Cancelar',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 0,
+                              ),
+                              icon: isSaving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.check_rounded, size: 18),
+                              label: const Text('Guardar Cargo', style: TextStyle(fontWeight: FontWeight.bold)),
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      setDialogState(() => isSaving = true);
+                                      final success = await _updateProfileField(
+                                        user: user,
+                                        position: controller.text.trim(),
+                                        fieldName: 'Oficina / Cargo',
+                                      );
+                                      if (success && ctx.mounted) {
+                                        Navigator.of(ctx).pop();
+                                      } else {
+                                        setDialogState(() => isSaving = false);
+                                      }
+                                    },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showEditAreaDialog(UserModel user) async {
+    final controller = TextEditingController(text: user.area);
+    bool isSaving = false;
+    final primary = ThemeService.primaryColor(context);
+
+    final suggestions = [
+      'Dirección General',
+      'Tecnologías de la Información (OTI)',
+      'Recursos Humanos',
+      'Administración y Finanzas',
+      'Investigación y Desarrollo',
+    ];
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final dialogBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+          final surfaceBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+          final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+          final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 440),
+              decoration: BoxDecoration(
+                color: dialogBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: borderCol, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.15),
+                    blurRadius: 32,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.12 : 0.08),
+                        border: Border(bottom: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.25 : 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.35)),
+                            ),
+                            child: const Icon(Icons.hub_rounded, color: Color(0xFF3B82F6), size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Área Asignada',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Dirección o departamento institucional',
+                                  style: TextStyle(fontSize: 11.5, color: textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close_rounded, size: 20, color: textMuted),
+                            splashRadius: 18,
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Área o Departamento *',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: controller,
+                              autofocus: true,
+                              decoration: InputDecoration(
+                                hintText: 'Ej. Dirección General / Tecnologías',
+                                hintStyle: TextStyle(fontSize: 12.5, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                                prefixIcon: const Icon(Icons.hub_rounded, size: 20),
+                                filled: true,
+                                fillColor: surfaceBg,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primary, width: 1.5),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Áreas institucionales frecuentes:',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted),
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: suggestions.map((sug) {
+                                return InkWell(
+                                  onTap: () {
+                                    setDialogState(() => controller.text = sug);
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: controller.text.trim() == sug
+                                          ? const Color(0xFF3B82F6).withValues(alpha: 0.18)
+                                          : surfaceBg,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: controller.text.trim() == sug ? const Color(0xFF3B82F6) : borderCol,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      sug,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: controller.text.trim() == sug ? FontWeight.bold : FontWeight.normal,
+                                        color: controller.text.trim() == sug ? const Color(0xFF3B82F6) : textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+                      decoration: BoxDecoration(
+                        color: surfaceBg,
+                        border: Border(top: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: borderCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                'Cancelar',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 0,
+                              ),
+                              icon: isSaving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.check_rounded, size: 18),
+                              label: const Text('Guardar Área', style: TextStyle(fontWeight: FontWeight.bold)),
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      setDialogState(() => isSaving = true);
+                                      final success = await _updateProfileField(
+                                        user: user,
+                                        department: controller.text.trim(),
+                                        fieldName: 'Área Asignada',
+                                      );
+                                      if (success && ctx.mounted) {
+                                        Navigator.of(ctx).pop();
+                                      } else {
+                                        setDialogState(() => isSaving = false);
+                                      }
+                                    },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showEditDocumentDialog(UserModel user) async {
+    final controller = TextEditingController(text: user.documentNumber ?? '');
+    String selectedDocType = _detectDocumentType(user.documentNumber);
+    bool isSaving = false;
+    final primary = ThemeService.primaryColor(context);
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final dialogBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+          final surfaceBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+          final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+          final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+          final docTypes = [
+            {'type': 'DNI', 'label': 'DNI (8 dígitos)', 'len': 8, 'numeric': true},
+            {'type': 'CE', 'label': 'Carné Extr. (9 caract.)', 'len': 9, 'numeric': false},
+            {'type': 'Pasaporte', 'label': 'Pasaporte (6-12)', 'len': 12, 'numeric': false},
+          ];
+
+          final currentSpec = docTypes.firstWhere((e) => e['type'] == selectedDocType, orElse: () => docTypes.first);
+          final int maxLen = currentSpec['len'] as int;
+          final bool isNumeric = currentSpec['numeric'] as bool;
+          final text = controller.text.trim();
+          final isValidLen = selectedDocType == 'DNI'
+              ? text.length == 8
+              : (selectedDocType == 'CE' ? text.length == 9 : (text.length >= 6 && text.length <= 12));
+
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 440),
+              decoration: BoxDecoration(
+                color: dialogBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: borderCol, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.15),
+                    blurRadius: 32,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.12 : 0.08),
+                        border: Border(bottom: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
+                            ),
+                            child: const Icon(Icons.fingerprint_rounded, color: Color(0xFFF59E0B), size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Documento de Identidad',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Identificación oficial requerida para asistencias',
+                                  style: TextStyle(fontSize: 11.5, color: textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close_rounded, size: 20, color: textMuted),
+                            splashRadius: 18,
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Tipo de Documento *',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: docTypes.map((dt) {
+                                final isSelected = selectedDocType == dt['type'];
+                                return Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                                    child: InkWell(
+                                      onTap: () {
+                                        setDialogState(() {
+                                          selectedDocType = dt['type'] as String;
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: AnimatedContainer(
+                                        duration: const Duration(milliseconds: 150),
+                                        padding: const EdgeInsets.symmetric(vertical: 9),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.15)
+                                              : surfaceBg,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: isSelected ? const Color(0xFFF59E0B) : borderCol,
+                                            width: isSelected ? 1.5 : 1,
+                                          ),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          dt['type'] as String,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                            color: isSelected ? const Color(0xFFF59E0B) : textMuted,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Número de $selectedDocType *',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: controller,
+                              autofocus: true,
+                              keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+                              maxLength: maxLen,
+                              onChanged: (_) => setDialogState(() {}),
+                              decoration: InputDecoration(
+                                hintText: 'Ingrese número de $selectedDocType',
+                                hintStyle: TextStyle(fontSize: 12.5, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                                prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                                suffixIcon: isValidLen
+                                    ? const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20)
+                                    : null,
+                                counterText: '',
+                                filled: true,
+                                fillColor: surfaceBg,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primary, width: 1.5),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              selectedDocType == 'DNI'
+                                  ? 'Debe contener 8 dígitos numéricos sin letras ni símbolos.'
+                                  : (selectedDocType == 'CE'
+                                      ? 'Debe contener exactamente 9 caracteres.'
+                                      : 'Debe contener entre 6 y 12 caracteres oficiales.'),
+                              style: TextStyle(fontSize: 11, color: textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+                      decoration: BoxDecoration(
+                        color: surfaceBg,
+                        border: Border(top: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: borderCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                'Cancelar',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 0,
+                              ),
+                              icon: isSaving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.check_rounded, size: 18),
+                              label: const Text('Guardar Documento', style: TextStyle(fontWeight: FontWeight.bold)),
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      final rawDoc = controller.text.replaceAll(RegExp(r'''['"\s]'''), '').trim();
+                                      if (selectedDocType == 'DNI' && !RegExp(r'^\d{8}$').hasMatch(rawDoc)) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text('El DNI debe tener exactamente 8 dígitos numéricos.'),
+                                            backgroundColor: const Color(0xFFEF4444),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                        );
+                                        return;
+                                      } else if (selectedDocType == 'CE' && !RegExp(r'^[a-zA-Z0-9]{9}$').hasMatch(rawDoc)) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text('El Carné de Extranjería (CE) debe tener exactamente 9 caracteres.'),
+                                            backgroundColor: const Color(0xFFEF4444),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                        );
+                                        return;
+                                      } else if (selectedDocType == 'Pasaporte' && (rawDoc.length < 6 || rawDoc.length > 12)) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text('El Pasaporte debe tener entre 6 y 12 caracteres.'),
+                                            backgroundColor: const Color(0xFFEF4444),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      setDialogState(() => isSaving = true);
+                                      final success = await _updateProfileField(
+                                        user: user,
+                                        documentNumber: rawDoc,
+                                        fieldName: 'Documento de Identidad',
+                                      );
+                                      if (success && ctx.mounted) {
+                                        Navigator.of(ctx).pop();
+                                      } else {
+                                        setDialogState(() => isSaving = false);
+                                      }
+                                    },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showEditPhoneDialog(UserModel user) async {
+    final controller = TextEditingController(text: user.phoneNumber ?? '');
+    bool isSaving = false;
+    final primary = ThemeService.primaryColor(context);
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final dialogBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+          final surfaceBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+          final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+          final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 440),
+              decoration: BoxDecoration(
+                color: dialogBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: borderCol, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.15),
+                    blurRadius: 32,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.12 : 0.08),
+                        border: Border(bottom: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.25 : 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
+                            ),
+                            child: const Icon(Icons.phone_android_rounded, color: Color(0xFF10B981), size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Teléfono de Contacto',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Número móvil para notificaciones y seguridad',
+                                  style: TextStyle(fontSize: 11.5, color: textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close_rounded, size: 20, color: textMuted),
+                            splashRadius: 18,
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Número de Celular *',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: controller,
+                              autofocus: true,
+                              keyboardType: TextInputType.phone,
+                              decoration: InputDecoration(
+                                hintText: 'Ej. 987 654 321',
+                                hintStyle: TextStyle(fontSize: 12.5, color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                                prefixIcon: const Icon(Icons.phone_android_rounded, size: 20),
+                                filled: true,
+                                fillColor: surfaceBg,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primary, width: 1.5),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Ingresa un número de celular válido para recibir alertas de marcación.',
+                              style: TextStyle(fontSize: 11, color: textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+                      decoration: BoxDecoration(
+                        color: surfaceBg,
+                        border: Border(top: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: borderCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                'Cancelar',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 0,
+                              ),
+                              icon: isSaving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.check_rounded, size: 18),
+                              label: const Text('Guardar Teléfono', style: TextStyle(fontWeight: FontWeight.bold)),
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      final rawPhone = controller.text.replaceAll(RegExp(r'''['"\s]'''), '').trim();
+                                      setDialogState(() => isSaving = true);
+                                      final success = await _updateProfileField(
+                                        user: user,
+                                        phoneNumber: rawPhone,
+                                        fieldName: 'Teléfono de Contacto',
+                                      );
+                                      if (success && ctx.mounted) {
+                                        Navigator.of(ctx).pop();
+                                      } else {
+                                        setDialogState(() => isSaving = false);
+                                      }
+                                    },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFieldSelectorSheet(UserModel user) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgCol = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 480),
+          decoration: BoxDecoration(
+            color: bgCol,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: borderCol, width: 1),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 42,
+                      height: 4.5,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    '¿Qué dato deseas actualizar?',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Selecciona el campo que necesitas modificar',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                  const SizedBox(height: 14),
+                  _buildSheetOptionTile(
+                    icon: Icons.business_rounded,
+                    color: const Color(0xFF10B981),
+                    title: 'Oficina / Cargo',
+                    subtitle: user.office.isNotEmpty ? user.office : 'Sin asignar',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _showEditOfficeDialog(user);
+                    },
+                  ),
+                  _buildSheetOptionTile(
+                    icon: Icons.hub_rounded,
+                    color: const Color(0xFF3B82F6),
+                    title: 'Área Asignada',
+                    subtitle: user.area.isNotEmpty ? user.area : 'Sin asignar',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _showEditAreaDialog(user);
+                    },
+                  ),
+                  _buildSheetOptionTile(
+                    icon: Icons.fingerprint_rounded,
+                    color: const Color(0xFFF59E0B),
+                    title: 'Documento de Identidad',
+                    subtitle: user.documentNumber?.isNotEmpty == true ? user.documentNumber! : 'No registrado',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _showEditDocumentDialog(user);
+                    },
+                  ),
+                  _buildSheetOptionTile(
+                    icon: Icons.phone_android_rounded,
+                    color: const Color(0xFF10B981),
+                    title: 'Teléfono de Contacto',
+                    subtitle: user.phoneNumber?.isNotEmpty == true ? user.phoneNumber! : 'No registrado',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _showEditPhoneDialog(user);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetOptionTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final itemBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+    final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: itemBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderCol, width: 1),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: isDark ? 0.2 : 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: color.withValues(alpha: 0.25)),
+                  ),
+                  child: Icon(icon, size: 20, color: color),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _openPhotoViewer(UserModel user) {
@@ -1980,7 +3054,6 @@ class _ProfileTabState extends State<ProfileTab> {
 
   /// Tarjeta de Información Institucional con estilo de tarjetas individuales
   Widget _buildInstitutionalInfoCard(BuildContext context, UserModel user) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     const mintGreen = Color(0xFF34D399);
 
     final docLabel = _getDocumentLabel(user.documentNumber);
@@ -1997,287 +3070,142 @@ class _ProfileTabState extends State<ProfileTab> {
           width: 1.2,
         ),
       ),
-      child: AnimatedCrossFade(
-        duration: const Duration(milliseconds: 250),
-        crossFadeState: _isEditingInstitutionalInfo ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-        firstChild: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Icono + Título + Botón Editar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: const [
-                    Icon(Icons.badge_rounded, color: mintGreen, size: 18),
-                    SizedBox(width: 8),
-                    Text(
-                      'Información Institucional',
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => _startEditingInstitutionalInfo(user),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF064E3B).withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.edit_rounded, size: 12, color: mintGreen),
-                        SizedBox(width: 4),
-                        Text(
-                          'Editar',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.bold,
-                            color: mintGreen,
-                          ),
-                        ),
-                      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Icono + Título + Botón Editar
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.badge_rounded, color: mintGreen, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Información Institucional',
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-
-            // 1. OFICINA / CARGO
-            _buildInstitutionalTile(
-              context: context,
-              icon: Icons.business_rounded,
-              label: 'OFICINA / CARGO',
-              value: user.office.isNotEmpty ? user.office : 'Sin asignar',
-              isPlaceholder: user.office.isEmpty,
-              onTap: () => _startEditingInstitutionalInfo(user),
-            ),
-            const SizedBox(height: 10),
-
-            // 2. ÁREA ASIGNADA
-            _buildInstitutionalTile(
-              context: context,
-              icon: Icons.hub_rounded,
-              label: 'ÁREA ASIGNADA',
-              value: user.area.isNotEmpty ? user.area : 'Sin asignar',
-              isPlaceholder: user.area.isEmpty,
-              onTap: () => _startEditingInstitutionalInfo(user),
-            ),
-            const SizedBox(height: 10),
-
-            // 3. DOCUMENTO DE IDENTIDAD
-            _buildInstitutionalTile(
-              context: context,
-              icon: Icons.fingerprint_rounded,
-              label: 'DOCUMENTO DE IDENTIDAD ($docLabel)',
-              value: hasDoc ? user.documentNumber! : 'No registrado',
-              isPlaceholder: !hasDoc,
-              trailingAction: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: hasDoc
-                      ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                      : const Color(0xFFD97706).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: hasDoc ? const Color(0xFF10B981) : const Color(0xFFD97706),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  hasDoc ? 'Registrado' : 'Completar',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: hasDoc ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                  ),
-                ),
+                ],
               ),
-              onTap: () => _startEditingInstitutionalInfo(user),
-            ),
-            const SizedBox(height: 10),
-
-            // 4. TELÉFONO DE CONTACTO
-            _buildInstitutionalTile(
-              context: context,
-              icon: Icons.phone_android_rounded,
-              label: 'TELÉFONO DE CONTACTO',
-              value: hasPhone ? user.phoneNumber! : 'No registrado',
-              isPlaceholder: !hasPhone,
-              trailingAction: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: hasPhone
-                      ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                      : const Color(0xFFD97706).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: hasPhone ? const Color(0xFF10B981) : const Color(0xFFD97706),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  hasPhone ? 'Verificado' : 'Completar',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: hasPhone ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                  ),
-                ),
-              ),
-              onTap: () => _startEditingInstitutionalInfo(user),
-            ),
-          ],
-        ),
-        secondChild: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Editar Información',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => setState(() => _isEditingInstitutionalInfo = false),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Actualiza tus datos laborales y de identificación:',
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // Campo Oficina
-            TextField(
-              controller: _officeController,
-              decoration: InputDecoration(
-                labelText: 'Oficina / Cargo',
-                hintText: 'ej. Sistemas / Administrador',
-                prefixIcon: const Icon(Icons.business_rounded, size: 20),
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Campo Área
-            TextField(
-              controller: _areaController,
-              decoration: InputDecoration(
-                labelText: 'Área Asignada',
-                hintText: 'ej. Dirección General',
-                prefixIcon: const Icon(Icons.hub_rounded, size: 20),
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Selector Tipo Documento + Número
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+              InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => _showFieldSelectorSheet(user),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                    ),
+                    color: const Color(0xFF064E3B).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
                   ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _documentType,
-                      items: const [
-                        DropdownMenuItem(value: 'DNI', child: Text('DNI')),
-                        DropdownMenuItem(value: 'CE', child: Text('C.E.')),
-                        DropdownMenuItem(value: 'Pasaporte', child: Text('Pasap.')),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) setState(() => _documentType = val);
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _documentController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      labelText: 'Nº Documento',
-                      hintText: 'Número oficial',
-                      filled: true,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.edit_rounded, size: 12, color: mintGreen),
+                      SizedBox(width: 4),
+                      Text(
+                        'Editar',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          color: mintGreen,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
 
-            // Campo Teléfono
-            TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Teléfono de Contacto',
-                hintText: '+51 987 654 321',
-                prefixIcon: const Icon(Icons.phone_android_rounded, size: 20),
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          // 1. OFICINA / CARGO
+          _buildInstitutionalTile(
+            context: context,
+            icon: Icons.business_rounded,
+            label: 'OFICINA / CARGO',
+            value: user.office.isNotEmpty ? user.office : 'Sin asignar',
+            isPlaceholder: user.office.isEmpty,
+            onTap: () => _showEditOfficeDialog(user),
+          ),
+          const SizedBox(height: 10),
+
+          // 2. ÁREA ASIGNADA
+          _buildInstitutionalTile(
+            context: context,
+            icon: Icons.hub_rounded,
+            label: 'ÁREA ASIGNADA',
+            value: user.area.isNotEmpty ? user.area : 'Sin asignar',
+            isPlaceholder: user.area.isEmpty,
+            onTap: () => _showEditAreaDialog(user),
+          ),
+          const SizedBox(height: 10),
+
+          // 3. DOCUMENTO DE IDENTIDAD
+          _buildInstitutionalTile(
+            context: context,
+            icon: Icons.fingerprint_rounded,
+            label: 'DOCUMENTO DE IDENTIDAD ($docLabel)',
+            value: hasDoc ? user.documentNumber! : 'No registrado',
+            isPlaceholder: !hasDoc,
+            trailingAction: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: hasDoc
+                    ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                    : const Color(0xFFD97706).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasDoc ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                hasDoc ? 'Registrado' : 'Completar',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: hasDoc ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
+            onTap: () => _showEditDocumentDialog(user),
+          ),
+          const SizedBox(height: 10),
 
-            // Botones Guardar / Cancelar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => setState(() => _isEditingInstitutionalInfo = false),
-                  child: const Text('Cancelar'),
+          // 4. TELÉFONO DE CONTACTO
+          _buildInstitutionalTile(
+            context: context,
+            icon: Icons.phone_android_rounded,
+            label: 'TELÉFONO DE CONTACTO',
+            value: hasPhone ? user.phoneNumber! : 'No registrado',
+            isPlaceholder: !hasPhone,
+            trailingAction: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: hasPhone
+                    ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                    : const Color(0xFFD97706).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasPhone ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                  width: 1,
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: _isSavingInstitutionalInfo ? null : () => _saveInstitutionalInfo(user),
-                  icon: _isSavingInstitutionalInfo
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.check_rounded, size: 18),
-                  label: const Text('Guardar Cambios'),
+              ),
+              child: Text(
+                hasPhone ? 'Verificado' : 'Completar',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: hasPhone ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                 ),
-              ],
+              ),
             ),
-          ],
-        ),
+            onTap: () => _showEditPhoneDialog(user),
+          ),
+        ],
       ),
     );
   }
