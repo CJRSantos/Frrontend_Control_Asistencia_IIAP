@@ -688,6 +688,9 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                       Image.asset(
                         item.assetPath!,
                         fit: BoxFit.cover,
+                        cacheWidth: 360,
+                        gaplessPlayback: true,
+                        filterQuality: FilterQuality.low,
                       ),
                       if (isSelected)
                         Positioned(

@@ -424,6 +424,8 @@ class WallpaperService {
             child: Image(
               image: provider,
               fit: BoxFit.cover,
+              gaplessPlayback: true,
+              filterQuality: FilterQuality.medium,
             ),
           ),
           // Capa 2: Velo Protector de Legibilidad (Overlay con tinte ambiental)

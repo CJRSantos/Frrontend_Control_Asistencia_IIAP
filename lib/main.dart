@@ -38,9 +38,11 @@ void main() async {
 
   runApp(const MyApp());
 
-  // Servicios secundarios en segundo plano
-  ScheduleService.init();
-  NotificationService.init();
+  // Servicios secundarios en segundo plano (diferidos al primer frame para renderizado inmediato a 60/120 FPS)
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    ScheduleService.init();
+    NotificationService.init();
+  });
 }
 
 class MyApp extends StatelessWidget {
