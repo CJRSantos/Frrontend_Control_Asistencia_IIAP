@@ -27,12 +27,12 @@ class ApiConfig {
 
   static const String envAppPackageNameAndroid = String.fromEnvironment(
     'APP_PACKAGE_NAME_ANDROID',
-    defaultValue: 'pe.gob.iiap.attendence',
+    defaultValue: 'pe.gob.iiap.attendance',
   );
 
   static const String envAppPackageNameIos = String.fromEnvironment(
     'APP_PACKAGE_NAME_IOS',
-    defaultValue: 'pe.gob.iiap.attendence',
+    defaultValue: 'pe.gob.iiap.attendance',
   );
 
   // Obtiene la URL base adecuada según el entorno de ejecución
