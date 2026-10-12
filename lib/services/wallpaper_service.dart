@@ -108,6 +108,20 @@ class WallpaperService {
       type: WallpaperType.preset,
       assetPath: 'assets/images/wallpapers/backiee-76116.jpg',
     ),
+    WallpaperItem(
+      id: 'backiee_376386',
+      title: 'CRYSTAL BLIND HALO',
+      category: 'Cyber & Hackers',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-376386.jpg',
+    ),
+    WallpaperItem(
+      id: 'backiee_377102',
+      title: 'OJOS DORADOS GLOW',
+      category: 'Cyber & Hackers',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-377102.jpg',
+    ),
 
     // === CATEGORÍA: SUPERDEPORTIVOS & MOTOR ===
     WallpaperItem(
@@ -212,6 +226,27 @@ class WallpaperService {
       type: WallpaperType.preset,
       assetPath: 'assets/images/wallpapers/backiee-341668.jpg',
     ),
+    WallpaperItem(
+      id: 'backiee_376037',
+      title: 'GUERRERA DORADA PALADÍN',
+      category: 'Aventura & Épico',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-376037.jpg',
+    ),
+    WallpaperItem(
+      id: 'backiee_376827',
+      title: 'BRISA MARINA & GAVIOTAS',
+      category: 'Aventura & Épico',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-376827.jpg',
+    ),
+    WallpaperItem(
+      id: 'backiee_376833',
+      title: 'SILUETA ATARDECER SKYLINE',
+      category: 'Aventura & Épico',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-376833.jpg',
+    ),
 
     // === CATEGORÍA: GAMING & ESTILO ===
     WallpaperItem(
@@ -234,6 +269,34 @@ class WallpaperService {
       category: 'Gaming & Estilo',
       type: WallpaperType.preset,
       assetPath: 'assets/images/wallpapers/backiee-33718.jpg',
+    ),
+    WallpaperItem(
+      id: 'backiee_376766',
+      title: 'MANGA NOIR AVIATOR',
+      category: 'Gaming & Estilo',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-376766.jpg',
+    ),
+    WallpaperItem(
+      id: 'backiee_376786',
+      title: 'GAMER YELLOW HOODIE',
+      category: 'Gaming & Estilo',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-376786.jpg',
+    ),
+    WallpaperItem(
+      id: 'backiee_376350',
+      title: 'ANIME SUNSET SMILE',
+      category: 'Gaming & Estilo',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-376350.jpg',
+    ),
+    WallpaperItem(
+      id: 'backiee_376681',
+      title: 'CYBER CITY GLAMOUR',
+      category: 'Gaming & Estilo',
+      type: WallpaperType.preset,
+      assetPath: 'assets/images/wallpapers/backiee-376681.jpg',
     ),
   ];
 
