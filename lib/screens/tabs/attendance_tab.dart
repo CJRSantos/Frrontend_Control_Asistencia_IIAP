@@ -183,6 +183,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
   }
 
   Future<void> _showManualAttendanceDialog() async {
+    final primary = ThemeService.primaryColor(context);
     final dniController = TextEditingController();
     final obsController = TextEditingController();
     AttendanceType selectedType = AttendanceType.CHECK_IN;
@@ -190,337 +191,587 @@ class _AttendanceTabState extends State<AttendanceTab> {
         DateTime.now().hour < 13 ? AttendanceShift.MORNING : AttendanceShift.AFTERNOON;
     bool isSubmitting = false;
 
+    final quickReasons = [
+      'Celular averiado',
+      'Olvido de celular',
+      'Sin batería',
+      'Problema con la cámara / QR',
+      'Extravío de dispositivo',
+    ];
+
     await showDialog(
       context: context,
       barrierDismissible: true,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
+          final dialogBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+          final surfaceBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+          final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+          final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            backgroundColor: ThemeService.cardBg(context),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.emergency_outlined, color: Colors.amber, size: 24),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Marcación Manual',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        'Contingencia por Celular Avariado/Robado',
-                        style: TextStyle(fontSize: 11, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Registrar asistencia manual para un colaborador que no puede escanear el QR.',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Campo DNI
-                  const Text('Documento / DNI del Colaborador *',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: dniController,
-                    keyboardType: TextInputType.number,
-                    maxLength: 8,
-                    decoration: InputDecoration(
-                      hintText: 'Ingrese los 8 dígitos del DNI',
-                      prefixIcon: const Icon(Icons.badge_outlined, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      counterText: '',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Selector de Turno: MAÑANA / TARDE
-                  const Text('Turno de la Jornada *',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setDialogState(() => selectedShift = AttendanceShift.MORNING),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 9),
-                            decoration: BoxDecoration(
-                              color: selectedShift == AttendanceShift.MORNING
-                                  ? Colors.blue.withValues(alpha: 0.2)
-                                  : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04)),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: selectedShift == AttendanceShift.MORNING
-                                    ? Colors.blue
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.wb_sunny_rounded,
-                                  size: 16,
-                                  color: selectedShift == AttendanceShift.MORNING ? Colors.blue : Colors.grey,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'MAÑANA',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: selectedShift == AttendanceShift.MORNING ? Colors.blue : Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setDialogState(() => selectedShift = AttendanceShift.AFTERNOON),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 9),
-                            decoration: BoxDecoration(
-                              color: selectedShift == AttendanceShift.AFTERNOON
-                                  ? Colors.amber.withValues(alpha: 0.2)
-                                  : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04)),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: selectedShift == AttendanceShift.AFTERNOON
-                                    ? Colors.amber
-                                    : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.nights_stay_rounded,
-                                  size: 16,
-                                  color: selectedShift == AttendanceShift.AFTERNOON ? Colors.amber : Colors.grey,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'TARDE',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: selectedShift == AttendanceShift.AFTERNOON ? Colors.amber : Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Selector de Tipo: ENTRADA / SALIDA
-                  const Text('Tipo de Marcación *',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setDialogState(() => selectedType = AttendanceType.CHECK_IN),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: selectedType == AttendanceType.CHECK_IN
-                                  ? Colors.green.withValues(alpha: 0.2)
-                                  : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04)),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: selectedType == AttendanceType.CHECK_IN ? Colors.green : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.login_rounded,
-                                  size: 18,
-                                  color: selectedType == AttendanceType.CHECK_IN ? Colors.green : Colors.grey,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'ENTRADA',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: selectedType == AttendanceType.CHECK_IN ? Colors.green : Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => setDialogState(() => selectedType = AttendanceType.CHECK_OUT),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: selectedType == AttendanceType.CHECK_OUT
-                                  ? Colors.orange.withValues(alpha: 0.2)
-                                  : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04)),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: selectedType == AttendanceType.CHECK_OUT ? Colors.orange : Colors.transparent,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.logout_rounded,
-                                  size: 18,
-                                  color: selectedType == AttendanceType.CHECK_OUT ? Colors.orange : Colors.grey,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'SALIDA',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: selectedType == AttendanceType.CHECK_OUT ? Colors.orange : Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Observación / Justificación
-                  const Text('Motivo / Observación *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: obsController,
-                    maxLines: 2,
-                    decoration: InputDecoration(
-                      hintText: 'Ej. Celular averiado / Olvido involuntario',
-                      prefixIcon: const Icon(Icons.edit_note_rounded, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 440),
+              decoration: BoxDecoration(
+                color: dialogBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: borderCol, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.15),
+                    blurRadius: 32,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isSubmitting ? null : () => Navigator.of(ctx).pop(),
-                child: const Text('Cancelar'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ThemeService.primaryColor(context),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header con degradado ámbar de contingencia
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.12 : 0.08),
+                        border: Border(bottom: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Icon(Icons.emergency_rounded, color: Color(0xFFF59E0B), size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Marcación Manual',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Contingencia por Celular Averiado o Robado',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: textMuted,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close_rounded, size: 20, color: textMuted),
+                            splashRadius: 18,
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Contenido Scrolleable Seguro
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Banner informativo de auditoría
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.08 : 0.06),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.info_outline_rounded, size: 17, color: Color(0xFFF59E0B)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Registra la asistencia de emergencia para un colaborador que no puede escanear el QR. Esta marcación queda auditada con tu usuario.',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Campo DNI del Colaborador
+                            const Text(
+                              'Documento / DNI del Colaborador *',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: dniController,
+                              keyboardType: TextInputType.number,
+                              maxLength: 8,
+                              onChanged: (_) => setDialogState(() {}),
+                              decoration: InputDecoration(
+                                hintText: 'Ingrese los 8 dígitos del DNI',
+                                hintStyle: TextStyle(
+                                  fontSize: 12.5,
+                                  color: isDark ? Colors.grey[500] : Colors.grey[400],
+                                ),
+                                prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                                suffixIcon: dniController.text.trim().length == 8
+                                    ? const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20)
+                                    : null,
+                                filled: true,
+                                fillColor: surfaceBg,
+                                counterText: '',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primary, width: 1.5),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Selector de Turno: MAÑANA / TARDE
+                            const Text(
+                              'Turno de la Jornada *',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => setDialogState(() => selectedShift = AttendanceShift.MORNING),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: selectedShift == AttendanceShift.MORNING
+                                            ? const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.22 : 0.12)
+                                            : surfaceBg,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: selectedShift == AttendanceShift.MORNING
+                                              ? const Color(0xFF3B82F6)
+                                              : borderCol,
+                                          width: selectedShift == AttendanceShift.MORNING ? 1.5 : 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.wb_sunny_rounded,
+                                            size: 16,
+                                            color: selectedShift == AttendanceShift.MORNING
+                                                ? const Color(0xFF3B82F6)
+                                                : textMuted,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'MAÑANA',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: selectedShift == AttendanceShift.MORNING
+                                                ? const Color(0xFF3B82F6)
+                                                : textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => setDialogState(() => selectedShift = AttendanceShift.AFTERNOON),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: selectedShift == AttendanceShift.AFTERNOON
+                                            ? const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.22 : 0.12)
+                                            : surfaceBg,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: selectedShift == AttendanceShift.AFTERNOON
+                                              ? const Color(0xFFF59E0B)
+                                              : borderCol,
+                                          width: selectedShift == AttendanceShift.AFTERNOON ? 1.5 : 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.nights_stay_rounded,
+                                            size: 16,
+                                            color: selectedShift == AttendanceShift.AFTERNOON
+                                                ? const Color(0xFFF59E0B)
+                                                : textMuted,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'TARDE',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: selectedShift == AttendanceShift.AFTERNOON
+                                                ? const Color(0xFFF59E0B)
+                                                : textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Selector de Tipo: ENTRADA / SALIDA
+                            const Text(
+                              'Tipo de Marcación *',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => setDialogState(() => selectedType = AttendanceType.CHECK_IN),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: selectedType == AttendanceType.CHECK_IN
+                                            ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.22 : 0.12)
+                                            : surfaceBg,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: selectedType == AttendanceType.CHECK_IN
+                                              ? const Color(0xFF10B981)
+                                              : borderCol,
+                                          width: selectedType == AttendanceType.CHECK_IN ? 1.5 : 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.login_rounded,
+                                            size: 17,
+                                            color: selectedType == AttendanceType.CHECK_IN
+                                                ? const Color(0xFF10B981)
+                                                : textMuted,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'ENTRADA',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: selectedType == AttendanceType.CHECK_IN
+                                                ? const Color(0xFF10B981)
+                                                : textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => setDialogState(() => selectedType = AttendanceType.CHECK_OUT),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: selectedType == AttendanceType.CHECK_OUT
+                                            ? const Color(0xFFF97316).withValues(alpha: isDark ? 0.22 : 0.12)
+                                            : surfaceBg,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: selectedType == AttendanceType.CHECK_OUT
+                                              ? const Color(0xFFF97316)
+                                              : borderCol,
+                                          width: selectedType == AttendanceType.CHECK_OUT ? 1.5 : 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.logout_rounded,
+                                            size: 17,
+                                            color: selectedType == AttendanceType.CHECK_OUT
+                                                ? const Color(0xFFF97316)
+                                                : textMuted,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'SALIDA',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: selectedType == AttendanceType.CHECK_OUT
+                                                ? const Color(0xFFF97316)
+                                                : textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Motivo / Observación con chips rápidos de un toque
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Motivo / Observación *',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  'Selecciona o escribe',
+                                  style: TextStyle(fontSize: 10.5, color: textMuted),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+
+                            // Chips de motivos comunes para rapidez de gestión
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: quickReasons.map((reason) {
+                                final isSelected = obsController.text.trim() == reason;
+                                return InkWell(
+                                  onTap: () {
+                                    setDialogState(() {
+                                      obsController.text = reason;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? primary.withValues(alpha: isDark ? 0.25 : 0.15)
+                                          : surfaceBg,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isSelected ? primary : borderCol,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      reason,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: isSelected ? primary : textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            TextField(
+                              controller: obsController,
+                              maxLines: 2,
+                              onChanged: (_) => setDialogState(() {}),
+                              decoration: InputDecoration(
+                                hintText: 'Ej. Celular averiado / Olvido involuntario',
+                                hintStyle: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark ? Colors.grey[500] : Colors.grey[400],
+                                ),
+                                prefixIcon: const Icon(Icons.edit_note_rounded, size: 20),
+                                filled: true,
+                                fillColor: surfaceBg,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: borderCol),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primary, width: 1.5),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Barra Inferior de Acciones
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+                      decoration: BoxDecoration(
+                        color: surfaceBg,
+                        border: Border(top: BorderSide(color: borderCol, width: 0.8)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSubmitting ? null : () => Navigator.of(ctx).pop(),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: borderCol),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                'Cancelar',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 0,
+                              ),
+                              icon: isSubmitting
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.how_to_reg_rounded, size: 18),
+                              label: const Text(
+                                'Registrar Asistencia',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () async {
+                                      final dni = dniController.text.trim();
+                                      final obs = obsController.text.trim();
+                                      if (dni.length != 8) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('El DNI debe tener 8 dígitos numéricos.')),
+                                        );
+                                        return;
+                                      }
+                                      if (obs.isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Por favor ingresa la observación del motivo.')),
+                                        );
+                                        return;
+                                      }
+
+                                      setDialogState(() => isSubmitting = true);
+                                      final scaffoldMessenger = ScaffoldMessenger.of(context);
+                                      final nav = Navigator.of(ctx);
+
+                                      try {
+                                        final res = await AttendanceService.registerManualAttendance(
+                                          dni: dni,
+                                          type: selectedType.name,
+                                          shift: selectedShift.name,
+                                          observation: obs,
+                                        );
+                                        nav.pop();
+                                        scaffoldMessenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(res['message']?.toString() ?? 'Asistencia registrada con éxito.'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                        if (mounted) {
+                                          _loadAllRecords();
+                                          _loadPendingCheckouts();
+                                          _loadMyRecords();
+                                        }
+                                      } catch (e) {
+                                        setDialogState(() => isSubmitting = false);
+                                        scaffoldMessenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: isSubmitting
-                    ? null
-                    : () async {
-                        final dni = dniController.text.trim();
-                        final obs = obsController.text.trim();
-                        if (dni.length != 8) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('El DNI debe tener 8 dígitos numéricos.')),
-                          );
-                          return;
-                        }
-                        if (obs.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Por favor ingresa la observación del motivo.')),
-                          );
-                          return;
-                        }
-
-                        setDialogState(() => isSubmitting = true);
-                        final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        final nav = Navigator.of(ctx);
-
-                        try {
-                          final res = await AttendanceService.registerManualAttendance(
-                            dni: dni,
-                            type: selectedType.name,
-                            shift: selectedShift.name,
-                            observation: obs,
-                          );
-                          nav.pop();
-                          scaffoldMessenger.showSnackBar(
-                            SnackBar(
-                              content: Text(res['message']?.toString() ?? 'Asistencia registrada con éxito.'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                          if (mounted) {
-                            _loadAllRecords();
-                            _loadPendingCheckouts();
-                            _loadMyRecords();
-                          }
-                        } catch (e) {
-                          setDialogState(() => isSubmitting = false);
-                          scaffoldMessenger.showSnackBar(
-                            SnackBar(
-                              content: Text('Error: $e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('Registrar Asistencia'),
               ),
-            ],
+            ),
           );
         },
       ),
