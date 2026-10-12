@@ -144,22 +144,62 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
   }
 
   Future<void> _confirmDeleteUser(UserModel targetUser) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar Cuenta'),
+        backgroundColor: dialogBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: borderCol),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.delete_forever_rounded, color: Color(0xFFEF4444), size: 22),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Eliminar Cuenta',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
         content: Text(
-          '¿Estás seguro de que deseas eliminar la cuenta de ${targetUser.fullName} (${targetUser.email})?\n\nEsta acción permitirá que el usuario pueda registrarse nuevamente desde cero.',
+          '¿Estás seguro de que deseas eliminar la cuenta de ${targetUser.fullName} (${targetUser.email})?\n\nEsta acción revocará sus accesos y permitirá que el colaborador pueda registrarse nuevamente desde cero.',
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Sí, Eliminar Cuenta', style: TextStyle(color: Colors.white)),
+            child: const Text('Sí, Eliminar Cuenta', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -191,30 +231,63 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
   }
 
   Future<void> _confirmUnbindDevice(UserModel targetUser) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        backgroundColor: dialogBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: borderCol),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.phonelink_erase_rounded, color: Color(0xFFD97706), size: 24),
-            SizedBox(width: 8),
-            Text('Desvincular Dispositivo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD97706).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.phonelink_erase_rounded, color: Color(0xFFD97706), size: 22),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Desvincular Dispositivo',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
         content: Text(
           '¿Deseas desvincular el celular registrado para ${targetUser.fullName}?\n\n'
-          'Esto permitirá que el colaborador pueda registrar su asistencia desde un nuevo teléfono.',
+          'Esto liberará el bloqueo por hardware y permitirá que el colaborador pueda registrar su asistencia desde un nuevo teléfono.',
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD97706)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD97706),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Sí, Desvincular', style: TextStyle(color: Colors.white)),
+            child: const Text('Sí, Desvincular', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -245,201 +318,548 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
     }
   }
 
-  Widget _buildAdminUserActions(UserModel u) {
+  Color _getRoleColor(UserRole role) {
+    switch (role) {
+      case UserRole.SUPERADMIN:
+      case UserRole.ADMIN:
+        return const Color(0xFFD97706);
+      case UserRole.ADMIN_EVENTO:
+        return const Color(0xFF2563EB);
+      case UserRole.GESTOR_EVENTO:
+        return const Color(0xFF0D9488);
+      case UserRole.SUPERVISOR:
+        return const Color(0xFF7C3AED);
+      case UserRole.USER:
+        return const Color(0xFF10B981);
+    }
+  }
+
+  Widget _buildSheetActionTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool isDanger = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final itemBg = isDanger
+        ? (isDark ? const Color(0xFF450A0A).withValues(alpha: 0.35) : const Color(0xFFFEF2F2))
+        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC));
+    final borderCol = isDanger
+        ? const Color(0xFFEF4444).withValues(alpha: 0.35)
+        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0));
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: itemBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderCol, width: 1),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: isDark ? 0.2 : 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: color.withValues(alpha: 0.25)),
+                  ),
+                  child: Icon(icon, size: 20, color: color),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: isDanger ? const Color(0xFFEF4444) : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: isDanger
+                      ? const Color(0xFFEF4444).withValues(alpha: 0.6)
+                      : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showUserManagementSheet(UserModel u) {
     final current = StorageService.currentUser;
     final isSuperAdmin = current?.isSuperAdmin == true;
     final isAdmin = current?.isAdmin == true;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = ThemeService.primaryColor(context);
+
+    final bgCol = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+    final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.65),
+      builder: (ctx) {
+        return Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 520),
+            decoration: BoxDecoration(
+              color: bgCol,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: borderCol, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 30,
+                  offset: const Offset(0, -6),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Drag Handle
+                      Center(
+                        child: Container(
+                          width: 42,
+                          height: 4.5,
+                          margin: const EdgeInsets.only(bottom: 14),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+
+                      // User Profile Header Card
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: borderCol),
+                        ),
+                        child: Row(
+                          children: [
+                            // Avatar con iniciales
+                            CircleAvatar(
+                              radius: 22,
+                              backgroundColor: primary.withValues(alpha: 0.15),
+                              child: Text(
+                                u.fullName.isNotEmpty
+                                    ? u.fullName.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                                    : 'U',
+                                style: TextStyle(
+                                  color: primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    u.fullName,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      if (u.documentNumber != null && u.documentNumber!.isNotEmpty) ...[
+                                        Text(
+                                          'DNI: ${u.documentNumber}',
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w500,
+                                            color: textMuted,
+                                          ),
+                                        ),
+                                        Text(' • ', style: TextStyle(color: textMuted, fontSize: 11)),
+                                      ],
+                                      Expanded(
+                                        child: Text(
+                                          u.office.isNotEmpty ? u.office : (u.area.isNotEmpty ? u.area : 'Sin área asignada'),
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: textMuted,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Badge de Rol Actual
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getRoleColor(u.role).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: _getRoleColor(u.role).withValues(alpha: 0.4)),
+                              ),
+                              child: Text(
+                                u.role.displayName,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: _getRoleColor(u.role),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // SECCIÓN 1: GESTIÓN DE PERFIL Y EQUIPO
+                      Text(
+                        'DATOS Y EQUIPO',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      _buildSheetActionTile(
+                        icon: Icons.edit_note_rounded,
+                        color: const Color(0xFF10B981),
+                        title: 'Editar Oficina y Área',
+                        subtitle: 'Actualizar la sede, oficina y área asignada',
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          _showEditUserOfficeAreaDialog(u);
+                        },
+                      ),
+
+                      if (isAdmin)
+                        _buildSheetActionTile(
+                          icon: Icons.phonelink_erase_rounded,
+                          color: const Color(0xFFD97706),
+                          title: 'Desvincular Celular / Equipo',
+                          subtitle: 'Permitir que el usuario vincule un nuevo dispositivo',
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _confirmUnbindDevice(u);
+                          },
+                        ),
+
+                      const SizedBox(height: 14),
+
+                      // SECCIÓN 2: ROLES Y PERMISOS
+                      Text(
+                        'ASIGNACIÓN DE ROLES Y PERMISOS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      if (isSuperAdmin && u.role != UserRole.ADMIN)
+                        _buildSheetActionTile(
+                          icon: Icons.military_tech_rounded,
+                          color: const Color(0xFFD97706),
+                          title: 'Designar Admin / Presidente',
+                          subtitle: 'Otorga permisos de máxima autoridad institucional',
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _changeUserRole(u, UserRole.ADMIN);
+                          },
+                        ),
+
+                      if (isAdmin && u.role != UserRole.ADMIN_EVENTO)
+                        _buildSheetActionTile(
+                          icon: Icons.event_available_rounded,
+                          color: const Color(0xFF2563EB),
+                          title: 'Designar Admin de Eventos / UO',
+                          subtitle: 'Gestión y control de eventos institucionales y UO',
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _changeUserRole(u, UserRole.ADMIN_EVENTO);
+                          },
+                        ),
+
+                      if (isAdmin && u.role != UserRole.GESTOR_EVENTO)
+                        _buildSheetActionTile(
+                          icon: Icons.campaign_rounded,
+                          color: const Color(0xFF0D9488),
+                          title: 'Designar Gestor de Eventos / UO',
+                          subtitle: 'Toma de asistencias y soporte en eventos',
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _changeUserRole(u, UserRole.GESTOR_EVENTO);
+                          },
+                        ),
+
+                      if (isAdmin && u.role != UserRole.SUPERVISOR)
+                        _buildSheetActionTile(
+                          icon: Icons.verified_user_rounded,
+                          color: const Color(0xFF7C3AED),
+                          title: 'Designar Supervisor',
+                          subtitle: 'Supervisar y corregir marcas del personal asignado',
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _changeUserRole(u, UserRole.SUPERVISOR);
+                          },
+                        ),
+
+                      if (u.role != UserRole.USER)
+                        _buildSheetActionTile(
+                          icon: Icons.person_outline_rounded,
+                          color: const Color(0xFF64748B),
+                          title: 'Cambiar a Rol Colaborador',
+                          subtitle: 'Rol básico (solo marca y consulta su propia asistencia)',
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _changeUserRole(u, UserRole.USER);
+                          },
+                        ),
+
+                      const SizedBox(height: 14),
+
+                      // SECCIÓN 3: ZONA DE PELIGRO
+                      Text(
+                        'ZONA DE RIESGO',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      _buildSheetActionTile(
+                        icon: Icons.delete_outline_rounded,
+                        color: const Color(0xFFEF4444),
+                        title: 'Eliminar Cuenta',
+                        subtitle: 'Borra al colaborador; podrá registrarse nuevamente',
+                        isDanger: true,
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          _confirmDeleteUser(u);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAdminUserActions(UserModel u) {
+    final current = StorageService.currentUser;
+    final isSuperAdmin = current?.isSuperAdmin == true;
 
     // Si es SuperAdmin, no puede ser modificado por otros
     if (u.isSuperAdmin && !isSuperAdmin) return const SizedBox.shrink();
 
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded, size: 20, color: Color(0xFF64748B)),
-      tooltip: 'Opciones de Gestión',
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (value) {
-        switch (value) {
-          case 'unbind_device':
-            _confirmUnbindDevice(u);
-            break;
-          case 'set_admin':
-            _changeUserRole(u, UserRole.ADMIN);
-            break;
-          case 'set_admin_evento':
-            _changeUserRole(u, UserRole.ADMIN_EVENTO);
-            break;
-          case 'set_gestor_evento':
-            _changeUserRole(u, UserRole.GESTOR_EVENTO);
-            break;
-          case 'set_supervisor':
-            _changeUserRole(u, UserRole.SUPERVISOR);
-            break;
-          case 'set_user':
-            _changeUserRole(u, UserRole.USER);
-            break;
-          case 'edit_office_area':
-            _showEditUserOfficeAreaDialog(u);
-            break;
-          case 'delete_user':
-            _confirmDeleteUser(u);
-            break;
-        }
-      },
-      itemBuilder: (ctx) => [
-        const PopupMenuItem<String>(
-          value: 'edit_office_area',
-          child: Row(
-            children: [
-              Icon(Icons.edit_note_rounded, size: 18, color: Color(0xFF2D5E2A)),
-              SizedBox(width: 8),
-              Text('Editar Oficina y Área', style: TextStyle(fontSize: 13)),
-            ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _showUserManagementSheet(u),
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+              width: 0.8,
+            ),
+          ),
+          child: const Icon(
+            Icons.more_vert_rounded,
+            size: 18,
+            color: Color(0xFF64748B),
           ),
         ),
-        if (isAdmin)
-          const PopupMenuItem<String>(
-            value: 'unbind_device',
-            child: Row(
-              children: [
-                Icon(Icons.phonelink_erase_rounded, size: 18, color: Color(0xFFD97706)),
-                SizedBox(width: 8),
-                Text('Desvincular Celular / Equipo', style: TextStyle(fontSize: 13)),
-              ],
-            ),
-          ),
-        if (isSuperAdmin && u.role != UserRole.ADMIN)
-          const PopupMenuItem<String>(
-            value: 'set_admin',
-            child: Row(
-              children: [
-                Icon(Icons.military_tech_rounded, size: 18, color: Color(0xFFD97706)),
-                SizedBox(width: 8),
-                Text('Designar Admin / Presidente', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-        if (isAdmin && u.role != UserRole.ADMIN_EVENTO)
-          const PopupMenuItem<String>(
-            value: 'set_admin_evento',
-            child: Row(
-              children: [
-                Icon(Icons.event_available_rounded, size: 18, color: Color(0xFF2563EB)),
-                SizedBox(width: 8),
-                Text('Designar Admin de Eventos / UO', style: TextStyle(fontSize: 13)),
-              ],
-            ),
-          ),
-        if (isAdmin && u.role != UserRole.GESTOR_EVENTO)
-          const PopupMenuItem<String>(
-            value: 'set_gestor_evento',
-            child: Row(
-              children: [
-                Icon(Icons.campaign_rounded, size: 18, color: Color(0xFF0D9488)),
-                SizedBox(width: 8),
-                Text('Designar Gestor de Eventos / UO', style: TextStyle(fontSize: 13)),
-              ],
-            ),
-          ),
-        if (isAdmin && u.role != UserRole.SUPERVISOR)
-          const PopupMenuItem<String>(
-            value: 'set_supervisor',
-            child: Row(
-              children: [
-                Icon(Icons.verified_user_rounded, size: 18, color: Color(0xFF7C3AED)),
-                SizedBox(width: 8),
-                Text('Designar Supervisor', style: TextStyle(fontSize: 13)),
-              ],
-            ),
-          ),
-        if (u.role != UserRole.USER)
-          const PopupMenuItem<String>(
-            value: 'set_user',
-            child: Row(
-              children: [
-                Icon(Icons.person_outline_rounded, size: 18, color: Color(0xFF64748B)),
-                SizedBox(width: 8),
-                Text('Cambiar a Rol Colaborador', style: TextStyle(fontSize: 13)),
-              ],
-            ),
-          ),
-        const PopupMenuDivider(),
-        const PopupMenuItem<String>(
-          value: 'delete_user',
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
-              SizedBox(width: 8),
-              Text('Eliminar Cuenta', style: TextStyle(fontSize: 13, color: Color(0xFFEF4444))),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   void _showEditUserOfficeAreaDialog(UserModel targetUser) {
     final officeCtrl = TextEditingController(text: targetUser.office);
     final areaCtrl = TextEditingController(text: targetUser.area);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final surfaceBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
+    final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final primary = ThemeService.primaryColor(context);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: dialogBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: borderCol),
+        ),
         title: Row(
           children: [
-            const Icon(Icons.apartment_rounded, color: Color(0xFF2D5E2A)),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.apartment_rounded, color: primary, size: 22),
+            ),
+            const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                'Oficina y Área: ${targetUser.fullName}',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Oficina y Área', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    targetUser.fullName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Actualiza la oficina y área asignada a este colaborador:',
-              style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: officeCtrl,
-              decoration: InputDecoration(
-                labelText: 'Oficina',
-                hintText: 'Ej. Presidencia, Sede Central...',
-                prefixIcon: const Icon(Icons.apartment_rounded, size: 20),
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Actualiza la oficina y área asignada a este colaborador:',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: areaCtrl,
-              decoration: InputDecoration(
-                labelText: 'Área',
-                hintText: 'Ej. Tecnologías, Recursos Humanos...',
-                prefixIcon: const Icon(Icons.grid_view_rounded, size: 20),
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: officeCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Oficina / Sede',
+                  hintText: 'Ej. Presidencia, Sede Central...',
+                  prefixIcon: const Icon(Icons.apartment_rounded, size: 20),
+                  filled: true,
+                  fillColor: surfaceBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderCol),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: primary, width: 1.5),
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 14),
+              TextField(
+                controller: areaCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Área / Departamento',
+                  hintText: 'Ej. Tecnologías, Recursos Humanos...',
+                  prefixIcon: const Icon(Icons.grid_view_rounded, size: 20),
+                  filled: true,
+                  fillColor: surfaceBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderCol),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: primary, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2D5E2A),
+              backgroundColor: primary,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
             onPressed: () async {
               final newOffice = officeCtrl.text.trim();
@@ -455,7 +875,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Oficina y Área actualizadas para ${targetUser.fullName}.'),
-                    backgroundColor: const Color(0xFF2D5E2A),
+                    backgroundColor: primary,
                   ),
                 );
                 _loadData();
@@ -469,7 +889,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 );
               }
             },
-            child: const Text('Guardar'),
+            child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
