@@ -20,14 +20,18 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
       setState(() => _isPicking = true);
       final XFile? file = await _picker.pickImage(
         source: source,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 90,
+        maxWidth: 1440,
+        maxHeight: 1440,
+        imageQuality: 85,
       );
 
       if (file == null) return;
 
-      await WallpaperService.setCustom(file.path);
+      if (mounted) {
+        await WallpaperService.setCustom(file.path, context: context);
+      } else {
+        await WallpaperService.setCustom(file.path);
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -317,7 +321,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                         item: item,
                         isSelected: isSelected,
                         primary: primary,
-                        onTap: () => WallpaperService.setPreset(item),
+                        onTap: () => WallpaperService.setPreset(item, context: context),
                       );
                     },
                   ),
@@ -367,7 +371,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                         item: item,
                         isSelected: isSelected,
                         primary: primary,
-                        onTap: () => WallpaperService.setPreset(item),
+                        onTap: () => WallpaperService.setPreset(item, context: context),
                       );
                     },
                   ),
@@ -417,7 +421,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                         item: item,
                         isSelected: isSelected,
                         primary: primary,
-                        onTap: () => WallpaperService.setPreset(item),
+                        onTap: () => WallpaperService.setPreset(item, context: context),
                       );
                     },
                   ),
@@ -467,7 +471,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                         item: item,
                         isSelected: isSelected,
                         primary: primary,
-                        onTap: () => WallpaperService.setPreset(item),
+                        onTap: () => WallpaperService.setPreset(item, context: context),
                       );
                     },
                   ),
@@ -517,7 +521,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                         item: item,
                         isSelected: isSelected,
                         primary: primary,
-                        onTap: () => WallpaperService.setPreset(item),
+                        onTap: () => WallpaperService.setPreset(item, context: context),
                       );
                     },
                   ),

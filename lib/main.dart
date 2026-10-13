@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
       animation: Listenable.merge([
         ThemeService.themeModeNotifier,
         ThemeService.accentColorNotifier,
-        WallpaperService.wallpaperNotifier,
+        WallpaperService.hasWallpaperNotifier,
       ]),
       builder: (context, _) {
         final accent = ThemeService.currentAccent;
