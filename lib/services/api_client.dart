@@ -48,15 +48,15 @@ class ApiClient {
     }
 
     String errorMessage = 'Ocurrió un error en el servidor (${response.statusCode})';
-    if (response.statusCode == 401) {
-      errorMessage = 'Sesión no autorizada o expirada. Inicia sesión nuevamente.';
-    } else if (body is Map && body.containsKey('message')) {
+    if (body is Map && body.containsKey('message')) {
       final msg = body['message'];
       if (msg is List) {
         errorMessage = msg.join('\n');
-      } else if (msg != null) {
-        errorMessage = msg.toString();
+      } else if (msg != null && msg.toString().trim().isNotEmpty) {
+        errorMessage = msg.toString().trim();
       }
+    } else if (response.statusCode == 401) {
+      errorMessage = 'Sesión no autorizada o expirada. Inicia sesión nuevamente.';
     }
 
     // NUNCA cerramos sesión automáticamente por un 401. La cuenta del usuario se preserva siempre (estilo redes sociales).

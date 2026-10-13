@@ -158,11 +158,30 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      final errorStr = e.toString();
+      final String msg;
+      if (errorStr.contains('MissingPluginException') || errorStr.contains('No implementation found')) {
+        msg = 'El inicio de sesión con Google está disponible en la app móvil (Android / iOS) y Web. En PC/Laptop (Windows), por favor ingresa con tu correo o DNI y contraseña.';
+      } else {
+        msg = 'Error al conectar con Google: $e';
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al conectar con Google: $e'),
+          content: Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  msg,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     } finally {

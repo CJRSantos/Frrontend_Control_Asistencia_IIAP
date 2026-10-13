@@ -207,7 +207,7 @@ class AuthService {
       try {
         if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
           throw ApiException(
-            'El inicio de sesión directo con Google está disponible en móviles (Android / iOS) y Web. En PC/Laptop de escritorio, por favor inicia sesión con tu correo o DNI y contraseña.',
+            'El inicio de sesión directo con Google está disponible en la app móvil (Android / iOS) y Web. En PC/Laptop de escritorio (Windows), por favor ingresa con tu correo o DNI y contraseña.',
           );
         }
       } catch (e) {
@@ -243,7 +243,12 @@ class AuthService {
     } catch (e) {
       if (e is ApiException) rethrow;
       final errorStr = e.toString();
-      debugPrint('Error en login con Google: ');
+      debugPrint('Error en login con Google: $e');
+      if (errorStr.contains('MissingPluginException') || errorStr.contains('No implementation found')) {
+        throw ApiException(
+          'El inicio de sesión con Google no está disponible en esta plataforma (Windows Desktop). Por favor inicia sesión con tu correo institucional o DNI y contraseña.',
+        );
+      }
       if (errorStr.contains('10') || errorStr.contains('DEVELOPER_ERROR')) {
         throw ApiException(
           'Configuración de Google no reconocida (SHA-1 no registrado para este dispositivo). Ingrese con correo o DNI y contraseña.',
@@ -257,11 +262,6 @@ class AuthService {
       if (errorStr.contains('network') || errorStr.contains('SocketException') || errorStr.contains('Failed to connect')) {
         throw ApiException(
           'Error de red al conectar con Google. Verifica tu conexión a internet.',
-        );
-      }
-      if (errorStr.contains('MissingPluginException')) {
-        throw ApiException(
-          'Esta plataforma no admite el botón de Google. Inicia sesión con tu correo o DNI y contraseña.',
         );
       }
       throw ApiException('Error al iniciar sesión con Google: ${errorStr.replaceAll('Exception:', '').replaceAll('PlatformException(', '').trim()}');
