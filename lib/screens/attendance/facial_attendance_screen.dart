@@ -56,12 +56,16 @@ class _FacialAttendanceScreenState extends State<FacialAttendanceScreen> {
         }
         return;
       }
-      // Priorizar la cámara trasera para reconocimiento facial según requerimiento institucional
-      final backCamera = _cameras!.firstWhere(
-        (cam) => cam.lensDirection == CameraLensDirection.back,
+      // Detección de factor de forma:
+      // En iPad / Tablet (kiosco o tótem de asistencia), la cámara frontal es la adecuada para que el personal se encuadre.
+      // En teléfonos móviles (iPhone / Android), se inicia por defecto con la trasera para supervisores.
+      // En ambos casos, el usuario puede alternar la cámara libremente con el botón superior.
+      final isTablet = MediaQueryData.fromView(WidgetsBinding.instance.platformDispatcher.views.first).size.shortestSide >= 600;
+      final defaultCamera = _cameras!.firstWhere(
+        (cam) => cam.lensDirection == (isTablet ? CameraLensDirection.front : CameraLensDirection.back),
         orElse: () => _cameras!.first,
       );
-      await _startCamera(backCamera);
+      await _startCamera(defaultCamera);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -298,9 +302,30 @@ class _FacialAttendanceScreenState extends State<FacialAttendanceScreen> {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          // 1. Vista previa de la cámara (Llena la pantalla)
+          // 1. Vista previa de la cámara (Llena la pantalla sin distorsión en iPad/iPhone)
           Positioned.fill(
-            child: CameraPreview(_cameraController!),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final previewSize = _cameraController!.value.previewSize;
+                if (previewSize == null) {
+                  return CameraPreview(_cameraController!);
+                }
+                final isLandscape = constraints.maxWidth > constraints.maxHeight;
+                final previewW = isLandscape ? previewSize.width : previewSize.height;
+                final previewH = isLandscape ? previewSize.height : previewSize.width;
+
+                return ClipRect(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: previewW,
+                      height: previewH,
+                      child: CameraPreview(_cameraController!),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
           // 2. HUD - Guía visual ovalada con animación
           CustomPaint(
@@ -408,10 +433,17 @@ class FaceOvalOverlayPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.5;
 
+    // Proporción áurea anatómica del rostro humano adaptada a iPhone y pantalla grande de iPad
+    final isLandscape = size.width > size.height;
+    final double ovalHeight = isLandscape
+        ? (size.height * 0.65).clamp(220.0, 480.0)
+        : (size.height * 0.45).clamp(240.0, 400.0);
+    final double ovalWidth = (ovalHeight * 0.74).clamp(160.0, size.width * 0.85);
+
     final ovalRect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height * 0.42),
-      width: size.width * 0.68,
-      height: size.height * 0.42,
+      center: Offset(size.width / 2, size.height * (isLandscape ? 0.46 : 0.42)),
+      width: ovalWidth,
+      height: ovalHeight,
     );
 
     // Máscara oscura exterior
