@@ -202,32 +202,499 @@ class _DashboardTabState extends State<DashboardTab> {
     }
   }
 
-  void _handleGenerarQrEvento(BuildContext context, EventModel? featuredEvent) {
+  Future<void> _handleGenerarQrEvento(BuildContext context, EventModel? featuredEvent) async {
     if (featuredEvent != null) {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => EventQrDisplayScreen(event: featuredEvent),
         ),
       );
-    } else {
-      final events = EventService.eventsNotifier.value;
-      if (events.isNotEmpty) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => EventQrDisplayScreen(event: events.first),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('No hay eventos activos para proyectar QR. Crea un nuevo evento primero.'),
-            backgroundColor: _cardBg(context),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
+      return;
     }
+
+    var events = EventService.eventsNotifier.value;
+    if (events.isEmpty) {
+      events = await EventService.getEvents();
+    }
+
+    if (!context.mounted) return;
+
+    if (events.length == 1) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => EventQrDisplayScreen(event: events.first),
+        ),
+      );
+    } else if (events.length > 1) {
+      _showEventSelectionModal(context, events);
+    } else {
+      _showNoEventsQrModal(context);
+    }
+  }
+
+  void _showNoEventsQrModal(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = ThemeService.primaryColor(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0C1316) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF1B2E36) : const Color(0xFFE2E8F0),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 25,
+                offset: const Offset(0, -6),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
+          child: SafeArea(
+            child: Responsive.constrained(
+              ctx,
+              maxTabletWidth: 550,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4.5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F2D24),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFF176044), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                            blurRadius: 16,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.qr_code_2_rounded,
+                        color: Color(0xFF10B981),
+                        size: 42,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'GENERAR QR DE EVENTOS',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Para proyectar un código QR de evento con cifrado dinámico SHA-256 y rotación de 15s, primero debes programar o seleccionar un evento para tu Unidad Organizativa.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.45,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primary,
+                        foregroundColor: const Color(0xFF091417),
+                        elevation: 3,
+                        shadowColor: primary.withValues(alpha: 0.4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        final created = await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const CreateEventScreen()),
+                        );
+                        if (created == true && context.mounted) {
+                          final evs = await EventService.getEvents(forceRefresh: true);
+                          if (evs.isNotEmpty && context.mounted) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => EventQrDisplayScreen(event: evs.first),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+                      label: const Text(
+                        'Crear Nuevo Evento Ahora',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFF3B82F6),
+                          width: 1.2,
+                        ),
+                        backgroundColor: isDark
+                            ? const Color(0xFF0F1E36)
+                            : const Color(0xFFEFF6FF),
+                        foregroundColor: const Color(0xFF60A5FA),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const QrDisplayScreen(mode: QrMode.attendance),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.screen_share_rounded, size: 18),
+                      label: const Text(
+                        'Emitir QR Kiosko de Asistencia UO',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const EventsListScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.calendar_month_rounded, size: 17),
+                    label: const Text(
+                      'Ver Lista y Agenda de Eventos',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEventSelectionModal(BuildContext context, List<EventModel> events) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = ThemeService.primaryColor(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.78,
+          ),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0C1316) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF1B2E36) : const Color(0xFFE2E8F0),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 25,
+                offset: const Offset(0, -6),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: SafeArea(
+            child: Responsive.constrained(
+              ctx,
+              maxTabletWidth: 600,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4.5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F2D24),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.qr_code_2_rounded,
+                              color: Color(0xFF10B981),
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'SELECCIONA EL EVENTO',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.1,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F3224),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF176044)),
+                        ),
+                        child: Text(
+                          '${events.length} EVENTOS',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Toca un evento para proyectar su código QR rotativo SHA-256 en pantalla.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: events.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (itemCtx, index) {
+                        final evt = events[index];
+                        final isNow = evt.isActiveNow;
+
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(ctx).pop();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => EventQrDisplayScreen(event: evt),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: isNow
+                                    ? (isDark ? const Color(0xFF0E251E) : const Color(0xFFECFDF5))
+                                    : (isDark ? const Color(0xFF131D22) : const Color(0xFFF8FAFC)),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isNow
+                                      ? const Color(0xFF10B981)
+                                      : (isDark ? const Color(0xFF223640) : const Color(0xFFE2E8F0)),
+                                  width: isNow ? 1.6 : 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: isNow
+                                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                                          : (isDark ? const Color(0xFF1C2A30) : const Color(0xFFE2E8F0)),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.qr_code_rounded,
+                                      color: isNow ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 4,
+                                          children: [
+                                            if (isNow)
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF10B981),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: const Text(
+                                                  'EN CURSO',
+                                                  style: TextStyle(
+                                                    fontSize: 8.5,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF091417),
+                                                  ),
+                                                ),
+                                              ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF162B24),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                evt.type.displayName.toUpperCase(),
+                                                style: const TextStyle(
+                                                  fontSize: 8.5,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF34D399),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          evt.title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${evt.location} • ${evt.attendeesCount} inscritos',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 15,
+                                    color: isNow ? const Color(0xFF10B981) : const Color(0xFF64748B),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 46,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: primary.withValues(alpha: 0.5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        final created = await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const CreateEventScreen()),
+                        );
+                        if (created == true && context.mounted) {
+                          await EventService.getEvents(forceRefresh: true);
+                        }
+                      },
+                      icon: Icon(Icons.add_rounded, color: primary, size: 18),
+                      label: Text(
+                        'Crear Nuevo Evento',
+                        style: TextStyle(
+                          color: primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _handleEscanearQr(BuildContext context) async {
