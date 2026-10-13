@@ -474,7 +474,6 @@ class _DashboardTabState extends State<DashboardTab> {
     List<EventModel> events,
   ) {
     final now = DateTime.now();
-    final todayStr = now.toIso8601String().substring(0, 10);
 
     // Eventos y métricas en tiempo real
     final activeOrUpcoming = events
@@ -484,24 +483,20 @@ class _DashboardTabState extends State<DashboardTab> {
         ? activeOrUpcoming.first
         : (events.isNotEmpty ? events.first : null);
 
-    final eventsToday = events.where((e) {
-      return e.startDate.toIso8601String().startsWith(todayStr) ||
-          e.endDate.toIso8601String().startsWith(todayStr) ||
-          (e.startDate.isBefore(now) && e.endDate.isAfter(now));
-    }).toList();
-
-    final eventsCount = eventsToday.isNotEmpty ? eventsToday.length : (events.isNotEmpty ? events.length : 4);
+    // Sincronización 100% en tiempo real sin valores simulados
+    final eventsCount = events.length;
     final enCursoCount = events.where((e) => e.isActiveNow).length;
 
     final totalRegistros = events.fold<int>(0, (sum, e) => sum + e.attendees.length);
-    final displayRegistros = totalRegistros > 0 ? totalRegistros : 185;
-    final aforoPercent = totalRegistros > 0 ? (totalRegistros > 150 ? 95 : 92) : 92;
-
     final totalCifrado = events.fold<int>(
       0,
       (sum, e) => sum + e.attendees.where((a) => a.notes != 'manual').length,
     );
-    final displayCifrado = totalCifrado > 0 ? totalCifrado : 240;
+    final int aforoPercent = totalRegistros > 0
+        ? ((totalCifrado / totalRegistros) * 100).clamp(0, 100).round()
+        : 0;
+    final int displayRegistros = totalRegistros;
+    final int displayCifrado = totalCifrado;
 
     final nameParts = user.fullName.trim().split(RegExp(r'\s+'));
     final firstName = nameParts.isNotEmpty ? nameParts.first : 'Jordan';
@@ -741,51 +736,70 @@ class _DashboardTabState extends State<DashboardTab> {
 
         const SizedBox(height: 20),
 
-        // 3. Fila de Métricas: Eventos 04 (2 en curso) | Aforo 92% (185 activos) | Cifrado 240 (SHA-256 OK)
+        // 3. Fila de Métricas Táctiles en Tiempo Real: Eventos | Aforo | Cifrado
         Row(
           children: [
             // Tarjeta 1: Eventos
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _cardBg(context),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EventsListScreen()),
+                    );
+                  },
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _cardBorder(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _cardBg(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _cardBorder(context)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Eventos',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Eventos',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                            ),
+                            Icon(Icons.calendar_today_rounded, size: 13, color: Color(0xFF10B981)),
+                          ],
                         ),
-                        Icon(Icons.calendar_today_rounded, size: 13, color: Color(0xFF10B981)),
+                        const SizedBox(height: 6),
+                        Text(
+                          eventsCount < 10 ? '0$eventsCount' : '$eventsCount',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            eventsCount == 0
+                                ? 'Sin eventos'
+                                : (enCursoCount == 0
+                                    ? '0 en curso'
+                                    : (enCursoCount == 1 ? '1 en curso' : '$enCursoCount en curso')),
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              color: enCursoCount > 0 ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      eventsCount < 10 ? '0$eventsCount' : '$eventsCount',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        enCursoCount > 0 ? '$enCursoCount en curso' : '2 en curso',
-                        style: const TextStyle(fontSize: 9.5, color: Color(0xFF10B981), fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -794,57 +808,68 @@ class _DashboardTabState extends State<DashboardTab> {
 
             // Tarjeta 2: Aforo
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _cardBg(context),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EventsListScreen()),
+                    );
+                  },
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _cardBorder(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Aforo',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
-                        ),
-                        Icon(Icons.groups_rounded, size: 14, color: Color(0xFF38BDF8)),
-                      ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _cardBg(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _cardBorder(context)),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '$aforoPercent',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Aforo',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                            ),
+                            Icon(Icons.groups_rounded, size: 14, color: Color(0xFF38BDF8)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '$aforoPercent',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            const Text(
+                              '%',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            eventsCount == 0 ? '0 activos' : '$displayRegistros activos',
+                            style: const TextStyle(fontSize: 9.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                            maxLines: 1,
                           ),
                         ),
-                        const SizedBox(width: 2),
-                        const Text(
-                          '%',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '$displayRegistros activos',
-                        style: const TextStyle(fontSize: 9.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -853,46 +878,57 @@ class _DashboardTabState extends State<DashboardTab> {
 
             // Tarjeta 3: Cifrado
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _cardBg(context),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EventsListScreen()),
+                    );
+                  },
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _cardBorder(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _cardBg(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _cardBorder(context)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Cifrado',
-                          style: TextStyle(fontSize: 10.5, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Cifrado',
+                              style: TextStyle(fontSize: 10.5, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                            ),
+                            Icon(Icons.shield_outlined, size: 13, color: Color(0xFFFBBF24)),
+                          ],
                         ),
-                        Icon(Icons.shield_outlined, size: 13, color: Color(0xFFFBBF24)),
+                        const SizedBox(height: 6),
+                        Text(
+                          '$displayCifrado',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'SHA-256 OK',
+                            style: TextStyle(fontSize: 9.5, color: Color(0xFFF59E0B), fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$displayCifrado',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'SHA-256 OK',
-                        style: TextStyle(fontSize: 9.5, color: Color(0xFFF59E0B), fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1604,7 +1640,6 @@ class _DashboardTabState extends State<DashboardTab> {
     List<EventModel> events,
   ) {
     final now = DateTime.now();
-    final todayStr = now.toIso8601String().substring(0, 10);
 
     // Métricas gerenciales reales calculadas en tiempo real
     final activeOrUpcoming = events
@@ -1614,24 +1649,20 @@ class _DashboardTabState extends State<DashboardTab> {
         ? activeOrUpcoming.first
         : (events.isNotEmpty ? events.first : null);
 
-    final eventsToday = events.where((e) {
-      return e.startDate.toIso8601String().startsWith(todayStr) ||
-          e.endDate.toIso8601String().startsWith(todayStr) ||
-          (e.startDate.isBefore(now) && e.endDate.isAfter(now));
-    }).toList();
-
-    final eventsCount = eventsToday.isNotEmpty ? eventsToday.length : (events.isNotEmpty ? events.length : 3);
+    // Sincronización 100% en tiempo real sin valores simulados
+    final eventsCount = events.length;
     final enCursoCount = events.where((e) => e.isActiveNow).length;
 
     final totalRegistros = events.fold<int>(0, (sum, e) => sum + e.attendees.length);
-    final displayRegistros = totalRegistros > 0 ? totalRegistros : 142;
-    final asistenciaPercent = totalRegistros > 0 ? (totalRegistros > 100 ? 94 : 89) : 89;
-
     final totalValidados = events.fold<int>(
       0,
       (sum, e) => sum + e.attendees.where((a) => a.notes != 'manual').length,
     );
-    final displayValidados = totalValidados > 0 ? totalValidados : 128;
+    final int asistenciaPercent = totalRegistros > 0
+        ? ((totalValidados / totalRegistros) * 100).clamp(0, 100).round()
+        : 0;
+    final int displayRegistros = totalRegistros;
+    final int displayValidados = totalValidados;
 
     final nameParts = user.fullName.trim().split(RegExp(r'\s+'));
     final firstName = nameParts.isNotEmpty ? nameParts.first : 'Jordan';
@@ -1878,51 +1909,70 @@ class _DashboardTabState extends State<DashboardTab> {
 
         const SizedBox(height: 12),
 
-        // 3 Tarjetas de Métricas Gerenciales
+        // 3 Tarjetas de Métricas Gerenciales Táctiles en Tiempo Real
         Row(
           children: [
             // Eventos
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _cardBg(context),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EventsListScreen()),
+                    );
+                  },
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _cardBorder(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _cardBg(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _cardBorder(context)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Eventos',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Eventos',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                            ),
+                            Icon(Icons.calendar_today_rounded, size: 13, color: Color(0xFF10B981)),
+                          ],
                         ),
-                        Icon(Icons.calendar_today_rounded, size: 13, color: Color(0xFF10B981)),
+                        const SizedBox(height: 6),
+                        Text(
+                          eventsCount < 10 ? '0$eventsCount' : '$eventsCount',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            eventsCount == 0
+                                ? 'Sin eventos'
+                                : (enCursoCount == 0
+                                    ? '0 en curso'
+                                    : (enCursoCount == 1 ? '1 en curso' : '$enCursoCount en curso')),
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              color: enCursoCount > 0 ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      eventsCount < 10 ? '0$eventsCount' : '$eventsCount',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        enCursoCount > 0 ? '$enCursoCount en curso' : '2 en curso',
-                        style: const TextStyle(fontSize: 9.5, color: Color(0xFF10B981), fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1931,57 +1981,68 @@ class _DashboardTabState extends State<DashboardTab> {
 
             // Asistencia
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _cardBg(context),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EventsListScreen()),
+                    );
+                  },
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _cardBorder(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Asistencia',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
-                        ),
-                        Icon(Icons.groups_rounded, size: 14, color: Color(0xFF38BDF8)),
-                      ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _cardBg(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _cardBorder(context)),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '$asistenciaPercent',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF34D399),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Asistencia',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                            ),
+                            Icon(Icons.groups_rounded, size: 14, color: Color(0xFF38BDF8)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '$asistenciaPercent',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF34D399),
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            const Text(
+                              '%',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF34D399)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            eventsCount == 0 ? '0 registros' : '$displayRegistros registros',
+                            style: const TextStyle(fontSize: 9.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                            maxLines: 1,
                           ),
                         ),
-                        const SizedBox(width: 2),
-                        const Text(
-                          '%',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF34D399)),
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '$displayRegistros registros',
-                        style: const TextStyle(fontSize: 9.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1990,46 +2051,57 @@ class _DashboardTabState extends State<DashboardTab> {
 
             // QR SHA-256
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _cardBg(context),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EventsListScreen()),
+                    );
+                  },
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _cardBorder(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _cardBg(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _cardBorder(context)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'QR SHA-256',
-                          style: TextStyle(fontSize: 10.5, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'QR SHA-256',
+                              style: TextStyle(fontSize: 10.5, color: Color(0xFF8FA3AF), fontWeight: FontWeight.w600),
+                            ),
+                            Icon(Icons.shield_outlined, size: 13, color: Color(0xFFFBBF24)),
+                          ],
                         ),
-                        Icon(Icons.shield_outlined, size: 13, color: Color(0xFFFBBF24)),
+                        const SizedBox(height: 6),
+                        Text(
+                          '$displayValidados',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Validados',
+                            style: TextStyle(fontSize: 9.5, color: Color(0xFFFBBF24), fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$displayValidados',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Validados',
-                        style: TextStyle(fontSize: 9.5, color: Color(0xFFFBBF24), fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
