@@ -50,6 +50,10 @@ class _SplashGateScreenState extends State<SplashGateScreen> with SingleTickerPr
     // mientras en paralelo se verifica la sesión en disco
     final startTime = DateTime.now();
 
+    if (StorageService.tokenSync == null) {
+      await StorageService.init();
+    }
+
     final user = StorageService.currentUser;
     final token = StorageService.tokenSync ?? await StorageService.getToken();
 
@@ -63,6 +67,7 @@ class _SplashGateScreenState extends State<SplashGateScreen> with SingleTickerPr
     _hasNavigated = true;
 
     // Si hay usuario o token guardado localmente, se va al HomeScreen de forma instantánea.
+    // Nunca pide login de nuevo si ya tiene cuenta iniciada.
     if (user != null || (token != null && token.isNotEmpty)) {
       _navigateTo(const HomeScreen());
     } else {
