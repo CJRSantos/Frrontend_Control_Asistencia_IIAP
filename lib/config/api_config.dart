@@ -5,14 +5,21 @@ class ApiConfig {
   static const String _customFacialHostKey = 'custom_facial_host';
 
   // Variables de Entorno (inyección vía .env o --dart-define)
+  // API principal NestJS (por defecto en red local)
+  static const String defaultLocalBaseUrl = 'http://192.168.1.100:3000/api';
+
+  // Microservicio facial (acceso directo desde Flutter para extraer embeddings)
+  static const String defaultFacialServiceUrl = 'http://192.168.1.100:8000';
+
+  // Variables de Entorno (inyección vía .env o --dart-define para producción o flavors)
   static const String envBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://dev-api-control.iiap.gob.pe/api',
+    defaultValue: defaultLocalBaseUrl,
   );
 
   static const String envFacialBaseUrl = String.fromEnvironment(
     'FACIAL_SERVICE_BASE_URL',
-    defaultValue: 'http://192.168.1.214:8000',
+    defaultValue: defaultFacialServiceUrl,
   );
 
   static const String envGoogleServerClientId = String.fromEnvironment(
@@ -37,14 +44,19 @@ class ApiConfig {
 
   // Obtiene la URL base adecuada según el entorno de ejecución
   static String get defaultBaseUrl => envBaseUrl;
-  static const String localWifiUrl = 'http://192.168.1.108:3000/api';
+  static const String localWifiUrl = 'http://192.168.1.100:3000/api';
+  static const String localWifiFacialUrl = 'http://192.168.1.100:8000';
   static const String androidEmulatorUrl = 'http://10.0.2.2:3000/api';
   static String get defaultFacialBaseUrl => envFacialBaseUrl;
 
   static String _currentBaseUrl = defaultBaseUrl;
   static String _currentFacialBaseUrl = defaultFacialBaseUrl;
 
+  // API principal NestJS
   static String get baseUrl => _currentBaseUrl;
+
+  // Microservicio facial (acceso directo desde Flutter para extraer embeddings)
+  static String get facialServiceUrl => _currentFacialBaseUrl;
   static String get facialServiceBaseUrl => _currentFacialBaseUrl;
 
   static Future<void> init() async {
