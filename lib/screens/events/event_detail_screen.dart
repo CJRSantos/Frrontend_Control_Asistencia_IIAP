@@ -1280,7 +1280,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
         ),
         actions: [
-          if (canManage) ...[
+          if (canManage && !_currentEvent.isEventosMirror) ...[
             IconButton(
               tooltip: 'Editar evento',
               icon: Icon(Icons.edit_outlined, color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569), size: 20),
@@ -1371,6 +1371,31 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     runSpacing: 6,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
+                      if (_currentEvent.isEventosMirror) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.5)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.sync_rounded, size: 12, color: Color(0xFF818CF8)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Sistema de Eventos',
+                                style: TextStyle(
+                                  color: Color(0xFF818CF8),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       // Badge de Tipo de Evento
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),

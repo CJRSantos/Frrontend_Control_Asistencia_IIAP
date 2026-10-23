@@ -414,6 +414,32 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
                     ),
                   ),
                 ),
+                if (event.isEventosMirror) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.4)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.sync_rounded, size: 11, color: Color(0xFF6366F1)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Sistema de Eventos',
+                          style: TextStyle(
+                            color: Color(0xFF6366F1),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

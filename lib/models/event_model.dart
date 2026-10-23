@@ -226,6 +226,8 @@ class EventModel {
   final String? organizationalUnit;
   final List<EventShift> shifts;
   final String? imageUrl;
+  final String? externalSource;
+  final String? externalId;
 
   EventModel({
     required this.id,
@@ -248,7 +250,13 @@ class EventModel {
     this.organizationalUnit,
     this.shifts = const [],
     this.imageUrl,
+    this.externalSource,
+    this.externalId,
   });
+
+  /// Identifica si el evento fue creado por el Sistema de Eventos (espejo)
+  bool get isEventosMirror =>
+      externalSource == 'EVENTOS' || (qrCode != null && qrCode!.startsWith('EVENTOS-'));
 
   bool canUserManageEvent(String? userId, String? userRole) {
     if (userId == null) return false;
@@ -344,6 +352,8 @@ class EventModel {
           json['photo_url']?.toString() ??
           json['photoUrl']?.toString() ??
           json['banner_url']?.toString(),
+      externalSource: json['external_source']?.toString() ?? json['externalSource']?.toString(),
+      externalId: json['external_id']?.toString() ?? json['externalId']?.toString(),
     );
   }
 
@@ -369,6 +379,8 @@ class EventModel {
       'organizational_unit': organizationalUnit,
       'shifts': shifts.map((s) => s.toJson()).toList(),
       'image_url': imageUrl,
+      if (externalSource != null) 'external_source': externalSource,
+      if (externalId != null) 'external_id': externalId,
     };
   }
 
@@ -393,6 +405,8 @@ class EventModel {
     String? organizationalUnit,
     List<EventShift>? shifts,
     String? imageUrl,
+    String? externalSource,
+    String? externalId,
   }) {
     return EventModel(
       id: id ?? this.id,
@@ -415,6 +429,8 @@ class EventModel {
       organizationalUnit: organizationalUnit ?? this.organizationalUnit,
       shifts: shifts ?? this.shifts,
       imageUrl: imageUrl ?? this.imageUrl,
+      externalSource: externalSource ?? this.externalSource,
+      externalId: externalId ?? this.externalId,
     );
   }
 

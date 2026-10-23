@@ -42,6 +42,14 @@ class ApiConfig {
     defaultValue: 'pe.gob.iiap.attendance',
   );
 
+  // Dominio independiente para el formulario público de registro de asistencia a eventos
+  static const String defaultPublicRegistrationUrl = 'https://dev-registro-eventos.iiap.gob.pe';
+
+  static const String envPublicRegistrationUrl = String.fromEnvironment(
+    'EVENT_PUBLIC_REGISTRATION_URL',
+    defaultValue: defaultPublicRegistrationUrl,
+  );
+
   // Obtiene la URL base adecuada según el entorno de ejecución
   static String get defaultBaseUrl => envBaseUrl;
   static const String localWifiUrl = 'http://192.168.1.100:3000/api';
@@ -157,11 +165,9 @@ class ApiConfig {
   static String eventManagers(String id) => '$baseUrl/events/$id/managers';
   static String eventRemoveManager(String eventId, String userId) => '$baseUrl/events/$eventId/managers/$userId';
 
-  /// URL web pública para que cualquier persona sin la app escanee con la cámara de su celular
+  /// URL web pública independiente para que cualquier persona sin la app escanee con la cámara de su celular
   static String eventPublicRegistrationUrl(String eventId) {
-    // Si la URL base es https://dev-api-control.iiap.gob.pe/api
-    // Genera https://dev-api-control.iiap.gob.pe/events/registro?id=...
-    final domain = baseUrl.replaceAll(RegExp(r'/api/?$'), '');
+    final domain = envPublicRegistrationUrl.replaceAll(RegExp(r'/$'), '');
     return '$domain/registro.html?id=$eventId';
   }
 }
