@@ -19,7 +19,6 @@ dependencies:
   dio: ^5.4.0
   shared_preferences: ^2.2.2
   image_picker: ^1.0.7
-  image_cropper: ^5.0.0
   camera: ^0.11.0+2
   permission_handler: ^11.3.1
   path_provider: ^2.1.2
