@@ -170,17 +170,21 @@ class DesktopOAuthService {
       }
 
       // Intercambiar authorization code por ID Token con PKCE
-      debugPrint('[DesktopOAuth] Código recibido. Intercambiando por tokens...');
+      final Map<String, String> tokenBody = {
+        'client_id': clientId,
+        'code': authCode,
+        'code_verifier': codeVerifier,
+        'grant_type': 'authorization_code',
+        'redirect_uri': redirectUri,
+      };
+      if (ApiConfig.googleDesktopClientSecret.isNotEmpty) {
+        tokenBody['client_secret'] = ApiConfig.googleDesktopClientSecret;
+      }
+
       final tokenResponse = await http.post(
         Uri.parse('https://oauth2.googleapis.com/token'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'client_id': clientId,
-          'code': authCode,
-          'code_verifier': codeVerifier,
-          'grant_type': 'authorization_code',
-          'redirect_uri': redirectUri,
-        },
+        body: tokenBody,
       );
 
       final tokenData = jsonDecode(tokenResponse.body) as Map<String, dynamic>;

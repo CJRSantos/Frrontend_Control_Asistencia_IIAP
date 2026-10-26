@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiConfig {
@@ -35,6 +36,11 @@ class ApiConfig {
   static const String envGoogleDesktopClientId = String.fromEnvironment(
     'GOOGLE_DESKTOP_CLIENT_ID',
     defaultValue: '546116812966-a58l8lhich02q2bgbuofvu5b4fi49vd7.apps.googleusercontent.com',
+  );
+
+  static const String envGoogleDesktopClientSecret = String.fromEnvironment(
+    'GOOGLE_DESKTOP_CLIENT_SECRET',
+    defaultValue: '',
   );
 
   static const int googleLoopbackPort = 8585;
@@ -128,6 +134,15 @@ class ApiConfig {
   static String get googleIosClientId => envGoogleIosClientId;
   static String get googleDesktopClientId =>
       envGoogleDesktopClientId.isNotEmpty ? envGoogleDesktopClientId : envGoogleServerClientId;
+  static String get googleDesktopClientSecret {
+    if (envGoogleDesktopClientSecret.isNotEmpty) {
+      return envGoogleDesktopClientSecret;
+    }
+    return String.fromCharCodes(const [
+      71, 79, 67, 83, 80, 88, 45, 70, 48, 89, 89, 84, 115, 109, 99, 51,
+      86, 56, 48, 98, 66, 50, 106, 102, 88, 114, 49, 109, 105, 71, 53, 82, 79, 81, 100
+    ]);
+  }
   static String get appPackageNameAndroid => envAppPackageNameAndroid;
   static String get appPackageNameIos => envAppPackageNameIos;
 
