@@ -57,3 +57,4 @@ Control Asistencia.ipa
 .env
 .env.*
 !.env.example
+windows_build_release/

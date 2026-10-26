@@ -34,7 +34,7 @@ class ApiConfig {
 
   static const String envGoogleDesktopClientId = String.fromEnvironment(
     'GOOGLE_DESKTOP_CLIENT_ID',
-    defaultValue: '',
+    defaultValue: '546116812966-a58l8lhich02q2bgbuofvu5b4fi49vd7.apps.googleusercontent.com',
   );
 
   static const int googleLoopbackPort = 8585;
