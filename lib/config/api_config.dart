@@ -32,6 +32,13 @@ class ApiConfig {
     defaultValue: '546116812966-aijkt8hrbhaue2uaj2d5cbem1nlspa9v.apps.googleusercontent.com',
   );
 
+  static const String envGoogleDesktopClientId = String.fromEnvironment(
+    'GOOGLE_DESKTOP_CLIENT_ID',
+    defaultValue: '',
+  );
+
+  static const int googleLoopbackPort = 8585;
+
   static const String envAppPackageNameAndroid = String.fromEnvironment(
     'APP_PACKAGE_NAME_ANDROID',
     defaultValue: 'pe.gob.iiap.attendance',
@@ -119,6 +126,8 @@ class ApiConfig {
   static String get authConfirmEmailChange => '$baseUrl/auth/confirm-email-change';
   static String get googleServerClientId => envGoogleServerClientId;
   static String get googleIosClientId => envGoogleIosClientId;
+  static String get googleDesktopClientId =>
+      envGoogleDesktopClientId.isNotEmpty ? envGoogleDesktopClientId : envGoogleServerClientId;
   static String get appPackageNameAndroid => envAppPackageNameAndroid;
   static String get appPackageNameIos => envAppPackageNameIos;
 

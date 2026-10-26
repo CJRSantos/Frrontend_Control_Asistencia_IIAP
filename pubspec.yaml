@@ -25,6 +25,7 @@ dependencies:
   google_sign_in: 6.2.1
   geolocator: ^13.0.1
   flutter_local_notifications: ^17.2.2
+  crypto: ^3.0.3
   pdf: ^3.11.1
   printing: ^5.13.2
   local_auth: ^2.3.0
@@ -35,6 +36,7 @@ dependencies:
   timezone: ^0.9.4
   local_notifier: ^0.1.6
   cached_network_image: ^3.4.1
+  quick_actions: ^1.1.1
 
 dev_dependencies:
   flutter_test:

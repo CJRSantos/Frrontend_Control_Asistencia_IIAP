@@ -13,6 +13,7 @@ import '../../services/notification_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/theme_service.dart';
 import '../../services/wallpaper_service.dart';
+import '../../services/offline_sync_service.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/leaf_logo.dart';
 import '../events/create_event_screen.dart';
@@ -910,15 +911,25 @@ class _DashboardTabState extends State<DashboardTab> {
                 child: ValueListenableBuilder<List<EventModel>>(
                   valueListenable: EventService.eventsNotifier,
                   builder: (context, events, _) {
+                    Widget dashboardContent;
                     if (user.role == UserRole.ADMIN_EVENTO || user.isAdmin) {
-                      return _buildAdminEventoDashboard(context, user, events);
+                      dashboardContent = _buildAdminEventoDashboard(context, user, events);
                     } else if (user.role == UserRole.GESTOR_EVENTO) {
-                      return _buildGestorEventoDashboard(context, user, events);
+                      dashboardContent = _buildGestorEventoDashboard(context, user, events);
                     } else if (isSupervisor) {
-                      return _buildSupervisorDashboard(context, user, events);
+                      dashboardContent = _buildSupervisorDashboard(context, user, events);
                     } else {
-                      return _buildUserDashboard(context, user, entry, exit, events);
+                      dashboardContent = _buildUserDashboard(context, user, entry, exit, events);
                     }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildOfflineSyncBanner(context),
+                        dashboardContent,
+                      ],
+                    );
                   },
                 ),
               ),
@@ -5146,7 +5157,7 @@ _buildCircularMuteBell(context),
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            'Iniciar Escáner Oficial',
+                            'Escanear',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.2, color: Color(0xFF091417)),
                           ),
                         ),
@@ -5540,6 +5551,175 @@ _buildCircularMuteBell(context),
                 ),
               ),
       ),
+    );
+  }
+
+  Widget _buildOfflineSyncBanner(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        ConnectivityService.isOnlineNotifier,
+        OfflineSyncService.pendingCountNotifier,
+        OfflineSyncService.isSyncingNotifier,
+      ]),
+      builder: (context, _) {
+        final pendingCount = OfflineSyncService.pendingCountNotifier.value;
+        final isOnline = ConnectivityService.isOnline;
+        final isSyncing = OfflineSyncService.isSyncingNotifier.value;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        if (pendingCount == 0 && isOnline) {
+          return const SizedBox.shrink();
+        }
+
+        // Caso 1: Hay marcajes pendientes de sincronizar (con o sin internet)
+        if (pendingCount > 0) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF451A03), const Color(0xFF291002)]
+                    : [const Color(0xFFFEF3C7), const Color(0xFFFDE68A)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.5) : const Color(0xFFF59E0B),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD97706).withValues(alpha: isDark ? 0.2 : 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD97706).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.cloud_upload_rounded,
+                    color: Color(0xFFD97706),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        pendingCount == 1
+                            ? '1 marcaje guardado offline'
+                            : '$pendingCount marcajes guardados offline',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF78350F),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isOnline
+                            ? 'Internet disponible. Listo para sincronizar.'
+                            : 'Sin señal. Se enviarán al detectar conexión.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (isSyncing)
+                  const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Color(0xFFD97706),
+                    ),
+                  )
+                else
+                  ElevatedButton(
+                    onPressed: isOnline
+                        ? () async {
+                            final res = await OfflineSyncService.syncPendingRecords();
+                            if (context.mounted) {
+                              AppToast.show(
+                                context,
+                                title: res.successCount > 0 ? 'Sincronización Exitosa' : 'Aviso',
+                                subtitle: res.message,
+                                icon: res.successCount > 0 ? Icons.cloud_done_rounded : Icons.info_outline_rounded,
+                                accentColor: res.successCount > 0 ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                              );
+                            }
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      backgroundColor: const Color(0xFFD97706),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: isDark ? const Color(0xFF33200B) : const Color(0xFFFDE68A),
+                      disabledForegroundColor: isDark ? const Color(0xFF785532) : const Color(0xFFB45309),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      isOnline ? 'Enviar' : 'En cola',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        // Caso 2: Sin internet y sin marcajes pendientes (aviso informativo sutil)
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF1E293B).withValues(alpha: 0.8)
+                : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.wifi_off_rounded,
+                size: 16,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Modo Sin Conexión activo. Tus marcajes se guardarán en este teléfono.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

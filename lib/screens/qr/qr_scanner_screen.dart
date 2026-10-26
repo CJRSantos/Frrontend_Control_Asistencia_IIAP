@@ -10,6 +10,9 @@ import '../../services/api_client.dart';
 import '../../services/storage_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/event_service.dart';
+import '../../services/connectivity_service.dart';
+import '../../services/offline_sync_service.dart';
+import '../../models/qr_model.dart';
 import '../../widgets/app_button.dart';
 
 enum ScanTarget {
@@ -222,16 +225,44 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
         final deviceId = await StorageService.getOrCreateDeviceId();
 
-        final result = await AttendanceService.scanAttendanceQr(
-          qrCode: cleanCode,
-          latitude: lat,
-          longitude: lng,
-          deviceId: deviceId,
-        );
+        AttendanceScanResult result;
+        bool isOffline = false;
+
+        if (!ConnectivityService.isOnline) {
+          result = await OfflineSyncService.saveOfflineAttendance(
+            qrCode: cleanCode,
+            latitude: lat,
+            longitude: lng,
+            deviceId: deviceId,
+          );
+          isOffline = true;
+        } else {
+          try {
+            result = await AttendanceService.scanAttendanceQr(
+              qrCode: cleanCode,
+              latitude: lat,
+              longitude: lng,
+              deviceId: deviceId,
+            );
+          } catch (netErr) {
+            if (OfflineSyncService.isNetworkError(netErr)) {
+              result = await OfflineSyncService.saveOfflineAttendance(
+                qrCode: cleanCode,
+                latitude: lat,
+                longitude: lng,
+                deviceId: deviceId,
+              );
+              isOffline = true;
+            } else {
+              rethrow;
+            }
+          }
+        }
+
         NotificationService.checkAndTriggerCheckoutReminder();
         if (!mounted) return;
 
-                final scanNow = DateTime.now();
+        final scanNow = DateTime.now();
         final hour = scanNow.hour % 12 == 0 ? 12 : scanNow.hour % 12;
         final minute = scanNow.minute.toString().padLeft(2, '0');
         final second = scanNow.second.toString().padLeft(2, '0');
@@ -239,7 +270,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         final localFormattedTime = '${hour.toString().padLeft(2, '0')}:$minute:$second $ampm';
 
         await _showSuccessDialog(
-          title: '¡Asistencia Registrada!',
+          title: isOffline ? '¡Asistencia Guardada (Sin Conexión)!' : '¡Asistencia Registrada!',
           message: result.message,
           detail: 'Marca: ${result.typeLabel ?? "REGISTRO"} • $localFormattedTime',
           isShaVerified: true,

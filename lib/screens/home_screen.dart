@@ -10,6 +10,7 @@ import 'tabs/supervisors_tab.dart';
 import 'tabs/profile_tab.dart';
 import '../services/theme_service.dart';
 import '../services/notification_service.dart';
+import '../services/quick_actions_service.dart';
 import '../utils/responsive.dart';
 import '../widgets/app_cached_avatar.dart';
 import '../widgets/app_toast.dart';
@@ -96,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // En segundo plano verificamos y refrescamos el token con el backend.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _validateSessionInBackground();
+      QuickActionsService.checkAndConsumePendingAction();
     });
   }
 

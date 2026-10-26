@@ -10,6 +10,8 @@ import 'services/attendance_service.dart';
 import 'services/schedule_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/notification_service.dart';
+import 'services/quick_actions_service.dart';
+import 'services/offline_sync_service.dart';
 import 'screens/splash_gate_screen.dart';
 
 void main() async {
@@ -32,6 +34,7 @@ void main() async {
     ApiConfig.init(),
     StorageService.init(),
     AttendanceService.init(),
+    OfflineSyncService.init(),
   ]);
 
   // Iniciar conectividad y notificaciones en segundo plano sin frenar el primer renderizado de la app
@@ -43,6 +46,7 @@ void main() async {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     ScheduleService.init();
     NotificationService.init();
+    QuickActionsService.init();
   });
 }
 

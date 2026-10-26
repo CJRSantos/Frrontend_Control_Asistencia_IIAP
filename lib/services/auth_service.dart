@@ -7,6 +7,7 @@ import '../config/api_config.dart';
 import '../models/user_model.dart';
 import 'api_client.dart';
 import 'storage_service.dart';
+import 'desktop_oauth_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -200,76 +201,85 @@ class AuthService {
     scopes: ['email', 'profile'],
   );
 
-  /// Inicia sesion o registra al usuario mediante Google OAuth2 con blindaje multiplataforma
+  /// Inicia sesion o registra al usuario mediante Google OAuth2 con blindaje multiplataforma (Android, iOS, Web y Windows Desktop)
   static Future<UserModel?> loginWithGoogle() async {
-    // 1. Validar compatibilidad en plataformas de escritorio (Windows, Linux, macOS)
+    String? idToken;
+
+    // 1. En plataformas de escritorio (Windows, Linux, macOS), usar OAuth 2.0 Loopback con PKCE
+    bool isDesktop = false;
     if (!kIsWeb) {
       try {
-        if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-          throw ApiException(
-            'El inicio de sesión directo con Google está disponible en la app móvil (Android / iOS) y Web. En PC/Laptop de escritorio (Windows), por favor ingresa con tu correo o DNI y contraseña.',
-          );
-        }
+        isDesktop = Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+      } catch (_) {}
+    }
+
+    if (isDesktop) {
+      debugPrint('[AuthService] Iniciando OAuth 2.0 Loopback para Escritorio...');
+      idToken = await DesktopOAuthService.signInWithGoogleDesktop();
+    } else {
+      // 2. En móviles (Android / iOS) y Web, usar el SDK oficial de google_sign_in
+      try {
+        try {
+          await _googleSignIn.signOut();
+        } catch (_) {}
+        final googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) return null; // Cancelado por el usuario
+        final googleAuth = await googleUser.authentication;
+        idToken = googleAuth.idToken;
       } catch (e) {
         if (e is ApiException) rethrow;
+        final errorStr = e.toString();
+        debugPrint('Error en login con Google (Mobile/Web): $e');
+        if (errorStr.contains('10') || errorStr.contains('DEVELOPER_ERROR')) {
+          throw ApiException(
+            'Configuración de Google no reconocida (SHA-1 no registrado para este dispositivo). Ingrese con correo o DNI y contraseña.',
+          );
+        }
+        if (errorStr.contains('12500') || errorStr.contains('SIGN_IN_FAILED')) {
+          throw ApiException(
+            'No se pudo iniciar sesión con Google en este dispositivo. Verifica que tenga Servicios de Google Play actualizados o una cuenta de Google activa.',
+          );
+        }
+        if (errorStr.contains('network') || errorStr.contains('SocketException') || errorStr.contains('Failed to connect')) {
+          throw ApiException(
+            'Error de red al conectar con Google. Verifica tu conexión a internet.',
+          );
+        }
+        throw ApiException('Error al iniciar sesión con Google: ${errorStr.replaceAll('Exception:', '').replaceAll('PlatformException(', '').trim()}');
       }
     }
 
-    try {
-      try {
-        await _googleSignIn.signOut();
-      } catch (_) {}
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null; // Cancelado por el usuario
-      final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken;
-      if (idToken == null || idToken.isEmpty) {
-        throw ApiException('No se pudo obtener el token de verificación de Google. Inténtalo nuevamente.');
-      }
-      final response = await ApiClient.post(
-        ApiConfig.authGoogle,
-        body: {'idToken': idToken},
-        requiresAuth: false,
-      );
-      final token = response['access_token']?.toString() ?? '';
-      final userJson = response['user'] as Map<String, dynamic>;
-      final user = UserModel.fromJson(userJson);
-      await StorageService.saveSession(
-        token: token,
-        user: user,
-        email: user.email,
-      );
-      return user;
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      final errorStr = e.toString();
-      debugPrint('Error en login con Google: $e');
-      if (errorStr.contains('MissingPluginException') || errorStr.contains('No implementation found')) {
-        throw ApiException(
-          'El inicio de sesión con Google no está disponible en esta plataforma (Windows Desktop). Por favor inicia sesión con tu correo institucional o DNI y contraseña.',
-        );
-      }
-      if (errorStr.contains('10') || errorStr.contains('DEVELOPER_ERROR')) {
-        throw ApiException(
-          'Configuración de Google no reconocida (SHA-1 no registrado para este dispositivo). Ingrese con correo o DNI y contraseña.',
-        );
-      }
-      if (errorStr.contains('12500') || errorStr.contains('SIGN_IN_FAILED')) {
-        throw ApiException(
-          'No se pudo iniciar sesión con Google en este dispositivo. Verifica que tenga Servicios de Google Play actualizados o una cuenta de Google activa.',
-        );
-      }
-      if (errorStr.contains('network') || errorStr.contains('SocketException') || errorStr.contains('Failed to connect')) {
-        throw ApiException(
-          'Error de red al conectar con Google. Verifica tu conexión a internet.',
-        );
-      }
-      throw ApiException('Error al iniciar sesión con Google: ${errorStr.replaceAll('Exception:', '').replaceAll('PlatformException(', '').trim()}');
+    if (idToken == null || idToken.isEmpty) {
+      throw ApiException('No se pudo obtener el token de verificación de Google. Inténtalo nuevamente.');
     }
+
+    // 3. Enviar el ID Token verificado de Google a nuestro backend
+    final response = await ApiClient.post(
+      ApiConfig.authGoogle,
+      body: {'idToken': idToken},
+      requiresAuth: false,
+    );
+    final token = response['access_token']?.toString() ?? '';
+    final userJson = response['user'] as Map<String, dynamic>;
+    final user = UserModel.fromJson(userJson);
+    await StorageService.saveSession(
+      token: token,
+      user: user,
+      email: user.email,
+    );
+    return user;
   }
 
   static Future<void> logout() async {
-    try { await _googleSignIn.signOut(); } catch (_) {}
+    if (!kIsWeb) {
+      try {
+        if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
+          await _googleSignIn.signOut();
+        }
+      } catch (_) {}
+    } else {
+      try { await _googleSignIn.signOut(); } catch (_) {}
+    }
     await StorageService.clearSession();
   }
 
