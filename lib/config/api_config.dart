@@ -12,10 +12,12 @@ class ApiConfig {
   // Microservicio facial (acceso directo desde Flutter para extraer embeddings)
   static const String defaultFacialServiceUrl = 'http://192.168.1.100:8000';
 
+  static const String prodBaseUrl = 'https://dev-api-control.iiap.gob.pe/api';
+
   // Variables de Entorno (inyección vía .env o --dart-define para producción o flavors)
   static const String envBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: defaultLocalBaseUrl,
+    defaultValue: prodBaseUrl,
   );
 
   static const String envFacialBaseUrl = String.fromEnvironment(

@@ -300,10 +300,10 @@ class DesktopOAuthService {
   <div class="card">
     <div class="icon-badge">$icon</div>
     <h1>$title</h1>
-    <p>$message</p>
+    ${isSuccess ? '' : '<p>$message</p>'}
     <div class="tag">Control Asistencia IIAP</div>
   </div>
-  ${isSuccess ? '<script>setTimeout(function() { window.close(); }, 3500);</script>' : ''}
+  ${isSuccess ? '<script>setTimeout(function() { window.close(); }, 2500);</script>' : ''}
 </body>
 </html>''';
   }
