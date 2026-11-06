@@ -273,8 +273,31 @@ class EventModel {
         status != EventStatus.CANCELLED;
   }
 
-  bool isUserRegistered(String userId) {
-    return attendees.any((a) => a.userId == userId);
+  bool isUserRegistered(String userId, {String? email, String? documentNumber}) {
+    final cleanId = userId.trim();
+    final cleanEmail = email?.trim().toLowerCase();
+    final cleanDoc = documentNumber?.trim();
+
+    return attendees.any((a) {
+      if (cleanId.isNotEmpty && a.userId.isNotEmpty && a.userId == cleanId) {
+        return true;
+      }
+      if (cleanDoc != null && cleanDoc.isNotEmpty && a.documentNumber != null && a.documentNumber!.isNotEmpty && a.documentNumber == cleanDoc) {
+        return true;
+      }
+      if (cleanEmail != null && cleanEmail.isNotEmpty && a.userEmail.isNotEmpty && a.userEmail.toLowerCase() == cleanEmail) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  bool isUserModelRegistered(dynamic user) {
+    if (user == null) return false;
+    final String uId = (user.id ?? '').toString();
+    final String? uEmail = user.email?.toString();
+    final String? uDoc = user.documentNumber?.toString();
+    return isUserRegistered(uId, email: uEmail, documentNumber: uDoc);
   }
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -405,6 +428,7 @@ class EventModel {
     String? organizationalUnit,
     List<EventShift>? shifts,
     String? imageUrl,
+    bool clearImageUrl = false,
     String? externalSource,
     String? externalId,
   }) {
@@ -428,7 +452,7 @@ class EventModel {
       managerIds: managerIds ?? this.managerIds,
       organizationalUnit: organizationalUnit ?? this.organizationalUnit,
       shifts: shifts ?? this.shifts,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       externalSource: externalSource ?? this.externalSource,
       externalId: externalId ?? this.externalId,
     );

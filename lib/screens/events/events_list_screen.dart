@@ -94,7 +94,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
         return e.endDate.isBefore(now) && !e.isActiveNow;
       } else if (tabIndex == 3) {
         // Mis Asistencias
-        return currentUser != null && e.isUserRegistered(currentUser.id);
+        return currentUser != null && e.isUserModelRegistered(currentUser);
       }
       return true; // Todos
     }).toList();
@@ -120,7 +120,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
           child: ValueListenableBuilder<List<EventModel>>(
             valueListenable: EventService.eventsNotifier,
             builder: (context, allEvents, _) {
-              final myCount = allEvents.where((e) => currentUser != null && e.isUserRegistered(currentUser.id)).length;
+              final myCount = allEvents.where((e) => currentUser != null && e.isUserModelRegistered(currentUser)).length;
 
               return TabBar(
                 controller: _tabController,
@@ -344,7 +344,10 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final typeColor = _getTypeColor(event.type);
-    final isRegistered = currentUser != null && event.isUserRegistered(currentUser.id);
+    final isRegistered = currentUser != null && event.isUserModelRegistered(currentUser);
+    final displayAttendees = event.attendees.length >= event.attendeesCount
+        ? event.attendees.length
+        : event.attendeesCount;
 
     return InkWell(
       onTap: () {
@@ -590,7 +593,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
                     Icon(Icons.people_alt_outlined, size: 14, color: ThemeService.primaryColor(context)),
                     const SizedBox(width: 5),
                     Text(
-                      '${event.attendees.length} asistentes',
+                      '$displayAttendees asistentes',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

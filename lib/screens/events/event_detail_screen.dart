@@ -69,8 +69,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   void _startLiveRefresh() {
     _liveRefreshTimer?.cancel();
-    // Sondeo periódico para reflejar en tiempo real participantes que escanean el QR o se registran vía web/manual
-    _liveRefreshTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+    // Sondeo periódico equilibrado (6s) para reflejar en tiempo real participantes que escanean el QR sin sobrecargar I/O
+    _liveRefreshTimer = Timer.periodic(const Duration(seconds: 6), (_) async {
       if (!mounted || _isLiveRefreshing) return;
       _isLiveRefreshing = true;
       try {
@@ -501,10 +501,15 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final currentUser = StorageService.currentUser;
     if (currentUser == null) return;
 
+    final cDoc = currentUser.documentNumber?.trim();
+    final cEmail = currentUser.email.trim().toLowerCase();
+
     EventAttendeeModel myAttendee;
     try {
       myAttendee = _currentEvent.attendees.firstWhere(
-        (a) => a.userId == currentUser.id,
+        (a) => (currentUser.id.isNotEmpty && a.userId == currentUser.id) ||
+               (cDoc != null && cDoc.isNotEmpty && a.documentNumber != null && a.documentNumber!.trim() == cDoc) ||
+               (cEmail.isNotEmpty && a.userEmail.trim().toLowerCase() == cEmail),
       );
     } catch (_) {
       myAttendee = EventAttendeeModel(
@@ -1243,8 +1248,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         final isAssignedManager = currentUser != null && _currentEvent.managerIds.contains(currentUser.id);
         final canManage = currentUser?.canManageEvents == true || isSuperAdmin || isAdmin || isAssignedManager;
         final canProjectQr = currentUser?.canManageEvents == true || isSuperAdmin || isAdmin || isAssignedManager;
-        final canScanAttendance = !isAdmin && !isSuperAdmin && !isAssignedManager;
-        final isAlreadyRegistered = currentUser != null && _currentEvent.isUserRegistered(currentUser.id);
+        final isAlreadyRegistered = currentUser != null && _currentEvent.isUserModelRegistered(currentUser);
+        final canScanAttendance = !isAlreadyRegistered;
 
         final hasWallpaper = WallpaperService.currentWallpaper.hasWallpaper;
         const mintGreen = Color(0xFF34D399);
@@ -1517,7 +1522,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           const Icon(Icons.people_outline_rounded, size: 16, color: mintGreen),
                           const SizedBox(width: 5),
                           Text(
-                            '${_currentEvent.attendees.length} Asistentes',
+                            '${_currentEvent.attendees.length >= _currentEvent.attendeesCount ? _currentEvent.attendees.length : _currentEvent.attendeesCount} Asistentes',
                             style: const TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,

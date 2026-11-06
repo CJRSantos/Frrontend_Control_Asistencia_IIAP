@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiConfig {
@@ -13,6 +12,9 @@ class ApiConfig {
   static const String defaultFacialServiceUrl = 'http://192.168.1.100:8000';
 
   static const String prodBaseUrl = 'https://dev-api-control.iiap.gob.pe/api';
+
+  // Servidor raíz sin sufijo /api
+  static String get serverRoot => baseUrl.replaceAll(RegExp(r'/api/?$'), '');
 
   // Variables de Entorno (inyección vía .env o --dart-define para producción o flavors)
   static const String envBaseUrl = String.fromEnvironment(
