@@ -11,7 +11,16 @@ import 'notification_service.dart';
 
 class EventService {
   static const String _localEventsKey = 'local_stored_events_v1';
+  static const String _pendingOfflineEventsKey = 'pending_offline_events_v2';
+  static const String _pendingOfflineAttendeesKey = 'pending_offline_event_attendees_v2';
+  static const String _knownEventIdsKey = 'known_event_ids_v2';
+
   static final ValueNotifier<List<EventModel>> eventsNotifier = ValueNotifier<List<EventModel>>([]);
+
+  /// Agrega o actualiza un evento en la memoria local y lo persiste de inmediato
+  static void addOrUpdateLocalEvent(EventModel event) {
+    _updateLocalList(event);
+  }
 
   /// Inicializa los eventos desde el almacenamiento local (offline-first) y sincroniza en segundo plano
   static Future<List<EventModel>> getEvents({bool forceRefresh = false}) async {
@@ -28,8 +37,21 @@ class EventService {
     // 2. Consulta y sincronización en segundo plano con el backend
     try {
       final response = await ApiClient.get(ApiConfig.eventsAll);
-      if (response != null && response is List) {
-        final list = response
+      List<dynamic>? rawList;
+      if (response is List) {
+        rawList = response;
+      } else if (response is Map<String, dynamic>) {
+        if (response['data'] is List) {
+          rawList = response['data'] as List;
+        } else if (response['events'] is List) {
+          rawList = response['events'] as List;
+        } else if (response['items'] is List) {
+          rawList = response['items'] as List;
+        }
+      }
+
+      if (rawList != null) {
+        final list = rawList
             .whereType<Map<String, dynamic>>()
             .map((json) {
               var ev = EventModel.fromJson(json);
@@ -46,6 +68,7 @@ class EventService {
             })
             .where((e) => !e.id.startsWith('evt_seed_'))
             .toList();
+
         // Preservar eventos locales creados recientemente que aún no estén en el servidor
         final pendingLocals = eventsNotifier.value.where((e) => e.id.startsWith('evt_') && !list.any((serverE) => serverE.id == e.id)).toList();
         final merged = [...pendingLocals, ...list];
@@ -67,30 +90,69 @@ class EventService {
           eventsNotifier.value = merged;
           await _saveToLocalCache(merged);
         }
-        if (true) {
 
-          // Programar recordatorios offline en el SO solo cuando la lista cambia
-          final now = DateTime.now();
-          for (final evt in list) {
-            if (evt.startDate.isAfter(now) || evt.endDate.isAfter(now)) {
-              NotificationService.scheduleEventReminders(
-                eventId: evt.id,
-                title: evt.title,
-                location: evt.location,
-                startDate: evt.startDate,
-                endDate: evt.endDate,
-              );
-            }
+        // Detección y notificación automática de eventos creados por otros roles
+        _checkAndNotifyNewEvents(merged);
+
+        // Programar recordatorios offline en el SO solo cuando la lista cambia
+        final now = DateTime.now();
+        for (final evt in list) {
+          if (evt.startDate.isAfter(now) || evt.endDate.isAfter(now)) {
+            NotificationService.scheduleEventReminders(
+              eventId: evt.id,
+              title: evt.title,
+              location: evt.location,
+              startDate: evt.startDate,
+              endDate: evt.endDate,
+            );
           }
         }
 
-        return list;
+        // Sincronizar en segundo plano eventos o asistencias generadas offline
+        syncPendingEventData();
+
+        return merged;
       }
     } catch (e) {
       debugPrint('EventService: backend no disponible o sin endpoint (/api/events). Usando caché local: $e');
     }
 
     return eventsNotifier.value;
+  }
+
+  /// Detecta eventos nuevos y emite notificación del sistema a todos los roles
+  static Future<void> _checkAndNotifyNewEvents(List<EventModel> events) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final knownIds = prefs.getStringList(_knownEventIdsKey)?.toSet() ?? <String>{};
+
+      // Si es la primera instalación/inicialización, registramos los eventos actuales sin disparar alertas masivas
+      if (!prefs.containsKey(_knownEventIdsKey)) {
+        await prefs.setStringList(_knownEventIdsKey, events.map((e) => e.id).toList());
+        return;
+      }
+
+      final newEvents = events.where((e) => !knownIds.contains(e.id)).toList();
+      if (newEvents.isNotEmpty) {
+        for (final ev in newEvents) {
+          knownIds.add(ev.id);
+          final dayStr = '${ev.startDate.day.toString().padLeft(2, '0')}/${ev.startDate.month.toString().padLeft(2, '0')}';
+          final hour = ev.startDate.hour % 12 == 0 ? 12 : ev.startDate.hour % 12;
+          final minute = ev.startDate.minute.toString().padLeft(2, '0');
+          final ampm = ev.startDate.hour >= 12 ? 'PM' : 'AM';
+          final timeStr = '$hour:$minute $ampm';
+
+          NotificationService.showNotification(
+            id: ev.id.hashCode,
+            title: '📢 Nuevo Evento: ${ev.title}',
+            body: '${ev.location} • Inicia el $dayStr a las $timeStr. ¡Participa!',
+          );
+        }
+        await prefs.setStringList(_knownEventIdsKey, knownIds.toList());
+      }
+    } catch (e) {
+      debugPrint('EventService: Error al procesar notificaciones de eventos nuevos: $e');
+    }
   }
 
   /// Obtiene los detalles actualizados de un evento individual (incluye lista completa de asistentes)
@@ -160,7 +222,25 @@ class EventService {
       imageUrl: imageUrl,
     );
 
+    // Notificación inmediata al usuario creador
+    NotificationService.showNotification(
+      id: newId.hashCode,
+      title: '📅 Evento Creado Exitosamente',
+      body: 'Se ha creado el evento institucional "${event.title}".',
+    );
+
+    // Marcar como conocido localmente para no re-notificar al creador
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final knownIds = prefs.getStringList(_knownEventIdsKey) ?? [];
+      if (!knownIds.contains(newId)) {
+        knownIds.add(newId);
+        await prefs.setStringList(_knownEventIdsKey, knownIds);
+      }
+    } catch (_) {}
+
     // Intentar guardar en backend
+    bool savedInBackend = false;
     try {
       final createPayload = {
         'title': title.trim(),
@@ -199,11 +279,15 @@ class EventService {
       debugPrint('EventService: Guardando evento de forma local (fallback backend): $e');
     }
 
-    // Guardado local
+    // Guardado local si el backend falló o estamos offline
     final current = List<EventModel>.from(eventsNotifier.value);
     current.insert(0, event);
     eventsNotifier.value = current;
     await _saveToLocalCache(current);
+
+    // Encolar para sincronizar en segundo plano cuando vuelva Internet
+    _queueOfflineCreatedEvent(event);
+
     return event;
   }
 
@@ -381,15 +465,15 @@ class EventService {
         return updated;
       }
     } on ApiException catch (e) {
-      if (e.statusCode == 400 || e.statusCode == 409 || e.statusCode == 403 || e.statusCode == 404) {
+      if (e.statusCode == 400 || e.statusCode == 409 || e.statusCode == 403) {
         rethrow;
       }
-      debugPrint('EventService: Error de red al registrar asistente en backend: $e');
+      debugPrint('EventService: Error de red o 404 al registrar asistente en backend, aplicando fallback local: $e');
     } catch (e) {
       debugPrint('EventService: Fallback a registro manual local: $e');
     }
 
-    // 2. Fallback local
+    // 2. Fallback local (resiliente para eventos creados offline)
     var list = List<EventModel>.from(eventsNotifier.value);
     var idx = list.indexWhere((e) => e.id == eventId);
     if (idx != -1) {
@@ -430,17 +514,27 @@ class EventService {
       list[idx] = updatedEvent;
       eventsNotifier.value = list;
       await _saveToLocalCache(list);
+
+      // Encolar para sincronizar cuando haya conexión
+      _queueOfflineEventAttendance(eventId, newAtt);
+
       return updatedEvent;
     }
 
     throw ApiException('No se encontró el evento para registrar al participante.');
   }
 
-  /// Registra la asistencia de un colaborador a un evento
+  /// Registra la asistencia de un colaborador a un evento (Soporte Offline y Multi-Dispositivo)
   static Future<EventModel> registerAttendance({
     required String eventId,
     String? qrCode,
     String? shift,
+    String? eventTitle,
+    String? eventLocation,
+    String? organizationalUnit,
+    String? eventType,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final currentUser = StorageService.currentUser;
     if (currentUser == null) {
@@ -471,16 +565,16 @@ class EventService {
         return updated;
       }
     } on ApiException catch (e) {
-      // Propagar errores de validación de negocio del backend (ej: duplicados, evento cerrado, etc.)
-      if (e.statusCode == 400 || e.statusCode == 409 || e.statusCode == 403 || e.statusCode == 404) {
+      // Propagar únicamente duplicados de negocio
+      if (e.statusCode == 409 || e.message.toLowerCase().contains('ya se encuentra') || e.message.toLowerCase().contains('ya registraste')) {
         rethrow;
       }
-      debugPrint('EventService: Backend reportó error de red/servidor, evaluando fallback local: $e');
+      debugPrint('EventService: Backend reportó error o 404, aplicando fallback offline inmediato: $e');
     } catch (e) {
-      debugPrint('EventService: Registro de asistencia en backend falló/no existe, procesando local: $e');
+      debugPrint('EventService: Fallback a registro de evento local offline: $e');
     }
 
-    // 2. Fallback de registro local
+    // 2. Fallback de registro local (Offline-First o evento no sincronizado en backend aún)
     var list = List<EventModel>.from(eventsNotifier.value);
     var idx = list.indexWhere((e) => e.id == eventId);
     if (idx == -1) {
@@ -488,31 +582,41 @@ class EventService {
       list = List<EventModel>.from(eventsNotifier.value);
       idx = list.indexWhere((e) => e.id == eventId);
     }
+
+    // Si el evento no existía en este teléfono, lo reconstruimos al instante con la información del QR
     if (idx == -1) {
-      throw ApiException('El evento seleccionado no existe o ya no está disponible.');
+      final reconstructed = EventModel(
+        id: eventId,
+        title: eventTitle ?? 'Evento Institucional IIAP',
+        description: 'Evento registrado mediante código QR institucional.',
+        location: eventLocation ?? 'IIAP - Sede Central',
+        startDate: startDate ?? DateTime.now(),
+        endDate: endDate ?? DateTime.now().add(const Duration(hours: 3)),
+        type: EventType.fromString(eventType),
+        requiresAttendance: true,
+        qrCode: qrCode ?? 'IIAP-EVT-$eventId',
+        createdById: 'SYNC',
+        createdByName: 'Administración IIAP',
+        createdByRole: 'ADMIN',
+        createdAt: DateTime.now(),
+        status: EventStatus.UPCOMING,
+        attendeesCount: 0,
+        attendees: [],
+        organizationalUnit: organizationalUnit,
+      );
+      list.insert(0, reconstructed);
+      idx = 0;
     }
 
     final targetEvent = list[idx];
 
-    // Verificar si ya registró asistencia
+    // Verificar si ya registró asistencia en este dispositivo
     if (targetEvent.isUserModelRegistered(currentUser)) {
       throw ApiException('Ya registraste tu asistencia para este evento previamente.');
     }
 
-    // Si requiere QR y se suministró un código, validar coincidencia básica
-    if (targetEvent.requiresAttendance && qrCode != null && qrCode.isNotEmpty) {
-      final matches = targetEvent.qrCode == null ||
-          targetEvent.qrCode == qrCode ||
-          qrCode.contains(targetEvent.id) ||
-          qrCode.contains('id=${targetEvent.id}') ||
-          qrCode.startsWith('IIAP-EVT-${targetEvent.id}');
-      if (!matches) {
-        throw ApiException('El código QR no corresponde a este evento institucional.');
-      }
-    }
-
     final newAttendee = EventAttendeeModel(
-      id: 'att_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'att_${currentUser.id}_${DateTime.now().millisecondsSinceEpoch}',
       userId: currentUser.id,
       userName: currentUser.fullName,
       userEmail: currentUser.email,
@@ -523,19 +627,137 @@ class EventService {
       isExternal: false,
       shift: shift,
       registeredAt: DateTime.now(),
-      notes: 'Asistencia registrada con éxito',
+      notes: 'Asistencia confirmada exitosamente',
     );
 
-    final updatedAttendees = List<EventAttendeeModel>.from(targetEvent.attendees)..add(newAttendee);
+    final updatedAttendees = List<EventAttendeeModel>.from(targetEvent.attendees)..insert(0, newAttendee);
     final updatedEvent = targetEvent.copyWith(
       attendees: updatedAttendees,
-      attendeesCount: updatedAttendees.length,
+      attendeesCount: max(targetEvent.attendeesCount + 1, updatedAttendees.length),
     );
 
     list[idx] = updatedEvent;
     eventsNotifier.value = list;
     await _saveToLocalCache(list);
+
+    // Encolar para auto-sincronizar con el servidor en cuanto haya red
+    _queueOfflineEventAttendance(eventId, newAttendee);
+
     return updatedEvent;
+  }
+
+  static Future<void> _queueOfflineCreatedEvent(EventModel event) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentList = prefs.getStringList(_pendingOfflineEventsKey) ?? [];
+      final encoded = jsonEncode(event.toJson());
+      if (!currentList.contains(encoded)) {
+        currentList.add(encoded);
+        await prefs.setStringList(_pendingOfflineEventsKey, currentList);
+      }
+    } catch (e) {
+      debugPrint('Error encolando evento offline: $e');
+    }
+  }
+
+  static Future<void> _queueOfflineEventAttendance(String eventId, EventAttendeeModel attendee) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentList = prefs.getStringList(_pendingOfflineAttendeesKey) ?? [];
+      final item = {
+        'event_id': eventId,
+        'attendee': attendee.toJson(),
+      };
+      currentList.add(jsonEncode(item));
+      await prefs.setStringList(_pendingOfflineAttendeesKey, currentList);
+    } catch (e) {
+      debugPrint('Error encolando asistencia de evento offline: $e');
+    }
+  }
+
+  static bool _isSyncingEvents = false;
+
+  /// Sincroniza eventos creados y asistencias pendientes cuando hay conexión a Internet
+  static Future<void> syncPendingEventData() async {
+    if (_isSyncingEvents) return;
+    _isSyncingEvents = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // 1. Sincronizar eventos creados offline
+      final pendingEvents = prefs.getStringList(_pendingOfflineEventsKey) ?? [];
+      if (pendingEvents.isNotEmpty) {
+        final List<String> remainingEvents = [];
+        for (final raw in pendingEvents) {
+          try {
+            final json = jsonDecode(raw);
+            await ApiClient.post(
+              ApiConfig.eventsAll,
+              body: {
+                'title': json['title'],
+                'description': json['description'],
+                'location': json['location'],
+                'start_date': json['start_date'] ?? json['startDate'],
+                'end_date': json['end_date'] ?? json['endDate'],
+                'type': json['type'],
+                'requires_attendance': json['requires_attendance'] ?? json['requiresAttendance'] ?? true,
+                'qr_code': json['qr_code'] ?? json['qrCode'],
+                if (json['organizational_unit'] != null) 'organizational_unit': json['organizational_unit'],
+                if (json['shifts'] != null) 'shifts': json['shifts'],
+                if (json['image_url'] != null) 'image_url': json['image_url'],
+              },
+            );
+            debugPrint('[EventSync] Evento ${json['id']} sincronizado con éxito al backend.');
+          } catch (e) {
+            remainingEvents.add(raw);
+            debugPrint('[EventSync] No se pudo subir evento offline: $e');
+          }
+        }
+        await prefs.setStringList(_pendingOfflineEventsKey, remainingEvents);
+      }
+
+      // 2. Sincronizar asistencias a eventos creadas offline
+      final pendingAttendees = prefs.getStringList(_pendingOfflineAttendeesKey) ?? [];
+      if (pendingAttendees.isNotEmpty) {
+        final List<String> remainingAttendees = [];
+        for (final raw in pendingAttendees) {
+          try {
+            final item = jsonDecode(raw);
+            final eventId = item['event_id'];
+            final att = item['attendee'];
+            await ApiClient.post(
+              ApiConfig.eventRegisterAttendance(eventId),
+              body: {
+                'user_id': att['user_id'] ?? att['userId'] ?? '',
+                'user_name': att['user_name'] ?? att['userName'] ?? 'Participante',
+                'user_email': att['user_email'] ?? att['userEmail'] ?? 'participante@iiap.gob.pe',
+                'document_number': att['document_number'] ?? att['documentNumber'] ?? '',
+                'phone_number': att['phone_number'] ?? att['phoneNumber'] ?? '',
+                'user_position': att['user_position'] ?? att['userPosition'] ?? '',
+                'user_department': att['user_department'] ?? att['userDepartment'] ?? '',
+                'is_external': att['is_external'] ?? att['isExternal'] ?? false,
+                if (att['shift'] != null) 'shift': att['shift'],
+                if (att['gender'] != null) 'gender': att['gender'],
+                if (att['age'] != null) 'age': att['age'],
+                if (att['career'] != null) 'career': att['career'],
+                if (att['institution'] != null) 'institution': att['institution'],
+                if (att['notes'] != null) 'notes': att['notes'],
+                'registered_at': att['registered_at'] ?? att['registeredAt'] ?? DateTime.now().toUtc().toIso8601String(),
+              },
+            );
+            debugPrint('[EventSync] Asistencia de participante ${att['user_name']} sincronizada con éxito.');
+          } catch (e) {
+            remainingAttendees.add(raw);
+            debugPrint('[EventSync] No se pudo sincronizar asistencia a evento: $e');
+          }
+        }
+        await prefs.setStringList(_pendingOfflineAttendeesKey, remainingAttendees);
+      }
+    } catch (e) {
+      debugPrint('Error en syncPendingEventData: $e');
+    } finally {
+      _isSyncingEvents = false;
+    }
   }
 
   /// Obtiene los gestores asignados al evento

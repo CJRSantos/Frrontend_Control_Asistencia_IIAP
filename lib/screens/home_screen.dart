@@ -11,6 +11,7 @@ import 'tabs/profile_tab.dart';
 import '../services/theme_service.dart';
 import '../services/notification_service.dart';
 import '../services/quick_actions_service.dart';
+import '../services/event_service.dart';
 import '../utils/responsive.dart';
 import '../widgets/app_cached_avatar.dart';
 import '../widgets/app_toast.dart';
@@ -145,6 +146,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _isSyncing = true;
     try {
       NotificationService.checkAndTriggerCheckoutReminder();
+      EventService.getEvents();
+      EventService.syncPendingEventData();
       final oldUser = StorageService.currentUser;
       final newUser = await AuthService.getProfile();
       if (!mounted) return;
