@@ -82,17 +82,25 @@ class _EventQrDisplayScreenState extends State<EventQrDisplayScreen> {
   String _generateDynamicQr() {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final nonce = Random().nextInt(999999).toString().padLeft(6, '0');
+    final shiftParam = _selectedShift != null ? '&shift=$_selectedShift' : '';
 
-        final shiftParam = _selectedShift != null ? '&shift=$_selectedShift' : '';
+    final titleParam = '&title=${Uri.encodeComponent(widget.event.title)}';
+    final locParam = '&loc=${Uri.encodeComponent(widget.event.location)}';
+    final uoParam = widget.event.organizationalUnit != null && widget.event.organizationalUnit!.isNotEmpty
+        ? '&uo=${Uri.encodeComponent(widget.event.organizationalUnit!)}'
+        : '';
+    final typeParam = '&type=${widget.event.type.name}';
+    final startParam = '&start=${widget.event.startDate.millisecondsSinceEpoch}';
+    final endParam = '&end=${widget.event.endDate.millisecondsSinceEpoch}';
 
     if (_selectedMode == EventQrMode.registered) {
-      // Formato para usuarios de la App IIAP con cuenta activa
-      return 'IIAP-EVT-${widget.event.id}?t=$timestamp&nonce=$nonce$shiftParam';
+      // Formato para usuarios de la App IIAP con cuenta activa (Autocontenido para funcionar 100% Offline)
+      return 'IIAP-EVT-${widget.event.id}?t=$timestamp&nonce=$nonce$shiftParam$titleParam$locParam$uoParam$typeParam$startParam$endParam';
     } else {
       // URL web pública para abrir el formulario en el navegador del celular
       final baseUrl = ApiConfig.eventPublicRegistrationUrl(widget.event.id);
       final separator = baseUrl.contains('?') ? '&' : '?';
-      return '$baseUrl${separator}t=$timestamp&nonce=$nonce$shiftParam';
+      return '$baseUrl${separator}t=$timestamp&nonce=$nonce$shiftParam$titleParam$locParam';
     }
   }
 

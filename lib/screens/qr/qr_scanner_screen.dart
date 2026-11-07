@@ -144,10 +144,46 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             }
           }
 
+          String? titleParam;
+          String? locParam;
+          String? uoParam;
+          String? typeParam;
+          DateTime? startParam;
+          DateTime? endParam;
+
+          if (uri != null) {
+            if (uri.queryParameters.containsKey('title')) {
+              titleParam = Uri.decodeComponent(uri.queryParameters['title']!);
+            }
+            if (uri.queryParameters.containsKey('loc')) {
+              locParam = Uri.decodeComponent(uri.queryParameters['loc']!);
+            }
+            if (uri.queryParameters.containsKey('uo')) {
+              uoParam = Uri.decodeComponent(uri.queryParameters['uo']!);
+            }
+            if (uri.queryParameters.containsKey('type')) {
+              typeParam = uri.queryParameters['type'];
+            }
+            if (uri.queryParameters.containsKey('start')) {
+              final ms = int.tryParse(uri.queryParameters['start']!);
+              if (ms != null) startParam = DateTime.fromMillisecondsSinceEpoch(ms);
+            }
+            if (uri.queryParameters.containsKey('end')) {
+              final ms = int.tryParse(uri.queryParameters['end']!);
+              if (ms != null) endParam = DateTime.fromMillisecondsSinceEpoch(ms);
+            }
+          }
+
           final updatedEvent = await EventService.registerAttendance(
             eventId: targetEventId,
             qrCode: cleanCode,
             shift: shiftParam,
+            eventTitle: titleParam,
+            eventLocation: locParam,
+            organizationalUnit: uoParam,
+            eventType: typeParam,
+            startDate: startParam,
+            endDate: endParam,
           );
           if (!mounted) return;
           await _showSuccessDialog(
