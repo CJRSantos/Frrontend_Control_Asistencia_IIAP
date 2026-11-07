@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +11,7 @@ import '../models/qr_model.dart';
 import 'api_client.dart';
 
 class AttendanceService {
+  static final Dio _dio = Dio();
   static QrGeneratedResponse? _lastActiveQr;
   static QrGeneratedResponse? get lastActiveQr => _lastActiveQr;
 
@@ -384,4 +387,37 @@ class AttendanceService {
     final response = await ApiClient.post(ApiConfig.attendanceFacialRecognition, body: body);
     return response as Map<String, dynamic>;
   }
+
+  /// 13. Registra asistencia mediante reconocimiento facial (solo admin)
+  Future<Map<String, dynamic>> registerFacialAttendance(File imageFile) async {
+    final formData = FormData.fromMap({
+      'image': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: 'face.jpg',
+      ),
+    });
+
+    final token = StorageService.tokenSync ?? await StorageService.getToken();
+    final url = ApiConfig.baseUrl.endsWith('/api')
+        ? '${ApiConfig.baseUrl}/attendance/facial'
+        : '${ApiConfig.baseUrl}/api/attendance/facial';
+
+    final response = await _dio.post(
+      url,
+      data: formData,
+      options: Options(
+        contentType: 'multipart/form-data',
+        headers: token != null && token.isNotEmpty
+            ? {'Authorization': 'Bearer $token'}
+            : null,
+      ),
+    );
+
+    return (response.data is Map<String, dynamic>)
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+  }
+
+  static Future<Map<String, dynamic>> registerFacial(File imageFile) =>
+      AttendanceService().registerFacialAttendance(imageFile);
 }

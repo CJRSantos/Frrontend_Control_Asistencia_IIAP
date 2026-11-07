@@ -66,9 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<!-- Permisos para Cámara y Escáner QR -->
+	<!-- Permisos para Cámara (Escáner QR y Reconocimiento Facial) -->
 	<key>NSCameraUsageDescription</key>
-	<string>Se requiere acceso a la cámara para escanear el código QR de registro de asistencia.</string>
+	<string>Se requiere acceso a la cámara para el escaneo de código QR y la verificación biométrica de asistencia mediante reconocimiento facial.</string>
 
 	<!-- Permisos para Geolocalización (Geolocator) -->
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -83,6 +83,15 @@
 	<!-- Permisos para Biometría / Face ID (Local Auth) -->
 	<key>NSFaceIDUsageDescription</key>
 	<string>Se requiere autenticación biométrica para verificar tu identidad de forma segura.</string>
+
+	<!-- Configuración de red para servicios locales y servidores institucionales (HTTP / Wi-Fi) -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Se requiere acceso a la red local para conectarse al servicio biométrico y validar la asistencia en la red institucional.</string>
 	<!-- Esquema de URL invertido para autenticación con Google en iOS / iPadOS -->
 	<key>CFBundleURLTypes</key>
 	<array>

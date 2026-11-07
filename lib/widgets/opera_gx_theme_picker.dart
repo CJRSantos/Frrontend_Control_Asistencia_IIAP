@@ -60,7 +60,6 @@ class OperaGxThemePicker extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                cacheExtent: 400,
                 itemCount: AppAccentColor.values.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 14),
                 itemBuilder: (context, index) {

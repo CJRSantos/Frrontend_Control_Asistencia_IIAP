@@ -84,12 +84,12 @@ class _ManualAttendeeModalState extends State<ManualAttendeeModal> {
     final shifts = widget.event.shifts.where((s) => s.enabled).toList();
     if (shifts.isNotEmpty) {
       final hour = DateTime.now().hour;
-      if (hour < 13 && shifts.any((s) => s.name == 'manana')) {
-        _selectedShift = 'manana';
-      } else if (hour < 18 && shifts.any((s) => s.name == 'tarde')) {
-        _selectedShift = 'tarde';
-      } else if (shifts.any((s) => s.name == 'noche')) {
-        _selectedShift = 'noche';
+      if (hour < 13 && shifts.any((s) => s.name.toLowerCase() == 'manana')) {
+        _selectedShift = shifts.firstWhere((s) => s.name.toLowerCase() == 'manana').name;
+      } else if (hour < 18 && shifts.any((s) => s.name.toLowerCase() == 'tarde')) {
+        _selectedShift = shifts.firstWhere((s) => s.name.toLowerCase() == 'tarde').name;
+      } else if (shifts.any((s) => s.name.toLowerCase() == 'noche')) {
+        _selectedShift = shifts.firstWhere((s) => s.name.toLowerCase() == 'noche').name;
       } else {
         _selectedShift = shifts.first.name;
       }

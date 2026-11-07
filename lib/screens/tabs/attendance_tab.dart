@@ -63,7 +63,8 @@ class _AttendanceTabState extends State<AttendanceTab> {
     _isLoadingAll = _allRecords.isEmpty;
 
     final user = StorageService.currentUserNotifier.value ?? StorageService.currentUser;
-    if (user != null && (user.isAdmin || user.isSupervisor)) {
+    final canManage = user != null && (user.isAdmin || user.isSupervisor || user.canManageAttendanceQr);
+    if (canManage) {
       _loadAllRecords();
       _loadMyRecords();
       _loadPendingCheckouts();
@@ -1627,8 +1628,10 @@ class _AttendanceTabState extends State<AttendanceTab> {
           builder: (context, user, _) {
             final isAdmin = user != null && user.isAdmin;
             final isSupervisor = user != null && user.isSupervisor;
+            final canManageAttendance = user != null && (user.canManageAttendanceQr || isAdmin || isSupervisor);
+            final canEditAttendance = user != null && (user.canEditAttendance || isAdmin || isSupervisor);
 
-            if (isAdmin || isSupervisor) {
+            if (canManageAttendance) {
               if (_allRecords.isEmpty && !_isLoadingAll) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
@@ -1639,8 +1642,8 @@ class _AttendanceTabState extends State<AttendanceTab> {
               }
             }
 
-            // 1. Administrador General: TabBar con "Registro General", "Mis Asistencias", "Pendientes de Salida"
-            if (isAdmin) {
+            // 1. Administrador General y Roles de Gestión: TabBar con "Registro General", "Mis Asistencias", "Pendientes de Salida"
+            if (canManageAttendance) {
               return DefaultTabController(
                 length: 3,
                 child: Scaffold(
@@ -1660,19 +1663,23 @@ class _AttendanceTabState extends State<AttendanceTab> {
                           child: const LeafLogo(size: 20),
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Control Institucional',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5, letterSpacing: -0.2),
+                                isAdmin ? 'Control Institucional' : 'Control de Asistencias',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5, letterSpacing: -0.2),
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                'Administración Central • IIAP',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF10B981)),
+                                isAdmin
+                                    ? 'Administración Central • IIAP'
+                                    : (isSupervisor
+                                        ? 'Supervisión de Cuadrilla • IIAP'
+                                        : '${user?.role.displayName ?? "Gestión"} • IIAP'),
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF10B981)),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
@@ -1697,17 +1704,19 @@ class _AttendanceTabState extends State<AttendanceTab> {
                         tooltip: 'Exportar Reporte PDF (Entradas y Salidas)',
                         onPressed: _isGeneratingPdf ? null : _exportPdfReport,
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.cleaning_services_rounded),
-                        tooltip: 'Reinicio Semanal (Viernes 10:00 PM)',
-                        onPressed: _confirmWeeklyReset,
-                      ),
+                      if (isAdmin)
+                        IconButton(
+                          icon: const Icon(Icons.cleaning_services_rounded),
+                          tooltip: 'Reinicio Semanal (Viernes 10:00 PM)',
+                          onPressed: _confirmWeeklyReset,
+                        ),
                       IconButton(
                         icon: const Icon(Icons.refresh_rounded),
                         tooltip: 'Actualizar',
                         onPressed: () {
                           _loadAllRecords();
                           _loadPendingCheckouts();
+                          _loadMyRecords();
                         },
                       ),
                     ],
@@ -1747,7 +1756,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
                           await _loadPendingCheckouts();
                         },
                         showUserName: true,
-                        canEdit: true,
+                        canEdit: canEditAttendance,
                       ),
                       _buildJourneyList(
                         ShiftJourneyRecord.groupFromRecords(_myRecords),
@@ -1766,190 +1775,67 @@ class _AttendanceTabState extends State<AttendanceTab> {
               );
             }
 
-            // 2. Colaborador Regular: Solo su propio historial de jornadas (La vista principal que ven los usuarios)
-            if (!isSupervisor) {
-              if (!_hasFetchedMy && !_isLoadingMy) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) _loadMyRecords();
-                });
-              }
-              return Scaffold(
-                backgroundColor: hasWallpaper ? Colors.transparent : ThemeService.scaffoldBg(context),
-                appBar: AppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  title: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: _cardBg(context),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _cardBorder(context)),
-                        ),
-                        child: const LeafLogo(size: 20),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Historial de Asistencias',
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16.5, letterSpacing: -0.2),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'Registro Oficial de Marcaciones • IIAP',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: primaryColor,
-                                letterSpacing: 0.2,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.refresh_rounded),
-                      tooltip: 'Actualizar',
-                      onPressed: _loadMyRecords,
-                    ),
-                  ],
-                ),
-                body: _buildJourneyList(
-                  ShiftJourneyRecord.groupFromRecords(_myRecords),
-                  _isLoadingMy,
-                  _loadMyRecords,
-                  showUserName: false,
-                ),
-              );
+            // 2. Colaborador Regular: Solo su propio historial de jornadas
+            if (!_hasFetchedMy && !_isLoadingMy) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _loadMyRecords();
+              });
             }
-
-            // 3. Supervisor: 3 pestañas: "Mis Asistencias", "Registro Institucional", "Pendientes de Salida"
-            return DefaultTabController(
-              length: 3,
-              child: Scaffold(
-                backgroundColor: hasWallpaper ? Colors.transparent : ThemeService.scaffoldBg(context),
-                appBar: AppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  title: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: _cardBg(context),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _cardBorder(context)),
-                        ),
-                        child: const LeafLogo(size: 20),
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Control de Asistencias',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5, letterSpacing: -0.2),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'Supervisión de Cuadrilla • IIAP',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF10B981)),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.person_add_alt_1_rounded),
-                      tooltip: 'Marcación Manual de Emergencia',
-                      onPressed: _showManualAttendanceDialog,
-                    ),
-                    IconButton(
-                      icon: _isGeneratingPdf
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.picture_as_pdf_rounded),
-                      tooltip: 'Exportar Reporte PDF (Entradas y Salidas)',
-                      onPressed: _isGeneratingPdf ? null : _exportPdfReport,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.refresh_rounded),
-                      tooltip: 'Actualizar',
-                      onPressed: () {
-                        _loadMyRecords();
-                        _loadAllRecords();
-                        _loadPendingCheckouts();
-                      },
-                    ),
-                  ],
-                  bottom: TabBar(
-                    labelColor: primaryColor,
-                    indicatorColor: primaryColor,
-                    unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    indicatorWeight: 3,
-                    tabs: [
-                      const Tab(
-                        icon: Icon(Icons.person_outline_rounded, size: 20),
-                        text: 'Mis Asistencias',
-                      ),
-                      const Tab(
-                        icon: Icon(Icons.corporate_fare_rounded, size: 20),
-                        text: 'Registro General',
-                      ),
-                      Tab(
-                        icon: Badge(
-                          isLabelVisible: _pendingCheckouts.isNotEmpty,
-                          label: Text('${_pendingCheckouts.length}'),
-                          backgroundColor: Colors.amber[800],
-                          child: const Icon(Icons.pending_actions_rounded, size: 20),
-                        ),
-                        text: 'Pendientes',
-                      ),
-                    ],
-                  ),
-                ),
-                body: TabBarView(
+            return Scaffold(
+              backgroundColor: hasWallpaper ? Colors.transparent : ThemeService.scaffoldBg(context),
+              appBar: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                title: Row(
                   children: [
-                    _buildJourneyList(
-                      ShiftJourneyRecord.groupFromRecords(_myRecords),
-                      _isLoadingMy,
-                      _loadMyRecords,
-                      showUserName: false,
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: _cardBg(context),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _cardBorder(context)),
+                      ),
+                      child: const LeafLogo(size: 20),
                     ),
-                    _buildJourneyList(
-                      ShiftJourneyRecord.groupFromRecords(_allRecords),
-                      _isLoadingAll,
-                      () async {
-                        await _loadAllRecords();
-                        await _loadPendingCheckouts();
-                      },
-                      showUserName: true,
-                      canEdit: true,
-                    ),
-                    _buildPendingList(
-                      _pendingCheckouts,
-                      _isLoadingPending,
-                      _loadPendingCheckouts,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Historial de Asistencias',
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16.5, letterSpacing: -0.2),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Registro Oficial de Marcaciones • IIAP',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: primaryColor,
+                              letterSpacing: 0.2,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded),
+                    tooltip: 'Actualizar',
+                    onPressed: _loadMyRecords,
+                  ),
+                ],
+              ),
+              body: _buildJourneyList(
+                ShiftJourneyRecord.groupFromRecords(_myRecords),
+                _isLoadingMy,
+                _loadMyRecords,
+                showUserName: false,
               ),
             );
           },

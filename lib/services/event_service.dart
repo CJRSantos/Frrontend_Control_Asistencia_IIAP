@@ -228,6 +228,11 @@ class EventService {
           'imageUrl': event.imageUrl,
           'cover_image': event.imageUrl,
           'image': event.imageUrl,
+        } else ...{
+          'image_url': null,
+          'imageUrl': null,
+          'cover_image': null,
+          'image': null,
         },
       };
       final res = await ApiClient.patch(
@@ -490,7 +495,7 @@ class EventService {
     final targetEvent = list[idx];
 
     // Verificar si ya registró asistencia
-    if (targetEvent.isUserRegistered(currentUser.id)) {
+    if (targetEvent.isUserModelRegistered(currentUser)) {
       throw ApiException('Ya registraste tu asistencia para este evento previamente.');
     }
 
@@ -582,7 +587,15 @@ class EventService {
 
   // --- Helpers de Caché Local ---
 
-  static Future<void> _saveToLocalCache(List<EventModel> events) async {
+  static DateTime? _lastSaveTime;
+
+  static Future<void> _saveToLocalCache(List<EventModel> events, {bool force = false}) async {
+    final now = DateTime.now();
+    if (!force && _lastSaveTime != null && now.difference(_lastSaveTime!).inSeconds < 4) {
+      // Evitar saturar el disco con I/O repetitivo durante sondeos en vivo
+      return;
+    }
+    _lastSaveTime = now;
     try {
       final prefs = await SharedPreferences.getInstance();
       final encoded = jsonEncode(events.map((e) => e.toJson()).toList());

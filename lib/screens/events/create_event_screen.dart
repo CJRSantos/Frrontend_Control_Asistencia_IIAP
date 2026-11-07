@@ -114,15 +114,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _hasTarde = false;
       _hasNoche = false;
       for (final s in editShifts) {
-        if (s.name == 'manana') {
+        final sName = s.name.toLowerCase();
+        if (sName == 'manana') {
           _hasManana = s.enabled;
           _mananaStart = _parseTimeOfDay(s.startTime, defaultHour: 8, defaultMinute: 30);
           _mananaEnd = _parseTimeOfDay(s.endTime, defaultHour: 12, defaultMinute: 30);
-        } else if (s.name == 'tarde') {
+        } else if (sName == 'tarde') {
           _hasTarde = s.enabled;
           _tardeStart = _parseTimeOfDay(s.startTime, defaultHour: 14, defaultMinute: 0);
           _tardeEnd = _parseTimeOfDay(s.endTime, defaultHour: 18, defaultMinute: 0);
-        } else if (s.name == 'noche') {
+        } else if (sName == 'noche') {
           _hasNoche = s.enabled;
           _nocheStart = _parseTimeOfDay(s.startTime, defaultHour: 18, defaultMinute: 30);
           _nocheEnd = _parseTimeOfDay(s.endTime, defaultHour: 21, defaultMinute: 30);
@@ -533,6 +534,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           organizationalUnit: uoVal,
           shifts: activeShifts,
           imageUrl: _eventImageUrl,
+          clearImageUrl: _eventImageUrl == null || _eventImageUrl!.isEmpty,
         );
         final saved = await EventService.updateEvent(updated);
         if (!mounted) return;
@@ -640,12 +642,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     ),
                     onPressed: () async {
                       Navigator.of(ctx).pop();
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                      HomeScreen.currentTabNotifier.value = 0;
+                      Navigator.of(context).pop(event);
                       await EventService.getEvents(forceRefresh: true);
                     },
                     child: const Text(
-                      'Volver al Inicio',
+                      'Listo / Volver a Eventos',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14.5,

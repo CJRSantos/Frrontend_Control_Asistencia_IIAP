@@ -94,7 +94,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
         return e.endDate.isBefore(now) && !e.isActiveNow;
       } else if (tabIndex == 3) {
         // Mis Asistencias
-        return currentUser != null && e.isUserRegistered(currentUser.id);
+        return currentUser != null && e.isUserModelRegistered(currentUser);
       }
       return true; // Todos
     }).toList();
@@ -120,7 +120,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
           child: ValueListenableBuilder<List<EventModel>>(
             valueListenable: EventService.eventsNotifier,
             builder: (context, allEvents, _) {
-              final myCount = allEvents.where((e) => currentUser != null && e.isUserRegistered(currentUser.id)).length;
+              final myCount = allEvents.where((e) => currentUser != null && e.isUserModelRegistered(currentUser)).length;
 
               return TabBar(
                 controller: _tabController,
@@ -344,7 +344,10 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final typeColor = _getTypeColor(event.type);
-    final isRegistered = currentUser != null && event.isUserRegistered(currentUser.id);
+    final isRegistered = currentUser != null && event.isUserModelRegistered(currentUser);
+    final displayAttendees = event.attendees.length >= event.attendeesCount
+        ? event.attendees.length
+        : event.attendeesCount;
 
     return InkWell(
       onTap: () {
@@ -414,6 +417,32 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
                     ),
                   ),
                 ),
+                if (event.isEventosMirror) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.4)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.sync_rounded, size: 11, color: Color(0xFF6366F1)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Sistema de Eventos',
+                          style: TextStyle(
+                            color: Color(0xFF6366F1),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -564,7 +593,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
                     Icon(Icons.people_alt_outlined, size: 14, color: ThemeService.primaryColor(context)),
                     const SizedBox(width: 5),
                     Text(
-                      '${event.attendees.length} asistentes',
+                      '$displayAttendees asistentes',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

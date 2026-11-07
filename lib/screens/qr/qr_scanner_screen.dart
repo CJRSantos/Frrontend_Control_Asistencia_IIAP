@@ -10,8 +10,10 @@ import '../../services/api_client.dart';
 import '../../services/storage_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/event_service.dart';
+import '../../services/connectivity_service.dart';
+import '../../services/offline_sync_service.dart';
+import '../../models/qr_model.dart';
 import '../../widgets/app_button.dart';
-import '../login_screen.dart';
 
 enum ScanTarget {
   attendance,
@@ -223,16 +225,44 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
         final deviceId = await StorageService.getOrCreateDeviceId();
 
-        final result = await AttendanceService.scanAttendanceQr(
-          qrCode: cleanCode,
-          latitude: lat,
-          longitude: lng,
-          deviceId: deviceId,
-        );
+        AttendanceScanResult result;
+        bool isOffline = false;
+
+        if (!ConnectivityService.isOnline) {
+          result = await OfflineSyncService.saveOfflineAttendance(
+            qrCode: cleanCode,
+            latitude: lat,
+            longitude: lng,
+            deviceId: deviceId,
+          );
+          isOffline = true;
+        } else {
+          try {
+            result = await AttendanceService.scanAttendanceQr(
+              qrCode: cleanCode,
+              latitude: lat,
+              longitude: lng,
+              deviceId: deviceId,
+            );
+          } catch (netErr) {
+            if (OfflineSyncService.isNetworkError(netErr)) {
+              result = await OfflineSyncService.saveOfflineAttendance(
+                qrCode: cleanCode,
+                latitude: lat,
+                longitude: lng,
+                deviceId: deviceId,
+              );
+              isOffline = true;
+            } else {
+              rethrow;
+            }
+          }
+        }
+
         NotificationService.checkAndTriggerCheckoutReminder();
         if (!mounted) return;
 
-                final scanNow = DateTime.now();
+        final scanNow = DateTime.now();
         final hour = scanNow.hour % 12 == 0 ? 12 : scanNow.hour % 12;
         final minute = scanNow.minute.toString().padLeft(2, '0');
         final second = scanNow.second.toString().padLeft(2, '0');
@@ -240,7 +270,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         final localFormattedTime = '${hour.toString().padLeft(2, '0')}:$minute:$second $ampm';
 
         await _showSuccessDialog(
-          title: '¡Asistencia Registrada!',
+          title: isOffline ? '¡Asistencia Guardada (Sin Conexión)!' : '¡Asistencia Registrada!',
           message: result.message,
           detail: 'Marca: ${result.typeLabel ?? "REGISTRO"} • $localFormattedTime',
           isShaVerified: true,
@@ -460,6 +490,10 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   Future<void> _showErrorDialog(String error) async {
     final isUnauthorized = error.toLowerCase().contains('unauthorized') || error.contains('401');
 
+    if (isUnauthorized) {
+      AuthService.trySilentRelogin();
+    }
+
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -471,58 +505,31 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             shape: BoxShape.circle,
           ),
           child: Icon(
-            isUnauthorized ? Icons.lock_person_rounded : Icons.error_outline_rounded,
+            isUnauthorized ? Icons.sync_problem_rounded : Icons.error_outline_rounded,
             color: const Color(0xFFEF4444),
             size: 40,
           ),
         ),
         title: Text(
-          isUnauthorized ? 'Sesión o Dispositivo no Autorizado' : 'No se pudo procesar',
+          isUnauthorized ? 'Revalidando Asistencia' : 'No se pudo procesar',
           textAlign: TextAlign.center,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
         content: Text(
           isUnauthorized
-              ? 'La sesión en este celular requiere revalidación de credenciales para registrar asistencias.'
+              ? 'Se está sincronizando tu credencial institucional en segundo plano. Por favor vuelve a escanear el código QR.'
               : error,
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 13),
         ),
         actions: [
-          if (isUnauthorized)
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('Cancelar'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppButton(
-                    text: 'Iniciar Sesión',
-                    height: 40,
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        (route) => false,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            )
-          else
-            Center(
-              child: AppButton(
-                text: 'Reintentar',
-                width: 130,
-                height: 42,
-                onPressed: () => Navigator.of(ctx).pop(),
-              ),
+          Center(
+            child: AppButton(
+              text: 'Aceptar y Reintentar',
+              height: 40,
+              onPressed: () => Navigator.of(ctx).pop(),
             ),
+          ),
         ],
       ),
     );

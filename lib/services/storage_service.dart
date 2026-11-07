@@ -58,15 +58,41 @@ class StorageService {
       } catch (e) {
         debugPrint('Error decodificando usuario en caché: $e');
         if (token != null && token.isNotEmpty) {
+          currentUserNotifier.value = _extractUserFromJwt(token);
           isAuthenticatedNotifier.value = true;
         }
       }
     } else if (token != null && token.isNotEmpty) {
+      currentUserNotifier.value = _extractUserFromJwt(token);
       isAuthenticatedNotifier.value = true;
     } else {
       currentUserNotifier.value = null;
       isAuthenticatedNotifier.value = false;
     }
+  }
+
+  /// Extrae un usuario de contingencia desde el payload del token JWT si los datos de disco fallan
+  static UserModel? _extractUserFromJwt(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      var normalized = base64Url.normalize(parts[1]);
+      final payloadString = utf8.decode(base64Url.decode(normalized));
+      final map = jsonDecode(payloadString) as Map<String, dynamic>;
+      final sub = map['sub']?.toString() ?? '';
+      final email = map['email']?.toString() ?? '';
+      final role = UserRole.fromString(map['role']?.toString());
+      final fullName = map['full_name']?.toString() ?? map['name']?.toString() ?? (email.isNotEmpty ? email.split('@').first : 'Usuario');
+      if (sub.isNotEmpty) {
+        return UserModel(
+          id: sub,
+          email: email,
+          fullName: fullName,
+          role: role,
+        );
+      }
+    } catch (_) {}
+    return null;
   }
 
   static Future<String?> getToken() async {

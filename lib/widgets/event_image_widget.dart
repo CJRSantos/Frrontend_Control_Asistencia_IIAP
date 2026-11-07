@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../config/api_config.dart';
 
 /// Widget de renderizado de imagen de evento de alto rendimiento.
 /// - Cachea los bytes Base64 decodificados en memoria para evitar re-decodificaciones innecesarias.
@@ -113,9 +114,12 @@ class _EventImageWidgetState extends State<EventImageWidget> {
         content = widget.fallbackWidget ?? _defaultFallback();
       }
     } else {
+      final effectiveUrl = (url.startsWith('http://') || url.startsWith('https://'))
+          ? url
+          : (url.startsWith('/') ? '${ApiConfig.serverRoot}$url' : '${ApiConfig.serverRoot}/$url');
       content = CachedNetworkImage(
-        key: ValueKey('event_img_net_${url.hashCode}'),
-        imageUrl: url,
+        key: ValueKey('event_img_net_${effectiveUrl.hashCode}'),
+        imageUrl: effectiveUrl,
         width: widget.width,
         height: widget.height,
         fit: widget.fit,

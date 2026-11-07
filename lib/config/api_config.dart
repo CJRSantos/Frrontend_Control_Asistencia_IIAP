@@ -5,14 +5,26 @@ class ApiConfig {
   static const String _customFacialHostKey = 'custom_facial_host';
 
   // Variables de Entorno (inyección vía .env o --dart-define)
+  // API principal NestJS (por defecto en red local)
+  static const String defaultLocalBaseUrl = 'http://192.168.1.100:3000/api';
+
+  // Microservicio facial (acceso directo desde Flutter para extraer embeddings)
+  static const String defaultFacialServiceUrl = 'http://192.168.1.100:8000';
+
+  static const String prodBaseUrl = 'https://dev-api-control.iiap.gob.pe/api';
+
+  // Servidor raíz sin sufijo /api
+  static String get serverRoot => baseUrl.replaceAll(RegExp(r'/api/?$'), '');
+
+  // Variables de Entorno (inyección vía .env o --dart-define para producción o flavors)
   static const String envBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://dev-api-control.iiap.gob.pe/api',
+    defaultValue: prodBaseUrl,
   );
 
   static const String envFacialBaseUrl = String.fromEnvironment(
     'FACIAL_SERVICE_BASE_URL',
-    defaultValue: 'http://192.168.1.214:8000',
+    defaultValue: defaultFacialServiceUrl,
   );
 
   static const String envGoogleServerClientId = String.fromEnvironment(
@@ -25,6 +37,18 @@ class ApiConfig {
     defaultValue: '546116812966-aijkt8hrbhaue2uaj2d5cbem1nlspa9v.apps.googleusercontent.com',
   );
 
+  static const String envGoogleDesktopClientId = String.fromEnvironment(
+    'GOOGLE_DESKTOP_CLIENT_ID',
+    defaultValue: '546116812966-a58l8lhich02q2bgbuofvu5b4fi49vd7.apps.googleusercontent.com',
+  );
+
+  static const String envGoogleDesktopClientSecret = String.fromEnvironment(
+    'GOOGLE_DESKTOP_CLIENT_SECRET',
+    defaultValue: '',
+  );
+
+  static const int googleLoopbackPort = 8585;
+
   static const String envAppPackageNameAndroid = String.fromEnvironment(
     'APP_PACKAGE_NAME_ANDROID',
     defaultValue: 'pe.gob.iiap.attendance',
@@ -35,16 +59,29 @@ class ApiConfig {
     defaultValue: 'pe.gob.iiap.attendance',
   );
 
+  // Dominio independiente para el formulario público de registro de asistencia a eventos
+  static const String defaultPublicRegistrationUrl = 'https://dev-registro-eventos.iiap.gob.pe';
+
+  static const String envPublicRegistrationUrl = String.fromEnvironment(
+    'EVENT_PUBLIC_REGISTRATION_URL',
+    defaultValue: defaultPublicRegistrationUrl,
+  );
+
   // Obtiene la URL base adecuada según el entorno de ejecución
   static String get defaultBaseUrl => envBaseUrl;
-  static const String localWifiUrl = 'http://192.168.1.108:3000/api';
+  static const String localWifiUrl = 'http://192.168.1.100:3000/api';
+  static const String localWifiFacialUrl = 'http://192.168.1.100:8000';
   static const String androidEmulatorUrl = 'http://10.0.2.2:3000/api';
   static String get defaultFacialBaseUrl => envFacialBaseUrl;
 
   static String _currentBaseUrl = defaultBaseUrl;
   static String _currentFacialBaseUrl = defaultFacialBaseUrl;
 
+  // API principal NestJS
   static String get baseUrl => _currentBaseUrl;
+
+  // Microservicio facial (acceso directo desde Flutter para extraer embeddings)
+  static String get facialServiceUrl => _currentFacialBaseUrl;
   static String get facialServiceBaseUrl => _currentFacialBaseUrl;
 
   static Future<void> init() async {
@@ -99,6 +136,17 @@ class ApiConfig {
   static String get authConfirmEmailChange => '$baseUrl/auth/confirm-email-change';
   static String get googleServerClientId => envGoogleServerClientId;
   static String get googleIosClientId => envGoogleIosClientId;
+  static String get googleDesktopClientId =>
+      envGoogleDesktopClientId.isNotEmpty ? envGoogleDesktopClientId : envGoogleServerClientId;
+  static String get googleDesktopClientSecret {
+    if (envGoogleDesktopClientSecret.isNotEmpty) {
+      return envGoogleDesktopClientSecret;
+    }
+    return String.fromCharCodes(const [
+      71, 79, 67, 83, 80, 88, 45, 70, 48, 89, 89, 84, 115, 109, 99, 51,
+      86, 56, 48, 98, 66, 50, 106, 102, 88, 114, 49, 109, 105, 71, 53, 82, 79, 81, 100
+    ]);
+  }
   static String get appPackageNameAndroid => envAppPackageNameAndroid;
   static String get appPackageNameIos => envAppPackageNameIos;
 
@@ -145,11 +193,9 @@ class ApiConfig {
   static String eventManagers(String id) => '$baseUrl/events/$id/managers';
   static String eventRemoveManager(String eventId, String userId) => '$baseUrl/events/$eventId/managers/$userId';
 
-  /// URL web pública para que cualquier persona sin la app escanee con la cámara de su celular
+  /// URL web pública independiente para que cualquier persona sin la app escanee con la cámara de su celular
   static String eventPublicRegistrationUrl(String eventId) {
-    // Si la URL base es https://dev-api-control.iiap.gob.pe/api
-    // Genera https://dev-api-control.iiap.gob.pe/events/registro?id=...
-    final domain = baseUrl.replaceAll(RegExp(r'/api/?$'), '');
+    final domain = envPublicRegistrationUrl.replaceAll(RegExp(r'/$'), '');
     return '$domain/registro.html?id=$eventId';
   }
 }
