@@ -1663,7 +1663,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
                           child: const LeafLogo(size: 20),
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
