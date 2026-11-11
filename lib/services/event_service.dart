@@ -293,6 +293,10 @@ class EventService {
 
   /// Actualiza un evento
   static Future<EventModel> updateEvent(EventModel event) async {
+    if (event.isEventosMirror) {
+      throw ApiException('Este evento se administra desde el Sistema de Eventos.', 409);
+    }
+
     try {
       final updatePayload = {
         'title': event.title,
@@ -333,7 +337,9 @@ class EventService {
         _updateLocalList(updated);
         return updated;
       }
-    } catch (_) {}
+    } catch (e) {
+      if (e is ApiException) rethrow;
+    }
 
     _updateLocalList(event);
     return event;
@@ -362,9 +368,16 @@ class EventService {
       throw ApiException('Solo Administradores y Supervisores pueden eliminar eventos.', 403);
     }
 
+    final existingEvent = eventsNotifier.value.where((e) => e.id == eventId).firstOrNull;
+    if (existingEvent != null && existingEvent.isEventosMirror) {
+      throw ApiException('Este evento se administra desde el Sistema de Eventos.', 409);
+    }
+
     try {
       await ApiClient.delete(ApiConfig.eventById(eventId));
-    } catch (_) {}
+    } catch (e) {
+      if (e is ApiException) rethrow;
+    }
 
     final list = List<EventModel>.from(eventsNotifier.value);
     list.removeWhere((e) => e.id == eventId);

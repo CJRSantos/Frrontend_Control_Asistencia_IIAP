@@ -150,6 +150,19 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         _nocheEnd = endTod;
       }
     }
+
+    if (edit?.isEventosMirror == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Este evento es gestionado por el Sistema de Eventos y no puede modificarse.'),
+            backgroundColor: Color(0xFF6366F1),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      });
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -511,6 +524,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           content: Text('La fecha y hora de culminación debe ser posterior al inicio.'),
           backgroundColor: Color(0xFFDC2626),
           behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (widget.eventToEdit?.isEventosMirror == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Este evento se administra desde el Sistema de Eventos.'),
+          backgroundColor: Color(0xFFEF4444),
         ),
       );
       return;
