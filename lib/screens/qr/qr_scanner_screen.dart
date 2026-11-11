@@ -76,24 +76,47 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       final uri = Uri.tryParse(cleanCode);
       final hasEventIdParam = uri != null &&
           (uri.queryParameters.containsKey('id') || uri.queryParameters.containsKey('event_id'));
-      final isEventUrlOrCode = widget.target == ScanTarget.eventAttendance ||
-          cleanCode.startsWith('IIAP-EVT-') ||
+
+      final looksLikeUuid = RegExp(
+        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+      ).hasMatch(cleanCode);
+
+      final isEventPattern = cleanCode.startsWith('IIAP-EVT-') ||
+          cleanCode.startsWith('IIAP-EVENT-') ||
+          cleanCode.startsWith('event_') ||
+          cleanCode.startsWith('evt_') ||
           cleanCode.contains('registro.html') ||
           cleanCode.contains('/registro') ||
           cleanCode.contains('events') ||
+          cleanCode.contains('/event/') ||
           (hasEventIdParam &&
               (cleanCode.contains('iiap') ||
                   cleanCode.contains('gob.pe') ||
                   cleanCode.contains('localhost') ||
                   cleanCode.contains('192.168')));
 
-      final isEventCode = isEventUrlOrCode;
+      final matchesKnownEvent = EventService.eventsNotifier.value.any(
+        (e) =>
+            e.id == cleanCode ||
+            e.qrCode == cleanCode ||
+            (cleanCode.contains(e.id) &&
+                !cleanCode.startsWith('IIAP-ASSIGN-') &&
+                !cleanCode.startsWith('IIAP-SHA-')),
+      );
+
+      final isEventCode = widget.target == ScanTarget.eventAttendance ||
+          isEventPattern ||
+          matchesKnownEvent ||
+          (widget.target != ScanTarget.roleAssignment &&
+              widget.target != ScanTarget.supervisorPromotion &&
+              looksLikeUuid);
 
       if (isEventCode) {
         String? targetEventId = widget.eventId;
         if (targetEventId == null) {
-          if (cleanCode.startsWith('IIAP-EVT-')) {
-            final withoutPrefix = cleanCode.substring('IIAP-EVT-'.length);
+          if (cleanCode.startsWith('IIAP-EVT-') || cleanCode.startsWith('IIAP-EVENT-')) {
+            final prefix = cleanCode.startsWith('IIAP-EVT-') ? 'IIAP-EVT-' : 'IIAP-EVENT-';
+            final withoutPrefix = cleanCode.substring(prefix.length);
             final withoutQuery = withoutPrefix.split('?').first;
 
             // 1. Buscar en la lista de eventos en memoria
@@ -112,19 +135,32 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               final match = RegExp(r'^(evt_\d+_\d+)').firstMatch(withoutQuery);
               targetEventId = match != null ? match.group(1) : withoutQuery;
             }
-          } else if (hasEventIdParam) {
+          } else if (hasEventIdParam && uri != null) {
             targetEventId = uri.queryParameters['id'] ?? uri.queryParameters['event_id'];
+          } else if (cleanCode.startsWith('event_')) {
+            targetEventId = cleanCode.substring('event_'.length).split('?').first;
+          } else if (cleanCode.startsWith('evt_')) {
+            targetEventId = cleanCode.split('?').first;
+          } else if (looksLikeUuid) {
+            targetEventId = cleanCode;
+          } else {
+            targetEventId = cleanCode.split('?').first;
           }
         }
-        if (targetEventId == null) {
-          if (EventService.eventsNotifier.value.isEmpty) {
-            await EventService.getEvents();
+
+        // Si todavía no lo encontramos en memoria, intentamos refrescar la lista de eventos del backend
+        if (targetEventId == null || !EventService.eventsNotifier.value.any((e) => e.id == targetEventId)) {
+          if (ConnectivityService.isOnline) {
+            try {
+              await EventService.getEvents(forceRefresh: true);
+            } catch (_) {}
           }
           final events = EventService.eventsNotifier.value;
           for (final ev in events) {
             if (ev.qrCode == cleanCode ||
                 cleanCode.contains(ev.id) ||
-                (ev.qrCode != null && cleanCode.contains(ev.qrCode!))) {
+                (ev.qrCode != null && cleanCode.contains(ev.qrCode!)) ||
+                (targetEventId != null && (ev.id == targetEventId || ev.id.contains(targetEventId)))) {
               targetEventId = ev.id;
               break;
             }
@@ -172,6 +208,24 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               final ms = int.tryParse(uri.queryParameters['end']!);
               if (ms != null) endParam = DateTime.fromMillisecondsSinceEpoch(ms);
             }
+          }
+
+          // Fallbacks por expresión regular si Uri.tryParse no los capturó
+          if (titleParam == null && cleanCode.contains('title=')) {
+            final m = RegExp(r'title=([^&]+)').firstMatch(cleanCode);
+            if (m != null) titleParam = Uri.decodeComponent(m.group(1)!);
+          }
+          if (locParam == null && cleanCode.contains('loc=')) {
+            final m = RegExp(r'loc=([^&]+)').firstMatch(cleanCode);
+            if (m != null) locParam = Uri.decodeComponent(m.group(1)!);
+          }
+          if (uoParam == null && cleanCode.contains('uo=')) {
+            final m = RegExp(r'uo=([^&]+)').firstMatch(cleanCode);
+            if (m != null) uoParam = Uri.decodeComponent(m.group(1)!);
+          }
+          if (typeParam == null && cleanCode.contains('type=')) {
+            final m = RegExp(r'type=([^&]+)').firstMatch(cleanCode);
+            if (m != null) typeParam = m.group(1);
           }
 
           final updatedEvent = await EventService.registerAttendance(
@@ -314,8 +368,38 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         if (mounted) Navigator.of(context).pop(true);
         return;
       } on ApiException catch (attendanceError) {
-        // 3. Detección automática: Solo si el código no coincide con asistencia, verificar si es de Supervisor
+        // 3. Detección automática de respaldo: si el código no fue de asistencia diaria, verificar si es de Evento o Supervisor
         if (attendanceError.message.contains('no es válido o ya fue dado de baja')) {
+          // 3.1 Probar si coincide con un evento institucional conocido
+          try {
+            final events = EventService.eventsNotifier.value;
+            EventModel? matchedEvt;
+            for (final ev in events) {
+              if (ev.qrCode == cleanCode ||
+                  cleanCode.contains(ev.id) ||
+                  (ev.qrCode != null && cleanCode.contains(ev.qrCode!))) {
+                matchedEvt = ev;
+                break;
+              }
+            }
+            if (matchedEvt != null) {
+              final updated = await EventService.registerAttendance(
+                eventId: matchedEvt.id,
+                qrCode: cleanCode,
+              );
+              if (!mounted) return;
+              await _showSuccessDialog(
+                title: '¡Asistencia al Evento Confirmada!',
+                message: 'Tu asistencia ha sido registrada exitosamente para el evento institucional:\n"${updated.title}".',
+                detail: 'Participante: ${StorageService.currentUser?.fullName ?? ""}',
+                isShaVerified: true,
+              );
+              if (mounted) Navigator.of(context).pop(true);
+              return;
+            }
+          } catch (_) {}
+
+          // 3.2 Probar si es QR de ascenso a Supervisor
           try {
             final supervisorResult = await AttendanceService.scanSupervisorQr(cleanCode);
             await AuthService.getProfile();
@@ -325,7 +409,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             if (mounted) Navigator.of(context).pop(true);
             return;
           } catch (_) {
-            // Si tampoco fue QR de supervisor, propagamos el error original de asistencia
+            // Si tampoco fue QR de evento ni supervisor, propagamos el error original de asistencia
             throw attendanceError;
           }
         }
@@ -574,6 +658,20 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   void _openManualInputDialog() {
     final textCtrl = TextEditingController();
 
+    final String manualTitle = widget.target == ScanTarget.eventAttendance
+        ? 'Ingreso de Código de Evento'
+        : (widget.target == ScanTarget.attendance
+            ? 'Ingreso de Código QR / Hash'
+            : 'Código de Designación');
+
+    final String manualDescription = widget.target == ScanTarget.eventAttendance
+        ? 'Ingresa o pega el código QR, URL o ID del evento institucional:'
+        : 'Pega el Hash SHA-256 o código emitido por el Administrador / Supervisor:';
+
+    final String manualHint = widget.target == ScanTarget.eventAttendance
+        ? 'Pega el código o enlace QR del evento aquí...'
+        : 'Pega el código QR o Hash SHA-256 aquí...';
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -584,9 +682,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             title: Text(
-              widget.target == ScanTarget.attendance
-                  ? 'Ingreso de Hash QR (SHA-256)'
-                  : 'Código de Designación',
+              manualTitle,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -598,7 +694,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Pega el Hash SHA-256 emitido por el Administrador o Supervisor:',
+                  manualDescription,
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -613,7 +709,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                     fontSize: 13,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Pega el Hash SHA-256 aquí...',
+                    hintText: manualHint,
                     hintStyle: TextStyle(
                       fontSize: 12,
                       color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
@@ -677,8 +773,26 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAttendance = widget.target == ScanTarget.attendance;
-    final title = isAttendance ? 'Escanear QR de Asistencia' : 'Escanear Ascenso a Supervisor';
+    final String title;
+    final String instructionText;
+    switch (widget.target) {
+      case ScanTarget.attendance:
+        title = 'Escanear QR de Asistencia';
+        instructionText = 'Enfoca el código QR emitido por el supervisor o del evento';
+        break;
+      case ScanTarget.eventAttendance:
+        title = 'Escanear QR del Evento';
+        instructionText = 'Enfoca el código QR proyectado en el evento';
+        break;
+      case ScanTarget.supervisorPromotion:
+        title = 'Escanear Ascenso a Supervisor';
+        instructionText = 'Enfoca el QR otorgado por el Administrador';
+        break;
+      case ScanTarget.roleAssignment:
+        title = 'Escanear Asignación de Rol';
+        instructionText = 'Enfoca el QR de designación o rol';
+        break;
+    }
     final scanBoxSize = Responsive.isTablet(context) ? 360.0 : 260.0;
 
     if (Platform.isWindows) {
@@ -911,9 +1025,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF4ADE80), size: 18),
                   const SizedBox(width: 8),
                   Text(
-                    isAttendance
-                        ? 'Enfoca el código QR SHA emitido por el supervisor'
-                        : 'Enfoca el QR otorgado por el Administrador',
+                    instructionText,
                     style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                 ],
