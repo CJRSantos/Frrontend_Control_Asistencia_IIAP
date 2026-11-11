@@ -541,44 +541,56 @@ class EventService {
       throw ApiException('Debes iniciar sesión para marcar asistencia.', 401);
     }
 
-    // 1. Intentar llamada al backend
-    try {
-      final body = {
-        'user_id': currentUser.id,
-        'user_name': currentUser.fullName,
-        'user_email': currentUser.email,
-        'user_position': currentUser.position ?? '',
-        'user_department': currentUser.department ?? '',
-        'document_number': currentUser.documentNumber ?? '',
-        'phone_number': currentUser.phoneNumber ?? '',
-        'is_external': false,
-        if (shift != null && shift.isNotEmpty) 'shift': shift.trim(),
-        'registered_at': DateTime.now().toUtc().toIso8601String(),
-      };
-      final res = await ApiClient.post(
-        ApiConfig.eventRegisterAttendance(eventId),
-        body: body,
-      );
-      if (res is Map<String, dynamic>) {
-        final updated = EventModel.fromJson(res);
-        _updateLocalList(updated);
-        return updated;
+    final safeEmail = (currentUser.email != null && currentUser.email!.contains('@'))
+        ? currentUser.email!.trim().toLowerCase()
+        : '${(currentUser.documentNumber?.isNotEmpty == true ? currentUser.documentNumber : currentUser.username ?? "usuario")}@iiap.gob.pe';
+
+    // 1. Intentar llamada al backend si hay conectividad
+    if (ConnectivityService.isOnline) {
+      try {
+        final body = {
+          'user_id': currentUser.id,
+          'user_name': currentUser.fullName,
+          'user_email': safeEmail,
+          'user_position': currentUser.position ?? '',
+          'user_department': currentUser.department ?? '',
+          'document_number': currentUser.documentNumber ?? '',
+          'phone_number': currentUser.phoneNumber ?? '',
+          'is_external': false,
+          if (shift != null && shift.isNotEmpty) 'shift': shift.trim(),
+          'registered_at': DateTime.now().toUtc().toIso8601String(),
+        };
+        final res = await ApiClient.post(
+          ApiConfig.eventRegisterAttendance(eventId),
+          body: body,
+        );
+        if (res is Map<String, dynamic>) {
+          final updated = EventModel.fromJson(res);
+          _updateLocalList(updated);
+          return updated;
+        }
+      } on ApiException catch (e) {
+        // Propagar duplicados de negocio informativos
+        if (e.statusCode == 409 ||
+            e.message.toLowerCase().contains('ya se encuentra') ||
+            e.message.toLowerCase().contains('ya registraste')) {
+          rethrow;
+        }
+        debugPrint('EventService: Backend reportó error o 404, aplicando fallback offline inmediato: $e');
+      } catch (e) {
+        debugPrint('EventService: Fallback a registro de evento local offline: $e');
       }
-    } on ApiException catch (e) {
-      // Propagar únicamente duplicados de negocio
-      if (e.statusCode == 409 || e.message.toLowerCase().contains('ya se encuentra') || e.message.toLowerCase().contains('ya registraste')) {
-        rethrow;
-      }
-      debugPrint('EventService: Backend reportó error o 404, aplicando fallback offline inmediato: $e');
-    } catch (e) {
-      debugPrint('EventService: Fallback a registro de evento local offline: $e');
     }
 
     // 2. Fallback de registro local (Offline-First o evento no sincronizado en backend aún)
     var list = List<EventModel>.from(eventsNotifier.value);
     var idx = list.indexWhere((e) => e.id == eventId);
     if (idx == -1) {
-      await getEvents(forceRefresh: true);
+      if (ConnectivityService.isOnline) {
+        try {
+          await getEvents(forceRefresh: true);
+        } catch (_) {}
+      }
       list = List<EventModel>.from(eventsNotifier.value);
       idx = list.indexWhere((e) => e.id == eventId);
     }
@@ -587,9 +599,9 @@ class EventService {
     if (idx == -1) {
       final reconstructed = EventModel(
         id: eventId,
-        title: eventTitle ?? 'Evento Institucional IIAP',
+        title: (eventTitle != null && eventTitle.isNotEmpty) ? eventTitle : 'Evento Institucional IIAP',
         description: 'Evento registrado mediante código QR institucional.',
-        location: eventLocation ?? 'IIAP - Sede Central',
+        location: (eventLocation != null && eventLocation.isNotEmpty) ? eventLocation : 'IIAP - Sede Central',
         startDate: startDate ?? DateTime.now(),
         endDate: endDate ?? DateTime.now().add(const Duration(hours: 3)),
         type: EventType.fromString(eventType),
@@ -611,15 +623,19 @@ class EventService {
     final targetEvent = list[idx];
 
     // Verificar si ya registró asistencia en este dispositivo
-    if (targetEvent.isUserModelRegistered(currentUser)) {
-      throw ApiException('Ya registraste tu asistencia para este evento previamente.');
+    if (targetEvent.isUserModelRegistered(currentUser, shift: shift)) {
+      throw ApiException(
+        shift != null && shift.isNotEmpty
+            ? 'Ya registraste tu asistencia para el turno "$shift" en este evento.'
+            : 'Ya registraste tu asistencia para este evento previamente.',
+      );
     }
 
     final newAttendee = EventAttendeeModel(
       id: 'att_${currentUser.id}_${DateTime.now().millisecondsSinceEpoch}',
       userId: currentUser.id,
       userName: currentUser.fullName,
-      userEmail: currentUser.email,
+      userEmail: safeEmail,
       userPosition: currentUser.position,
       userDepartment: currentUser.department,
       documentNumber: currentUser.documentNumber,
@@ -725,12 +741,17 @@ class EventService {
             final item = jsonDecode(raw);
             final eventId = item['event_id'];
             final att = item['attendee'];
+            String attEmail = (att['user_email'] ?? att['userEmail'] ?? '').toString().trim();
+            if (!attEmail.contains('@')) {
+              final doc = (att['document_number'] ?? att['documentNumber'] ?? 'participante').toString().trim();
+              attEmail = '$doc@iiap.gob.pe';
+            }
             await ApiClient.post(
               ApiConfig.eventRegisterAttendance(eventId),
               body: {
                 'user_id': att['user_id'] ?? att['userId'] ?? '',
                 'user_name': att['user_name'] ?? att['userName'] ?? 'Participante',
-                'user_email': att['user_email'] ?? att['userEmail'] ?? 'participante@iiap.gob.pe',
+                'user_email': attEmail,
                 'document_number': att['document_number'] ?? att['documentNumber'] ?? '',
                 'phone_number': att['phone_number'] ?? att['phoneNumber'] ?? '',
                 'user_position': att['user_position'] ?? att['userPosition'] ?? '',

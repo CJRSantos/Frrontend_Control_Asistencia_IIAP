@@ -273,12 +273,16 @@ class EventModel {
         status != EventStatus.CANCELLED;
   }
 
-  bool isUserRegistered(String userId, {String? email, String? documentNumber}) {
+  bool isUserRegistered(String userId, {String? email, String? documentNumber, String? shift}) {
     final cleanId = userId.trim();
     final cleanEmail = email?.trim().toLowerCase();
     final cleanDoc = documentNumber?.trim();
+    final cleanShift = shift?.trim().toLowerCase();
 
     return attendees.any((a) {
+      if (cleanShift != null && cleanShift.isNotEmpty && a.shift != null && a.shift!.isNotEmpty) {
+        if (a.shift!.trim().toLowerCase() != cleanShift) return false;
+      }
       if (cleanId.isNotEmpty && a.userId.isNotEmpty && a.userId == cleanId) {
         return true;
       }
@@ -292,12 +296,12 @@ class EventModel {
     });
   }
 
-  bool isUserModelRegistered(dynamic user) {
+  bool isUserModelRegistered(dynamic user, {String? shift}) {
     if (user == null) return false;
     final String uId = (user.id ?? '').toString();
     final String? uEmail = user.email?.toString();
     final String? uDoc = user.documentNumber?.toString();
-    return isUserRegistered(uId, email: uEmail, documentNumber: uDoc);
+    return isUserRegistered(uId, email: uEmail, documentNumber: uDoc, shift: shift);
   }
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
