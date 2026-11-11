@@ -6,7 +6,7 @@ import '../config/api_config.dart';
 import '../models/event_model.dart';
 import 'api_client.dart';
 import 'storage_service.dart';
-
+import 'connectivity_service.dart';
 import 'notification_service.dart';
 
 class EventService {
@@ -541,9 +541,9 @@ class EventService {
       throw ApiException('Debes iniciar sesión para marcar asistencia.', 401);
     }
 
-    final safeEmail = (currentUser.email != null && currentUser.email!.contains('@'))
-        ? currentUser.email!.trim().toLowerCase()
-        : '${(currentUser.documentNumber?.isNotEmpty == true ? currentUser.documentNumber : currentUser.username ?? "usuario")}@iiap.gob.pe';
+    final safeEmail = (currentUser.email.isNotEmpty && currentUser.email.contains('@'))
+        ? currentUser.email.trim().toLowerCase()
+        : '${(currentUser.documentNumber?.isNotEmpty == true ? currentUser.documentNumber : currentUser.id)}@iiap.gob.pe';
 
     // 1. Intentar llamada al backend si hay conectividad
     if (ConnectivityService.isOnline) {
