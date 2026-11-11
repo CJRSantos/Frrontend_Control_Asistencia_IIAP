@@ -13,6 +13,7 @@ import '../../services/event_service.dart';
 import '../../services/connectivity_service.dart';
 import '../../services/offline_sync_service.dart';
 import '../../models/qr_model.dart';
+import '../../models/event_model.dart';
 import '../../widgets/app_button.dart';
 
 enum ScanTarget {
@@ -248,7 +249,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           );
           if (mounted) Navigator.of(context).pop(true);
           return;
-        } else if (widget.target == ScanTarget.eventAttendance || isEventUrlOrCode) {
+        } else if (widget.target == ScanTarget.eventAttendance || isEventCode) {
           throw ApiException(
             'El código QR escaneado corresponde a un evento institucional, pero no se encontró un evento activo asociado o ya ha concluido.',
           );
@@ -793,6 +794,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         instructionText = 'Enfoca el QR de designación o rol';
         break;
     }
+    final isAttendance = widget.target == ScanTarget.attendance;
     final scanBoxSize = Responsive.isTablet(context) ? 360.0 : 260.0;
 
     if (Platform.isWindows) {
