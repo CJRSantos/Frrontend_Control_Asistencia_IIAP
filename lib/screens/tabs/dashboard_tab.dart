@@ -3051,16 +3051,26 @@ class _DashboardTabState extends State<DashboardTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (featuredEvent.imageUrl != null && featuredEvent.imageUrl!.trim().isNotEmpty) ...[
-                              Container(
-                                height: 125,
-                                width: double.infinity,
-                                margin: const EdgeInsets.only(bottom: 12),
-                                child: EventImageWidget(
-                                  imageUrl: featuredEvent.imageUrl,
-                                  height: 125,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  borderRadius: BorderRadius.circular(14),
+                              GestureDetector(
+                                onTap: () => EventImageWidget.showFullScreen(
+                                  context,
+                                  featuredEvent.imageUrl,
+                                  title: featuredEvent.title,
+                                ),
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: Container(
+                                    height: 125,
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    child: EventImageWidget(
+                                      imageUrl: featuredEvent.imageUrl,
+                                      height: 125,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -5218,16 +5228,26 @@ _buildCircularMuteBell(context),
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (featuredEvent.imageUrl != null && featuredEvent.imageUrl!.trim().isNotEmpty) ...[
-                    Container(
-                      height: 130,
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 14),
-                      child: EventImageWidget(
-                        imageUrl: featuredEvent.imageUrl,
-                        height: 130,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        borderRadius: BorderRadius.circular(14),
+                    GestureDetector(
+                      onTap: () => EventImageWidget.showFullScreen(
+                        context,
+                        featuredEvent.imageUrl,
+                        title: featuredEvent.title,
+                      ),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: Container(
+                          height: 130,
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 14),
+                          child: EventImageWidget(
+                            imageUrl: featuredEvent.imageUrl,
+                            height: 130,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
                       ),
                     ),
                   ],

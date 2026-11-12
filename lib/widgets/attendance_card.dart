@@ -341,89 +341,100 @@ class AttendanceCard extends StatelessWidget {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: ThemeService.cardBg(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: ThemeService.cardBg(context),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(
-                  record.type == AttendanceType.CHECK_IN
-                      ? (isPunctual ? Icons.check_circle_rounded : Icons.cancel_rounded)
-                      : Icons.verified_rounded,
-                  color: record.type == AttendanceType.CHECK_IN
-                      ? (isPunctual ? const Color(0xFF16A34A) : const Color(0xFFDC2626))
-                      : const Color(0xFF2563EB),
-                  size: 26,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Detalle de Asistencia',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildDetailRow('Colaborador:', record.userName ?? 'Usuario Registrado', isDark),
-            _buildDetailRow('Tipo de Marca:', record.type.label, isDark),
-            _buildDetailRow('Hora Registrada:', _formatTime(record.timestamp), isDark),
-            _buildDetailRow('Fecha:', _formatDate(record.timestamp), isDark),
-            _buildDetailRow('Horario:', schedule.timeRangeFormatted12h, isDark),
-            _buildDetailRow('Tolerancia de Entrada:', 'Hasta las ${schedule.toleranceLimitFormatted}', isDark),
-            if (record.isManual)
-              _buildDetailRow('Modalidad:', 'MarcaciÃ³n Manual de Emergencia', isDark, highlightColor: Colors.amber),
-            if (record.observation != null && record.observation!.isNotEmpty)
-              _buildDetailRow('JustificaciÃ³n / Motivo:', record.observation!, isDark),
-            _buildDetailRow(
-              'Puntualidad:',
-              record.type == AttendanceType.CHECK_IN
-                  ? (isPunctual ? 'A tiempo' : 'Tarde')
-                  : 'Salida Registrada',
-              isDark,
-              highlightColor: record.type == AttendanceType.CHECK_IN
-                  ? (isPunctual ? const Color(0xFF16A34A) : const Color(0xFFDC2626))
-                  : null,
-            ),
-            if (record.markedByName != null)
-              _buildDetailRow('Supervisor Autorizador:', record.markedByName!, isDark),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2D5E2A),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Entendido'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(
+                        record.type == AttendanceType.CHECK_IN
+                            ? (isPunctual ? Icons.check_circle_rounded : Icons.cancel_rounded)
+                            : Icons.verified_rounded,
+                        color: record.type == AttendanceType.CHECK_IN
+                            ? (isPunctual ? const Color(0xFF16A34A) : const Color(0xFFDC2626))
+                            : const Color(0xFF2563EB),
+                        size: 26,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Detalle de Asistencia',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDetailRow('Colaborador:', record.userName ?? 'Usuario Registrado', isDark),
+                  _buildDetailRow('Tipo de Marca:', record.type.label, isDark),
+                  _buildDetailRow('Hora Registrada:', _formatTime(record.timestamp), isDark),
+                  _buildDetailRow('Fecha:', _formatDate(record.timestamp), isDark),
+                  _buildDetailRow('Horario:', schedule.timeRangeFormatted12h, isDark),
+                  _buildDetailRow('Tolerancia de Entrada:', 'Hasta las ${schedule.toleranceLimitFormatted}', isDark),
+                  if (record.isManual)
+                    _buildDetailRow('Modalidad:', 'Marcación Manual de Emergencia', isDark, highlightColor: Colors.amber),
+                  if (record.observation != null && record.observation!.isNotEmpty)
+                    _buildDetailRow('Justificación / Motivo:', record.observation!, isDark),
+                  _buildDetailRow(
+                    'Puntualidad:',
+                    record.type == AttendanceType.CHECK_IN
+                        ? (isPunctual ? 'A tiempo' : 'Tarde')
+                        : 'Salida Registrada',
+                    isDark,
+                    highlightColor: record.type == AttendanceType.CHECK_IN
+                        ? (isPunctual ? const Color(0xFF16A34A) : const Color(0xFFDC2626))
+                        : null,
+                  ),
+                  if (record.markedByName != null)
+                    _buildDetailRow('Supervisor Autorizador:', record.markedByName!, isDark),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2D5E2A),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Entendido'),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

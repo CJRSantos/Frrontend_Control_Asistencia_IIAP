@@ -64,112 +64,121 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
   void _showImageSourceModal() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF13111C) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(
-              color: ThemeService.cardBorder(ctx),
-              width: 1,
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.85,
             ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF13111C) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(
+                  color: ThemeService.cardBorder(ctx),
+                  width: 1,
                 ),
-                const SizedBox(height: 18),
-                Text(
-                  'AÑADIR FONDO DE PANTALLA',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.bold,
-                    color: ThemeService.primaryColor(ctx),
-                  ),
+              ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'AÑADIR FONDO DE PANTALLA',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.bold,
+                        color: ThemeService.primaryColor(ctx),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: ThemeService.containerColor(ctx),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.camera_alt_rounded,
+                          color: ThemeService.primaryColor(ctx),
+                          size: 22,
+                        ),
+                      ),
+                      title: Text(
+                        'Tomar Foto con la Cámara',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Captura una nueva imagen al instante',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _pickCustomImage(ImageSource.camera);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: ThemeService.containerColor(ctx),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.photo_library_rounded,
+                          color: ThemeService.primaryColor(ctx),
+                          size: 22,
+                        ),
+                      ),
+                      title: Text(
+                        'Elegir de la Galería',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Selecciona de tus fotos o descargas',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _pickCustomImage(ImageSource.gallery);
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: ThemeService.containerColor(ctx),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.camera_alt_rounded,
-                      color: ThemeService.primaryColor(ctx),
-                      size: 22,
-                    ),
-                  ),
-                  title: Text(
-                    'Tomar Foto con la Cámara',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Captura una nueva imagen al instante',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickCustomImage(ImageSource.camera);
-                  },
-                ),
-                const SizedBox(height: 8),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: ThemeService.containerColor(ctx),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.photo_library_rounded,
-                      color: ThemeService.primaryColor(ctx),
-                      size: 22,
-                    ),
-                  ),
-                  title: Text(
-                    'Elegir de la Galería',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Selecciona de tus fotos o descargas',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickCustomImage(ImageSource.gallery);
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         );

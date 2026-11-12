@@ -313,6 +313,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
 
     await showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: isDark ? const Color(0xFF132228) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -322,74 +323,80 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
           child: Responsive.constrained(
             context,
             maxTabletWidth: 500,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white24 : Colors.black12,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Anticipación de Aviso para Eventos',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Selecciona con cuánta anticipación deseas recibir la alarma previa a una capacitación o evento.',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...options.map((opt) {
-                    final mins = opt['minutes'] as int;
-                    final isSelected = mins == _leadMinutes;
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                        color: isSelected ? const Color(0xFF10B981) : (isDark ? Colors.white38 : Colors.black38),
-                      ),
-                      title: Text(
-                        opt['label'] as String,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : Colors.black12,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setInt('notif_events_lead_minutes', mins);
-                        if (mounted) setState(() => _leadMinutes = mins);
-                        if (_isMasterEnabled && _notifEvents) {
-                          await NotificationService.syncEventSettings(
-                            eventsEnabled: _notifEvents,
-                            closeEnabled: _notifEventClose,
-                            events: EventService.eventsNotifier.value,
-                          );
-                        }
-                        if (_notifHapticEnabled) HapticFeedback.selectionClick();
-                      },
-                    );
-                  }),
-                ],
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Anticipación de Aviso para Eventos',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Selecciona con cuánta anticipación deseas recibir la alarma previa a una capacitación o evento.',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...options.map((opt) {
+                      final mins = opt['minutes'] as int;
+                      final isSelected = mins == _leadMinutes;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                          color: isSelected ? const Color(0xFF10B981) : (isDark ? Colors.white38 : Colors.black38),
+                        ),
+                        title: Text(
+                          opt['label'] as String,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setInt('notif_events_lead_minutes', mins);
+                          if (mounted) setState(() => _leadMinutes = mins);
+                          if (_isMasterEnabled && _notifEvents) {
+                            await NotificationService.syncEventSettings(
+                              eventsEnabled: _notifEvents,
+                              closeEnabled: _notifEventClose,
+                              events: EventService.eventsNotifier.value,
+                            );
+                          }
+                          if (_notifHapticEnabled) HapticFeedback.selectionClick();
+                        },
+                      );
+                    }),
+                  ],
+                ),
               ),
             ),
           ),
@@ -425,6 +432,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
 
     await showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: isDark ? const Color(0xFF132228) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -436,122 +444,128 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
               child: Responsive.constrained(
                 context,
                 maxTabletWidth: 500,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white24 : Colors.black12,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        'Tono de Alerta y Notificación',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Toca cualquier tono para escuchar su sonido acústico y elegir tu preferido.',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ...tones.map((t) {
-                        final isSelected = t['id'] == _alertToneId;
-                        return ListTile(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          tileColor: isSelected
-                              ? (isDark ? const Color(0xFF0F3224) : const Color(0xFFE8F5E9))
-                              : Colors.transparent,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
-                          leading: Icon(
-                            isSelected ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
-                            color: isSelected ? const Color(0xFF10B981) : (isDark ? Colors.white38 : Colors.black38),
-                            size: 22,
-                          ),
-                          title: Text(
-                            t['title']!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.85,
+                  ),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white24 : Colors.black12,
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
-                          subtitle: Text(
-                            t['desc']!,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                            ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Tono de Alerta y Notificación',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
-                          trailing: isSelected
-                              ? const Icon(Icons.volume_up_rounded, color: Color(0xFF10B981), size: 20)
-                              : null,
-                          onTap: () async {
-                            setModalState(() => _alertToneId = t['id']!);
-                            if (mounted) setState(() => _alertToneId = t['id']!);
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Toca cualquier tono para escuchar su sonido acústico y elegir tu preferido.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ...tones.map((t) {
+                          final isSelected = t['id'] == _alertToneId;
+                          return ListTile(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            tileColor: isSelected
+                                ? (isDark ? const Color(0xFF0F3224) : const Color(0xFFE8F5E9))
+                                : Colors.transparent,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
+                            leading: Icon(
+                              isSelected ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
+                              color: isSelected ? const Color(0xFF10B981) : (isDark ? Colors.white38 : Colors.black38),
+                              size: 22,
+                            ),
+                            title: Text(
+                              t['title']!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            subtitle: Text(
+                              t['desc']!,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(Icons.volume_up_rounded, color: Color(0xFF10B981), size: 20)
+                                : null,
+                            onTap: () async {
+                              setModalState(() => _alertToneId = t['id']!);
+                              if (mounted) setState(() => _alertToneId = t['id']!);
 
-                            // 1. Reproducir sonido de inmediato al tocar
-                            await NotificationService.previewTone(t['id']!);
+                              // 1. Reproducir sonido de inmediato al tocar
+                              await NotificationService.previewTone(t['id']!);
 
-                            // 2. Vibración háptica si está habilitada
-                            if (_notifHapticEnabled) {
-                              if (t['id'] == 'alarma_energizada') {
-                                HapticFeedback.heavyImpact();
-                              } else if (t['id'] == 'campana_suave') {
-                                HapticFeedback.lightImpact();
-                              } else {
-                                HapticFeedback.selectionClick();
+                              // 2. Vibración háptica si está habilitada
+                              if (_notifHapticEnabled) {
+                                if (t['id'] == 'alarma_energizada') {
+                                  HapticFeedback.heavyImpact();
+                                } else if (t['id'] == 'campana_suave') {
+                                  HapticFeedback.lightImpact();
+                                } else {
+                                  HapticFeedback.selectionClick();
+                                }
                               }
-                            }
 
-                            // 3. Persistir selección
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.setString('notif_alert_tone', t['id']!);
-                            await NotificationService.reloadPreferences();
-                            if (_isMasterEnabled) {
-                              await NotificationService.scheduleAllAttendanceReminders();
-                              await NotificationService.syncEventSettings(
-                                eventsEnabled: _notifEvents,
-                                closeEnabled: _notifEventClose,
-                                events: EventService.eventsNotifier.value,
-                              );
-                            }
-                          },
-                        );
-                      }),
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              // 3. Persistir selección
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('notif_alert_tone', t['id']!);
+                              await NotificationService.reloadPreferences();
+                              if (_isMasterEnabled) {
+                                await NotificationService.scheduleAllAttendanceReminders();
+                                await NotificationService.syncEventSettings(
+                                  eventsEnabled: _notifEvents,
+                                  closeEnabled: _notifEventClose,
+                                  events: EventService.eventsNotifier.value,
+                                );
+                              }
+                            },
+                          );
+                        }),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            onPressed: () {
+                              NotificationService.stopAudioPreview();
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Aceptar y Guardar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                           ),
-                          onPressed: () {
-                            NotificationService.stopAudioPreview();
-                            Navigator.pop(ctx);
-                          },
-                          child: const Text('Aceptar y Guardar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -566,6 +580,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: isDark ? const Color(0xFF132228) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -575,12 +590,17 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
           child: Responsive.constrained(
             context,
             maxTabletWidth: 500,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   Row(
                     children: [
                       Container(
@@ -667,10 +687,11 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
               ),
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Future<void> _triggerTest() async {
     setState(() => _isTesting = true);
