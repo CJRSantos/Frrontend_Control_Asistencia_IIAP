@@ -605,7 +605,7 @@ class _DashboardTabState extends State<DashboardTab> {
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: Text(
-                                                evt.type.displayName.toUpperCase(),
+                                                evt.displayTypeName.toUpperCase(),
                                                 style: const TextStyle(
                                                   fontSize: 8.5,
                                                   fontWeight: FontWeight.bold,
@@ -4835,7 +4835,7 @@ _buildCircularMuteBell(context),
                               border: Border.all(color: const Color(0xFF165942)),
                             ),
                             child: Text(
-                              featuredEvent.type.displayName.toUpperCase(),
+                              featuredEvent.displayTypeName.toUpperCase(),
                               style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF10B981), letterSpacing: 0.4),
                             ),
                           ),

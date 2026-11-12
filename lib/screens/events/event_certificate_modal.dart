@@ -209,7 +209,7 @@ class EventCertificateModal extends StatelessWidget {
                       ),
                       pw.SizedBox(height: 4),
                       pw.Text(
-                        'Tipo: ${event.type.displayName.toUpperCase()}  |  Ubicación: ${event.location}',
+                        'Tipo: ${event.displayTypeName.toUpperCase()}  |  Ubicación: ${event.location}',
                         style: const pw.TextStyle(fontSize: 9.5, color: mutedText),
                         textAlign: pw.TextAlign.center,
                       ),
@@ -470,7 +470,7 @@ class EventCertificateModal extends StatelessWidget {
                     // Detalles del Evento
                     _buildRow(context, 'Evento:', event.title, isBold: true),
                     const SizedBox(height: 8),
-                    _buildRow(context, 'Tipo de Evento:', event.type.displayName),
+                    _buildRow(context, 'Tipo de Evento:', event.displayTypeName),
                     const SizedBox(height: 8),
                     _buildRow(context, 'Fecha:', _formatDateTime(event.startDate)),
                     const SizedBox(height: 8),

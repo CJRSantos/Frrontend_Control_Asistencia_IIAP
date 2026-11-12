@@ -1316,7 +1316,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              _currentEvent.type.displayName,
+                              _currentEvent.displayTypeName,
                               style: const TextStyle(
                                 color: mintGreen,
                                 fontSize: 11.5,
@@ -1700,12 +1700,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     // PESTAÑA 1: Control & QR (solo visible para roles autorizados)
                     _buildQrOptionCard(
                       context: context,
-                      title: 'QR para Personal IIAP y Registrados',
-                      badge: 'SISTEMA IIAP',
+                      title: 'Código QR de Asistencia',
+                      badge: 'OFICIAL IIAP',
                       badgeColor: const Color(0xFF10B981),
-                      icon: Icons.domain_rounded,
-                      description: 'Proyecta el código para que los colaboradores con la app móvil confirmen su asistencia al instante.',
-                      buttonText: 'QR Registrados',
+                      icon: Icons.qr_code_2_rounded,
+                      description: 'Proyecta el código para el registro de participantes y confirmación de asistencia en tiempo real.',
+                      buttonText: 'QR',
                       buttonColor: const Color(0xFF10B981),
                       onTap: () {
                         Navigator.of(context).push(
@@ -1713,27 +1713,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             builder: (_) => EventQrDisplayScreen(
                               event: _currentEvent,
                               initialMode: EventQrMode.registered,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    _buildQrOptionCard(
-                      context: context,
-                      title: 'QR para Invitados y Público Externo',
-                      badge: 'INVITADOS Y EXTERNOS',
-                      badgeColor: const Color(0xFF0284C7),
-                      icon: Icons.public_rounded,
-                      description: 'Abre el formulario web de registro público sin necesidad de tener instalada la app en el teléfono.',
-                      buttonText: 'QR Externos',
-                      buttonColor: const Color(0xFF0284C7),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => EventQrDisplayScreen(
-                              event: _currentEvent,
-                              initialMode: EventQrMode.external,
                             ),
                           ),
                         );

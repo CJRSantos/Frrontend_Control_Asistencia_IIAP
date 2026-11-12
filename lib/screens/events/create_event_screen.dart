@@ -29,8 +29,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   final _formKey = GlobalKey<FormState>();
 
+  late TextEditingController _createdByNameController;
   late TextEditingController _titleController;
   late TextEditingController _uoController;
+  late TextEditingController _customTypeController;
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
 
@@ -55,6 +57,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   bool _isSubmitting = false;
   bool _isCustomUo = false;
+  bool _isCustomType = false;
   int? _maxCapacity;
   bool _generateCertificate = false;
   bool _allowWebRegistration = true;
@@ -81,16 +84,20 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     super.initState();
     final edit = widget.eventToEdit;
     final now = DateTime.now();
+    final currentUser = StorageService.currentUser;
 
+    final initialCreatedByName = edit?.createdByName ?? currentUser?.fullName ?? '';
+    _createdByNameController = TextEditingController(text: initialCreatedByName);
     _titleController = TextEditingController(text: edit?.title ?? '');
     _uoController = TextEditingController(text: edit?.organizationalUnit ?? '');
+    _customTypeController = TextEditingController(text: edit?.customType ?? '');
+    _isCustomType = (edit?.customType != null && edit!.customType!.trim().isNotEmpty);
     _descriptionController = TextEditingController(text: edit?.description ?? '');
     _locationController = TextEditingController(text: edit?.location ?? 'IIAP - Sede Central');
 
     _selectedType = edit?.type ?? EventType.CAPACITACION;
     _eventImageUrl = edit?.imageUrl;
 
-    final currentUser = StorageService.currentUser;
     if (_uoController.text.trim().isEmpty) {
       if (currentUser?.department != null && currentUser!.department!.trim().isNotEmpty) {
         _uoController.text = currentUser.department!.trim();
@@ -290,8 +297,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   @override
   void dispose() {
+    _createdByNameController.dispose();
     _titleController.dispose();
     _uoController.dispose();
+    _customTypeController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
     super.dispose();
@@ -550,6 +559,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     try {
       final uoText = _uoController.text.trim();
       final uoVal = uoText.isNotEmpty ? uoText : null;
+      final customTypeVal = _isCustomType && _customTypeController.text.trim().isNotEmpty
+          ? _customTypeController.text.trim()
+          : null;
+      final createdByNameVal = _createdByNameController.text.trim().isNotEmpty
+          ? _createdByNameController.text.trim()
+          : null;
 
       if (widget.eventToEdit != null) {
         final updated = widget.eventToEdit!.copyWith(
@@ -559,6 +574,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           startDate: start,
           endDate: end,
           type: _selectedType,
+          customType: customTypeVal,
+          clearCustomType: !_isCustomType,
+          createdByName: createdByNameVal,
           requiresAttendance: _requiresAttendance,
           organizationalUnit: uoVal,
           shifts: activeShifts,
@@ -576,6 +594,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           startDate: start,
           endDate: end,
           type: _selectedType,
+          customType: customTypeVal,
+          createdByName: createdByNameVal,
           requiresAttendance: _requiresAttendance,
           organizationalUnit: uoVal,
           shifts: activeShifts,
@@ -774,13 +794,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               const SizedBox(height: 16),
               ...EventType.values.map((type) {
-                final isSelected = _selectedType == type;
+                final isSelected = !_isCustomType && _selectedType == type;
                 final color = _getTypeColor(type);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: InkWell(
                     onTap: () {
-                      setState(() => _selectedType = type);
+                      setState(() {
+                        _selectedType = type;
+                        _isCustomType = false;
+                      });
                       Navigator.pop(ctx);
                     },
                     borderRadius: BorderRadius.circular(14),
@@ -832,6 +855,56 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                 );
               }),
+              const Divider(height: 20),
+              // Opción personalizada para Tipo de Evento
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isCustomType = true;
+                    _selectedType = EventType.OTRO;
+                  });
+                  Navigator.pop(ctx);
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _isCustomType
+                        ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1)
+                        : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _isCustomType
+                          ? const Color(0xFF10B981)
+                          : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                      width: _isCustomType ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.edit_note_rounded, color: Color(0xFF10B981), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Escribir otro Tipo de Evento personalizado...',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      if (_isCustomType)
+                        const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
+                      else
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF94A3B8)),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         );
@@ -1190,14 +1263,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     required String label,
     required IconData icon,
   }) {
-    final isSelected = _selectedType == type;
+    final isSelected = !_isCustomType && _selectedType == type;
     const mintGreen = Color(0xFF10B981);
     const darkGreen = Color(0xFF064E3B);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _selectedType = type),
+        onTap: () => setState(() {
+          _selectedType = type;
+          _isCustomType = false;
+        }),
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -1684,6 +1760,47 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
+                    // ORGANIZADOR / CREADOR DEL EVENTO
+                    Row(
+                      children: [
+                        Text(
+                          'Organizador / Creador del Evento',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text('*', style: TextStyle(color: mintGreen, fontWeight: FontWeight.bold, fontSize: 16)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: TextFormField(
+                        controller: _createdByNameController,
+                        style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.person_outline_rounded, color: Color(0xFF64748B), size: 20),
+                          hintText: 'Nombre del organizador o responsable',
+                          hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 13.5),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'El organizador o creador del evento es obligatorio';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 18),
                     // TÍTULO DEL EVENTO
                     Row(
                       children: [
@@ -1773,7 +1890,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                                 color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Icon(_getTypeIcon(_selectedType), color: mintGreen, size: 22),
+                              child: Icon(
+                                _isCustomType ? Icons.edit_note_rounded : _getTypeIcon(_selectedType),
+                                color: mintGreen,
+                                size: 22,
+                              ),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -1781,7 +1902,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _selectedType.displayName,
+                                    _isCustomType
+                                        ? (_customTypeController.text.trim().isNotEmpty
+                                            ? _customTypeController.text.trim()
+                                            : 'Personalizado')
+                                        : _selectedType.displayName,
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
@@ -1789,9 +1914,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Text(
-                                    'Toca para cambiar la categoría del evento',
-                                    style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8)),
+                                  Text(
+                                    _isCustomType
+                                        ? 'Tipo personalizado de evento'
+                                        : 'Toca para cambiar la categoría del evento',
+                                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8)),
                                   ),
                                 ],
                               ),
@@ -1801,6 +1928,34 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         ),
                       ),
                     ),
+                    if (_isCustomType) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: cardBorder),
+                        ),
+                        child: TextFormField(
+                          controller: _customTypeController,
+                          style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.edit_note_rounded, color: Color(0xFF10B981), size: 20),
+                            hintText: 'Ej. Simposio Amazónico, Feria Científica...',
+                            hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 13.5),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          ),
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            if (_isCustomType && (value == null || value.trim().isEmpty)) {
+                              return 'Escribe el nombre del tipo de evento personalizado';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     Row(
                       children: [

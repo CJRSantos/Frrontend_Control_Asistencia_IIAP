@@ -421,7 +421,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    event.type.displayName.toUpperCase(),
+                    event.displayTypeName.toUpperCase(),
                     style: TextStyle(
                       color: typeColor,
                       fontSize: 10.5,

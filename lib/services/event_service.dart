@@ -229,6 +229,8 @@ class EventService {
     String? organizationalUnit,
     List<EventShift>? shifts,
     String? imageUrl,
+    String? createdByName,
+    String? customType,
   }) async {
     final currentUser = StorageService.currentUser;
     if (currentUser == null || !currentUser.canManageAttendanceQr) {
@@ -237,6 +239,12 @@ class EventService {
 
     final newId = 'evt_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
     final qrToken = 'IIAP-EVT-$newId';
+    final effectiveCreatedByName = (createdByName != null && createdByName.trim().isNotEmpty)
+        ? createdByName.trim()
+        : currentUser.fullName;
+    final effectiveCustomType = (customType != null && customType.trim().isNotEmpty)
+        ? customType.trim()
+        : null;
 
     final event = EventModel(
       id: newId,
@@ -249,13 +257,14 @@ class EventService {
       requiresAttendance: requiresAttendance,
       qrCode: qrToken,
       createdById: currentUser.id,
-      createdByName: currentUser.fullName,
+      createdByName: effectiveCreatedByName,
       createdByRole: currentUser.role.name,
       createdAt: DateTime.now(),
       status: EventStatus.UPCOMING,
       attendeesCount: 0,
       attendees: [],
       organizationalUnit: organizationalUnit?.trim(),
+      customType: effectiveCustomType,
       shifts: shifts ?? [],
       imageUrl: imageUrl,
     );
@@ -289,6 +298,9 @@ class EventService {
         'type': type.name,
         'requires_attendance': requiresAttendance,
         'qr_code': qrToken,
+        'created_by_name': effectiveCreatedByName,
+        if (effectiveCustomType != null)
+          'custom_type': effectiveCustomType,
         if (organizationalUnit != null && organizationalUnit.trim().isNotEmpty)
           'organizational_unit': organizationalUnit.trim(),
         if (shifts != null && shifts.isNotEmpty)
@@ -356,6 +368,10 @@ class EventService {
         'type': event.type.name,
         'requires_attendance': event.requiresAttendance,
         'status': event.status.name,
+        if (event.createdByName.trim().isNotEmpty)
+          'created_by_name': event.createdByName.trim(),
+        if (event.customType != null && event.customType!.trim().isNotEmpty)
+          'custom_type': event.customType!.trim(),
         if (event.organizationalUnit != null)
           'organizational_unit': event.organizationalUnit,
         if (event.shifts.isNotEmpty)
