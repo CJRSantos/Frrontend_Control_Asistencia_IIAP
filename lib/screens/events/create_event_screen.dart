@@ -1570,22 +1570,36 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               ? Stack(
                                   fit: StackFit.expand,
                                   children: [
-                                    EventImageWidget(
-                                      imageUrl: _eventImageUrl,
-                                      fit: BoxFit.cover,
-                                      fallbackWidget: const Center(
-                                        child: Icon(Icons.broken_image_rounded, color: Color(0xFF64748B), size: 36),
+                                    GestureDetector(
+                                      onTap: () => EventImageWidget.showFullScreen(
+                                        context,
+                                        _eventImageUrl,
+                                        title: _titleController.text.trim().isNotEmpty
+                                            ? _titleController.text.trim()
+                                            : 'Vista previa de la imagen',
+                                      ),
+                                      child: MouseRegion(
+                                        cursor: SystemMouseCursors.click,
+                                        child: EventImageWidget(
+                                          imageUrl: _eventImageUrl,
+                                          fit: BoxFit.cover,
+                                          fallbackWidget: const Center(
+                                            child: Icon(Icons.broken_image_rounded, color: Color(0xFF64748B), size: 36),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            Colors.transparent,
-                                            Colors.black.withValues(alpha: 0.65),
-                                          ],
+                                    IgnorePointer(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.black.withValues(alpha: 0.65),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),

@@ -1132,85 +1132,91 @@ class _ProfileTabState extends State<ProfileTab> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 480),
-          decoration: BoxDecoration(
-            color: bgCol,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(color: borderCol, width: 1),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.85,
           ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 42,
-                      height: 4.5,
-                      margin: const EdgeInsets.only(bottom: 14),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                        borderRadius: BorderRadius.circular(3),
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 480),
+              decoration: BoxDecoration(
+                color: bgCol,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(color: borderCol, width: 1),
+              ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 4.5,
+                        margin: const EdgeInsets.only(bottom: 14),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
                     ),
-                  ),
-                  const Text(
-                    '¿Qué dato deseas actualizar?',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Selecciona el campo que necesitas modificar',
-                    style: TextStyle(fontSize: 12, color: textMuted),
-                  ),
-                  const SizedBox(height: 14),
-                  _buildSheetOptionTile(
-                    icon: Icons.business_rounded,
-                    color: const Color(0xFF10B981),
-                    title: 'Oficina / Cargo',
-                    subtitle: user.office.isNotEmpty ? user.office : 'Sin asignar',
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      _showEditOfficeDialog(user);
-                    },
-                  ),
-                  _buildSheetOptionTile(
-                    icon: Icons.hub_rounded,
-                    color: const Color(0xFF3B82F6),
-                    title: 'Área Asignada',
-                    subtitle: user.area.isNotEmpty ? user.area : 'Sin asignar',
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      _showEditAreaDialog(user);
-                    },
-                  ),
-                  _buildSheetOptionTile(
-                    icon: Icons.fingerprint_rounded,
-                    color: const Color(0xFFF59E0B),
-                    title: 'Documento de Identidad',
-                    subtitle: user.documentNumber?.isNotEmpty == true ? user.documentNumber! : 'No registrado',
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      _showEditDocumentDialog(user);
-                    },
-                  ),
-                  _buildSheetOptionTile(
-                    icon: Icons.phone_android_rounded,
-                    color: const Color(0xFF10B981),
-                    title: 'Teléfono de Contacto',
-                    subtitle: user.phoneNumber?.isNotEmpty == true ? user.phoneNumber! : 'No registrado',
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      _showEditPhoneDialog(user);
-                    },
-                  ),
-                ],
+                    const Text(
+                      '¿Qué dato deseas actualizar?',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Selecciona el campo que necesitas modificar',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildSheetOptionTile(
+                      icon: Icons.business_rounded,
+                      color: const Color(0xFF10B981),
+                      title: 'Oficina / Cargo',
+                      subtitle: user.office.isNotEmpty ? user.office : 'Sin asignar',
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        _showEditOfficeDialog(user);
+                      },
+                    ),
+                    _buildSheetOptionTile(
+                      icon: Icons.hub_rounded,
+                      color: const Color(0xFF3B82F6),
+                      title: 'Área Asignada',
+                      subtitle: user.area.isNotEmpty ? user.area : 'Sin asignar',
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        _showEditAreaDialog(user);
+                      },
+                    ),
+                    _buildSheetOptionTile(
+                      icon: Icons.fingerprint_rounded,
+                      color: const Color(0xFFF59E0B),
+                      title: 'Documento de Identidad',
+                      subtitle: user.documentNumber?.isNotEmpty == true ? user.documentNumber! : 'No registrado',
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        _showEditDocumentDialog(user);
+                      },
+                    ),
+                    _buildSheetOptionTile(
+                      icon: Icons.phone_android_rounded,
+                      color: const Color(0xFF10B981),
+                      title: 'Teléfono de Contacto',
+                      subtitle: user.phoneNumber?.isNotEmpty == true ? user.phoneNumber! : 'No registrado',
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        _showEditPhoneDialog(user);
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1387,112 +1393,121 @@ class _ProfileTabState extends State<ProfileTab> {
   void _showPhotoOptions() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF13111C) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(
-              color: ThemeService.cardBorder(ctx),
-              width: 1,
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.85,
             ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF13111C) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(
+                  color: ThemeService.cardBorder(ctx),
+                  width: 1,
                 ),
-                const SizedBox(height: 18),
-                Text(
-                  'FOTO DE PERFIL',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.bold,
-                    color: ThemeService.primaryColor(ctx),
-                  ),
+              ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'FOTO DE PERFIL',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.bold,
+                        color: ThemeService.primaryColor(ctx),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: ThemeService.containerColor(ctx),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.camera_alt_rounded,
+                          color: ThemeService.primaryColor(ctx),
+                          size: 22,
+                        ),
+                      ),
+                      title: Text(
+                        'Tomar Foto con la Cámara',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Usa la cámara de tu teléfono móvil',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _pickAndUploadPhoto(ImageSource.camera);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: ThemeService.containerColor(ctx),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.photo_library_rounded,
+                          color: ThemeService.primaryColor(ctx),
+                          size: 22,
+                        ),
+                      ),
+                      title: Text(
+                        'Elegir de la Galería',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Selecciona una imagen de tu galería',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _pickAndUploadPhoto(ImageSource.gallery);
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: ThemeService.containerColor(ctx),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.camera_alt_rounded,
-                      color: ThemeService.primaryColor(ctx),
-                      size: 22,
-                    ),
-                  ),
-                  title: Text(
-                    'Tomar Foto con la Cámara',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Usa la cámara de tu teléfono móvil',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickAndUploadPhoto(ImageSource.camera);
-                  },
-                ),
-                const SizedBox(height: 8),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: ThemeService.containerColor(ctx),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.photo_library_rounded,
-                      color: ThemeService.primaryColor(ctx),
-                      size: 22,
-                    ),
-                  ),
-                  title: Text(
-                    'Elegir de la Galería',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Selecciona una imagen de tu galería',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickAndUploadPhoto(ImageSource.gallery);
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         );
