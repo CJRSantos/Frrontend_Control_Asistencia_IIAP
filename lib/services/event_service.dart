@@ -360,17 +360,7 @@ class EventService {
           'organizational_unit': event.organizationalUnit,
         if (event.shifts.isNotEmpty)
           'shifts': event.shifts.map((s) => s.toJson()).toList(),
-        if (event.imageUrl != null && event.imageUrl!.isNotEmpty) ...{
-          'image_url': event.imageUrl,
-          'imageUrl': event.imageUrl,
-          'cover_image': event.imageUrl,
-          'image': event.imageUrl,
-        } else ...{
-          'image_url': null,
-          'imageUrl': null,
-          'cover_image': null,
-          'image': null,
-        },
+        'image_url': (event.imageUrl != null && event.imageUrl!.isNotEmpty) ? event.imageUrl : null,
       };
       final res = await ApiClient.patch(
         ApiConfig.eventById(event.id),

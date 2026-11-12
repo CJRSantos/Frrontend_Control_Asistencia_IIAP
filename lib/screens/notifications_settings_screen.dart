@@ -243,8 +243,8 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
       context: context,
       initialTime: TimeOfDay(hour: initialH, minute: initialM),
       helpText: 'HORARIO: $title'.toUpperCase(),
-      cancelText: 'CANCELAR',
-      confirmText: 'GUARDAR',
+      cancelText: 'Cancelar',
+      confirmText: 'Guardar',
       builder: (context, child) {
         return Theme(
           data: (isDark ? ThemeData.dark() : ThemeData.light()).copyWith(
