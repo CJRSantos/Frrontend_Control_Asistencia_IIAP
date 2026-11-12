@@ -2295,28 +2295,22 @@ class _ProfileTabState extends State<ProfileTab> {
                         });
 
                         try {
-                          final msg = await AuthService.deleteMyAccount(pw);
-                          if (context.mounted) {
-                            Navigator.of(ctx).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                                    const SizedBox(width: 10),
-                                    Expanded(child: Text('$msg Puedes registrarte nuevamente cuando lo desees.')),
-                                  ],
-                                ),
-                                backgroundColor: const Color(0xFFEF4444),
-                                behavior: SnackBarBehavior.floating,
-                                duration: const Duration(seconds: 4),
-                              ),
-                            );
-                            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (_) => const LoginScreen()),
-                              (route) => false,
-                            );
-                          }
+                          final msg = await AuthService.deleteMyAccount(pw).timeout(const Duration(seconds: 8));
+                          Navigator.of(ctx).pop();
+
+                          final nav = StorageService.navigatorKey.currentState ?? Navigator.of(context, rootNavigator: true);
+                          nav.pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            (route) => false,
+                          );
+
+                          AppToast.show(
+                            StorageService.navigatorKey.currentContext ?? context,
+                            title: 'Cuenta Eliminada',
+                            subtitle: '$msg Puedes registrarte nuevamente cuando lo desees.',
+                            icon: Icons.check_circle_rounded,
+                            accentColor: const Color(0xFFEF4444),
+                          );
                         } catch (e) {
                           setModalState(() {
                             isSubmitting = false;
@@ -2361,13 +2355,17 @@ class _ProfileTabState extends State<ProfileTab> {
 
     if (confirm != true) return;
 
-    await AuthService.logout();
-    if (!mounted) return;
-
-    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+    // Redirección inmediata y segura al Login usando el navigatorKey global sin bloqueos
+    final nav = StorageService.navigatorKey.currentState ?? Navigator.of(context, rootNavigator: true);
+    nav.pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
     );
+
+    // Limpieza de sesión en segundo plano sin congelar la interfaz
+    try {
+      await AuthService.logout().timeout(const Duration(seconds: 2));
+    } catch (_) {}
   }
 
 
