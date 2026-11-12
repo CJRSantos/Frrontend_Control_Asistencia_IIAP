@@ -153,22 +153,32 @@ class _ManualAttendeeModalState extends State<ManualAttendeeModal> {
 
       if (!mounted) return;
 
-      // Diálogo de confirmación para registrar a otro participante
+      // Diálogo de confirmación para registrar a otro participante (100% responsivo sin desbordamientos)
       final registerAnother = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actionsOverflowButtonSpacing: 8,
           title: const Row(
             children: [
-              Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 26),
-              SizedBox(width: 10),
-              Text('¡Registro Exitoso!'),
+              Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 24),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '¡Registro Exitoso!',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           content: Text(
             'Se registró correctamente a "${_nameController.text.trim()}".\n\n¿Deseas registrar a otra persona para este evento?',
-            style: const TextStyle(fontSize: 14, height: 1.4),
+            style: const TextStyle(fontSize: 13.5, height: 1.4),
           ),
           actions: [
             TextButton(
@@ -757,20 +767,29 @@ class _ManualAttendeeModalState extends State<ManualAttendeeModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel('Edad', hint: 'Años'),
+        _buildLabel('Edad', hint: 'Años (máx. 2 dígitos)'),
         const SizedBox(height: 6),
         TextFormField(
           controller: _ageController,
           keyboardType: TextInputType.number,
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(3),
+            LengthLimitingTextInputFormatter(2),
           ],
           decoration: _inputDecoration(
             context,
-            hintText: 'Ej. 28',
+            hintText: 'Ej. 25',
             icon: Icons.cake_outlined,
           ),
+          validator: (val) {
+            if (val != null && val.trim().isNotEmpty) {
+              final age = int.tryParse(val.trim());
+              if (age == null || age < 1 || age > 99) {
+                return 'Ingresa una edad válida (1 a 99 años)';
+              }
+            }
+            return null;
+          },
         ),
       ],
     );
