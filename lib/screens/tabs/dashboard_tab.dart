@@ -1100,21 +1100,12 @@ class _DashboardTabState extends State<DashboardTab> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(15),
-                            child: (user.photoUrl != null && user.photoUrl!.isNotEmpty)
-                                ? CachedNetworkImage(
-                                    imageUrl: user.photoUrl!,
-                                    fit: BoxFit.cover,
-                                    fadeInDuration: const Duration(milliseconds: 150),
-                                    placeholder: (_, __) => const Center(
-                                      child: Icon(Icons.access_time_filled_rounded, color: Color(0xFF34D399), size: 28),
-                                    ),
-                                    errorWidget: (_, __, ___) => const Center(
-                                      child: Icon(Icons.access_time_filled_rounded, color: Color(0xFF34D399), size: 28),
-                                    ),
-                                  )
-                                : const Center(
-                                    child: Icon(Icons.access_time_filled_rounded, color: Color(0xFF34D399), size: 28),
-                                  ),
+                            child: AppCachedAvatar(
+                              imageUrl: user.photoUrl,
+                              name: user.fullName,
+                              size: 56,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
                           ),
                         ),
                         Positioned(
@@ -2259,38 +2250,51 @@ class _DashboardTabState extends State<DashboardTab> {
 
               const SizedBox(height: 14),
 
-              // Contenido: Squircle con Logo + Hola, Jordan + Botón Swap
+              // Contenido: Squircle con Foto + Hola, Christopher + Botón Swap
               Row(
                 children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0D2520),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF176044), width: 1.2),
-                        ),
-                        child: const Center(
-                          child: LeafLogo(size: 26),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: -2,
-                        right: -2,
-                        child: Container(
-                          width: 10,
-                          height: 10,
+                  InkWell(
+                    onTap: () => _openPhotoViewer(user),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _cardBg(context), width: 2),
+                            color: const Color(0xFF0D2520),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF176044), width: 1.2),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: AppCachedAvatar(
+                              imageUrl: user.photoUrl,
+                              name: user.fullName,
+                              size: 56,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                        Positioned(
+                          bottom: -2,
+                          right: -2,
+                          child: Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: _cardBg(context), width: 2),
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.check, size: 9, color: Colors.black),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
