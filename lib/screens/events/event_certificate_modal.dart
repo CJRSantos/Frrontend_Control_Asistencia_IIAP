@@ -72,15 +72,40 @@ class EventCertificateModal extends StatelessWidget {
   }
 
   String _getVerificationHash() {
-    final raw = '${event.id}_${attendee.userId}_${attendee.registeredAt.millisecondsSinceEpoch}';
+    final identifier = attendee.userId.isNotEmpty
+        ? attendee.userId
+        : (attendee.documentNumber != null && attendee.documentNumber!.isNotEmpty
+            ? attendee.documentNumber!
+            : attendee.userName);
+    final raw = '${event.id}_${identifier}_${attendee.registeredAt.millisecondsSinceEpoch}';
     final bytes = utf8.encode(raw);
     int hash = 0xcbf29ce484222325;
     for (var b in bytes) {
-      hash ^= b;
+      hash = (hash ^ b) & 0xFFFFFFFFFFFFFFFF;
       hash = (hash * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF;
     }
-    final hex = hash.toRadixString(16).toUpperCase().padLeft(16, '0');
+    final hex = hash.toUnsigned(64).toRadixString(16).toUpperCase().padLeft(16, '0');
     return 'IIAP-CERT-${hex.substring(0, 4)}-${hex.substring(4, 8)}-${hex.substring(8, 12)}';
+  }
+
+  String _buildQrPayload(String certCode) {
+    final buffer = StringBuffer();
+    buffer.writeln('CONSTANCIA DE ASISTENCIA - IIAP');
+    buffer.writeln('ESTADO: VERIFICADO Y AUTÉNTICO');
+    buffer.writeln('----------------------------------------');
+    buffer.writeln('Participante: ${attendee.userName}');
+    if (attendee.documentNumber != null && attendee.documentNumber!.isNotEmpty) {
+      buffer.writeln('Documento: ${attendee.documentNumber}');
+    }
+    buffer.writeln('Evento: ${event.title}');
+    buffer.writeln('Tipo: ${event.type.displayName}');
+    buffer.writeln('Fecha Evento: ${_formatDateTime(event.startDate)}');
+    buffer.writeln('Sede: ${event.location}');
+    buffer.writeln('Acreditación: ${_formatDateTime(attendee.registeredAt)}');
+    buffer.writeln('Código Validación: $certCode');
+    buffer.writeln('----------------------------------------');
+    buffer.write('Instituto de Investigaciones de la Amazonía Peruana');
+    return buffer.toString();
   }
 
   Future<void> _handlePrintPdf(BuildContext context) async {
@@ -473,9 +498,9 @@ class EventCertificateModal extends StatelessWidget {
                             border: Border.all(color: Colors.grey.shade300),
                           ),
                           child: QrImageView(
-                            data: 'IIAP_CERT:$certCode|EVENT:${event.id}|USER:${attendee.userId}',
+                            data: _buildQrPayload(certCode),
                             version: QrVersions.auto,
-                            size: 68,
+                            size: 72,
                           ),
                         ),
                         const SizedBox(width: 14),

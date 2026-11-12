@@ -73,7 +73,21 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     if (mounted) setState(() {});
 
     try {
-      // 0. Si el target es evento o el código es de un evento institucional IIAP (formato código, URL pública oficial o enlace web de registro)
+      // 0. Si es un código de Constancia de Asistencia / Certificado Digital emitido por el IIAP
+      if (cleanCode.contains('CONSTANCIA DE ASISTENCIA') ||
+          cleanCode.startsWith('IIAP_CERT:') ||
+          cleanCode.contains('IIAP-CERT-')) {
+        await _showCertificateValidationDialog(cleanCode);
+        if (mounted) {
+          try {
+            await _scannerController?.start();
+          } catch (_) {}
+          setState(() => _isProcessing = false);
+        }
+        return;
+      }
+
+      // 1. Si el target es evento o el código es de un evento institucional IIAP (formato código, URL pública oficial o enlace web de registro)
       final uri = Uri.tryParse(cleanCode);
       final hasEventIdParam = uri != null &&
           (uri.queryParameters.containsKey('id') || uri.queryParameters.containsKey('event_id'));
@@ -574,6 +588,77 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           Center(
             child: AppButton(
               text: 'Aceptar',
+              width: 140,
+              height: 42,
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showCertificateValidationDialog(String rawPayload) async {
+    final lines = rawPayload
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty && !l.startsWith('---'))
+        .toList();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: const BoxDecoration(
+            color: Color(0xFFDCFCE7),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.verified_rounded, color: Color(0xFF16A34A), size: 40),
+        ),
+        title: const Text('Constancia Oficial IIAP', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.4)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 16),
+                    SizedBox(width: 6),
+                    Text(
+                      'CERTIFICADO AUTÉNTICO Y VÁLIDO',
+                      style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...lines.map((line) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2.5),
+                    child: Text(
+                      line,
+                      style: const TextStyle(fontSize: 12.5, height: 1.3),
+                    ),
+                  )),
+            ],
+          ),
+        ),
+        actions: [
+          Center(
+            child: AppButton(
+              text: 'Entendido',
               width: 140,
               height: 42,
               onPressed: () => Navigator.of(ctx).pop(),
