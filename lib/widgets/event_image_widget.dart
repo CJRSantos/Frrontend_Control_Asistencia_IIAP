@@ -60,6 +60,25 @@ class EventImageWidget extends StatefulWidget {
     }
   }
 
+  /// Abre el visor interactivo de pantalla completa para cualquier imagen de evento
+  static void showFullScreen(BuildContext context, String? imageUrl, {String? title}) {
+    if (imageUrl == null || imageUrl.trim().isEmpty) return;
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black.withValues(alpha: 0.94),
+        barrierDismissible: true,
+        pageBuilder: (ctx, anim1, anim2) => FullScreenImageViewer(
+          imageUrl: imageUrl,
+          title: title,
+        ),
+        transitionsBuilder: (ctx, anim, secondaryAnim, child) {
+          return FadeTransition(opacity: anim, child: child);
+        },
+      ),
+    );
+  }
+
   @override
   State<EventImageWidget> createState() => _EventImageWidgetState();
 }
@@ -145,25 +164,6 @@ class _EventImageWidgetState extends State<EventImageWidget> {
       color: const Color(0xFF1E293B),
       child: const Center(
         child: Icon(Icons.event_note_rounded, color: Color(0xFF10B981), size: 36),
-      ),
-    );
-  }
-
-  /// Abre el visor interactivo de pantalla completa para cualquier imagen de evento
-  static void showFullScreen(BuildContext context, String? imageUrl, {String? title}) {
-    if (imageUrl == null || imageUrl.trim().isEmpty) return;
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black.withValues(alpha: 0.94),
-        barrierDismissible: true,
-        pageBuilder: (ctx, anim1, anim2) => FullScreenImageViewer(
-          imageUrl: imageUrl,
-          title: title,
-        ),
-        transitionsBuilder: (ctx, anim, secondaryAnim, child) {
-          return FadeTransition(opacity: anim, child: child);
-        },
       ),
     );
   }
