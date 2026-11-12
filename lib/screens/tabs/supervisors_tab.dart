@@ -1289,6 +1289,8 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
               context: ctx,
               initialTime: TimeOfDay(hour: checkInH, minute: checkInM),
               helpText: 'HORA DE ENTRADA',
+              confirmText: 'Aceptar',
+              cancelText: 'Cancelar',
             );
             if (picked != null) {
               setSheetState(() {
@@ -1308,6 +1310,8 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
               context: ctx,
               initialTime: TimeOfDay(hour: checkOutH, minute: checkOutM),
               helpText: 'HORA DE SALIDA',
+              confirmText: 'Aceptar',
+              cancelText: 'Cancelar',
             );
             if (picked != null) {
               setSheetState(() {

@@ -315,6 +315,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       firstDate: DateTime.now().subtract(const Duration(days: 30)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       helpText: 'Fecha de inicio del evento',
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar',
     );
     if (picked != null) {
       setState(() {
@@ -333,6 +335,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       firstDate: _startDate,
       lastDate: DateTime.now().add(const Duration(days: 365)),
       helpText: 'Fecha de culminación del evento',
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar',
     );
     if (picked != null) {
       setState(() => _endDate = picked);
@@ -348,6 +352,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       context: context,
       initialTime: initialTime,
       helpText: title,
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar',
     );
     if (picked != null) {
       setState(() => onSelected(picked));
@@ -1124,7 +1130,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               InkWell(
                 onTap: () {
-                  if (_titleController.text.trim().isNotEmpty) {
+                  if (widget.eventToEdit != null || _titleController.text.trim().isNotEmpty) {
                     setState(() => _currentStep = 1);
                   }
                 },
@@ -1139,7 +1145,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               InkWell(
                 onTap: () {
-                  if (_titleController.text.trim().isNotEmpty && (_hasManana || _hasTarde || _hasNoche)) {
+                  if (widget.eventToEdit != null || (_titleController.text.trim().isNotEmpty && (_hasManana || _hasTarde || _hasNoche))) {
                     setState(() => _currentStep = 2);
                   }
                 },
@@ -1158,7 +1164,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               InkWell(
                 onTap: () {
-                  if (_titleController.text.trim().isNotEmpty) {
+                  if (widget.eventToEdit != null || _titleController.text.trim().isNotEmpty) {
                     setState(() => _currentStep = 1);
                   }
                 },
@@ -1166,7 +1172,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
               InkWell(
                 onTap: () {
-                  if (_titleController.text.trim().isNotEmpty && (_hasManana || _hasTarde || _hasNoche)) {
+                  if (widget.eventToEdit != null || (_titleController.text.trim().isNotEmpty && (_hasManana || _hasTarde || _hasNoche))) {
                     setState(() => _currentStep = 2);
                   }
                 },
@@ -1435,6 +1441,29 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             fontSize: 18,
           ),
         ),
+        actions: [
+          if (isEdit)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _isSubmitting ? null : _handleSubmit,
+                icon: _isSubmitting
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.check_rounded, size: 18),
+                label: const Text(
+                  'Guardar',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                ),
+              ),
+            ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -1933,6 +1962,30 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     ],
                     const SizedBox(height: 26),
 
+                    if (isEdit) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          onPressed: _isSubmitting ? null : _handleSubmit,
+                          icon: _isSubmitting
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.save_rounded, size: 19),
+                          label: const Text(
+                            'Guardar Cambios del Evento',
+                            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
                     // BOTÓN CONTINUAR A SEDES & HORARIOS
                     SizedBox(
                       width: double.infinity,
@@ -2310,6 +2363,30 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
+
+                    if (isEdit) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          onPressed: _isSubmitting ? null : _handleSubmit,
+                          icon: _isSubmitting
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.save_rounded, size: 19),
+                          label: const Text(
+                            'Guardar Cambios del Evento',
+                            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
 
                     // BOTONES INFERIORES DEL PASO 2
                     Row(
