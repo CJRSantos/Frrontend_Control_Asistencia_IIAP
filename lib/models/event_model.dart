@@ -232,6 +232,7 @@ class EventModel {
   final List<EventAttendeeModel> attendees;
   final List<String> managerIds;
   final String? organizationalUnit;
+  final String? customType;
   final List<EventShift> shifts;
   final String? imageUrl;
   final String? externalSource;
@@ -256,6 +257,7 @@ class EventModel {
     this.attendees = const [],
     this.managerIds = const [],
     this.organizationalUnit,
+    this.customType,
     this.shifts = const [],
     this.imageUrl,
     this.externalSource,
@@ -265,6 +267,14 @@ class EventModel {
   /// Identifica si el evento fue creado por el Sistema de Eventos (espejo)
   bool get isEventosMirror =>
       externalSource == 'EVENTOS' || (qrCode != null && qrCode!.startsWith('EVENTOS-'));
+
+  /// Nombre legible del tipo de evento (prioriza tipo personalizado si existe)
+  String get displayTypeName {
+    if (customType != null && customType!.trim().isNotEmpty) {
+      return customType!.trim();
+    }
+    return type.displayName;
+  }
 
   bool canUserManageEvent(String? userId, String? userRole) {
     if (userId == null) return false;
@@ -378,6 +388,7 @@ class EventModel {
       attendees: attendeesList,
       managerIds: parsedManagerIds,
       organizationalUnit: json['organizational_unit']?.toString() ?? json['organizationalUnit']?.toString(),
+      customType: json['custom_type']?.toString() ?? json['customType']?.toString(),
       shifts: parsedShifts,
       imageUrl: json['image_url']?.toString() ??
           json['imageUrl']?.toString() ??
@@ -412,6 +423,7 @@ class EventModel {
       'attendees': attendees.map((a) => a.toJson()).toList(),
       'manager_ids': managerIds,
       'organizational_unit': organizationalUnit,
+      if (customType != null && customType!.isNotEmpty) 'custom_type': customType,
       'shifts': shifts.map((s) => s.toJson()).toList(),
       'image_url': imageUrl,
       if (externalSource != null) 'external_source': externalSource,
@@ -438,6 +450,8 @@ class EventModel {
     List<EventAttendeeModel>? attendees,
     List<String>? managerIds,
     String? organizationalUnit,
+    String? customType,
+    bool clearCustomType = false,
     List<EventShift>? shifts,
     String? imageUrl,
     bool clearImageUrl = false,
@@ -463,6 +477,7 @@ class EventModel {
       attendees: attendees ?? this.attendees,
       managerIds: managerIds ?? this.managerIds,
       organizationalUnit: organizationalUnit ?? this.organizationalUnit,
+      customType: clearCustomType ? null : (customType ?? this.customType),
       shifts: shifts ?? this.shifts,
       imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       externalSource: externalSource ?? this.externalSource,
@@ -481,6 +496,8 @@ class EventModel {
         other.startDate == startDate &&
         other.endDate == endDate &&
         other.type == type &&
+        other.customType == customType &&
+        other.createdByName == createdByName &&
         other.status == status &&
         other.imageUrl == imageUrl &&
         other.attendeesCount == attendeesCount &&

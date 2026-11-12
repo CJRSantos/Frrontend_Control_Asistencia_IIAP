@@ -217,7 +217,7 @@ class _EventQrDisplayScreenState extends State<EventQrDisplayScreen> {
       _justRotated = true;
       _rotationReason = mode == EventQrMode.registered
           ? 'Modo cambiado: Usuario Registrado (App IIAP)'
-          : 'Modo cambiado: Usuario Externo (Formulario Web)';
+          : 'Modo cambiado: Usuario no Registrado (Formulario Web)';
     });
 
     _badgeTimer?.cancel();
@@ -304,7 +304,7 @@ class _EventQrDisplayScreenState extends State<EventQrDisplayScreen> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: _buildModeTab(
-                            title: 'Usuario Externo',
+                            title: 'Usuario no Registrado',
                             subtitle: 'Formulario Web',
                             icon: Icons.language_rounded,
                             mode: EventQrMode.external,
@@ -346,7 +346,7 @@ class _EventQrDisplayScreenState extends State<EventQrDisplayScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                widget.event.type.displayName.toUpperCase(),
+                                widget.event.displayTypeName.toUpperCase(),
                                 style: TextStyle(
                                   color: ThemeService.primaryColor(context),
                                   fontWeight: FontWeight.bold,
@@ -578,7 +578,7 @@ class _EventQrDisplayScreenState extends State<EventQrDisplayScreen> {
                                 Text(
                                   (_selectedMode == EventQrMode.registered
                                       ? 'QR PARA USUARIO REGISTRADO'
-                                      : 'QR PARA USUARIO EXTERNO') +
+                                      : 'QR PARA USUARIO NO REGISTRADO') +
                                   (_selectedShift != null
                                       ? ' • ${_selectedShift == "manana" ? "MAÑANA" : _selectedShift == "tarde" ? "TARDE" : "NOCHE"}'
                                       : ''),
