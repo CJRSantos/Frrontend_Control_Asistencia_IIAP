@@ -90,6 +90,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     HomeScreen.currentTabNotifier.addListener(_onExternalTabSelect);
+    EventService.newEventAlertNotifier.addListener(_onNewEventAlert);
+    EventService.startLiveSync();
     _startSyncTimer();
     NotificationService.checkAndTriggerCheckoutReminder();
 
@@ -100,6 +102,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _validateSessionInBackground();
       QuickActionsService.checkAndConsumePendingAction();
     });
+  }
+
+  void _onNewEventAlert() {
+    final newEvt = EventService.newEventAlertNotifier.value;
+    if (newEvt != null && mounted) {
+      AppToast.show(
+        context,
+        title: '📢 ¡Nuevo Evento Creado!',
+        subtitle: '${newEvt.title} (${newEvt.type.displayName})',
+        icon: Icons.event_available_rounded,
+        accentColor: const Color(0xFF10B981),
+      );
+    }
   }
 
   Future<void> _validateSessionInBackground() async {
@@ -117,6 +132,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     HomeScreen.currentTabNotifier.removeListener(_onExternalTabSelect);
+    EventService.newEventAlertNotifier.removeListener(_onNewEventAlert);
+    EventService.stopLiveSync();
     _syncTimer?.cancel();
     super.dispose();
   }
@@ -124,11 +141,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      EventService.startLiveSync();
       _startSyncTimer();
       _syncProfile();
       _validateSessionInBackground();
       NotificationService.checkAndTriggerCheckoutReminder();
     } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      EventService.stopLiveSync();
       _syncTimer?.cancel();
     }
   }

@@ -84,12 +84,13 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
       final isEventPattern = cleanCode.startsWith('IIAP-EVT-') ||
           cleanCode.startsWith('IIAP-EVENT-') ||
+          cleanCode.toUpperCase().startsWith('EVENTOS-') ||
           cleanCode.startsWith('event_') ||
           cleanCode.startsWith('evt_') ||
           cleanCode.contains('registro.html') ||
           cleanCode.contains('/registro') ||
-          cleanCode.contains('events') ||
-          cleanCode.contains('/event/') ||
+          cleanCode.toLowerCase().contains('event') ||
+          cleanCode.toLowerCase().contains('evento') ||
           (hasEventIdParam &&
               (cleanCode.contains('iiap') ||
                   cleanCode.contains('gob.pe') ||
@@ -100,6 +101,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         (e) =>
             e.id == cleanCode ||
             e.qrCode == cleanCode ||
+            e.externalId == cleanCode ||
             (cleanCode.contains(e.id) &&
                 !cleanCode.startsWith('IIAP-ASSIGN-') &&
                 !cleanCode.startsWith('IIAP-SHA-')),
@@ -108,6 +110,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       final isEventCode = widget.target == ScanTarget.eventAttendance ||
           isEventPattern ||
           matchesKnownEvent ||
+          cleanCode.toUpperCase().startsWith('EVENTOS-') ||
           (widget.target != ScanTarget.roleAssignment &&
               widget.target != ScanTarget.supervisorPromotion &&
               looksLikeUuid);
@@ -136,8 +139,22 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               final match = RegExp(r'^(evt_\d+_\d+)').firstMatch(withoutQuery);
               targetEventId = match != null ? match.group(1) : withoutQuery;
             }
+          } else if (cleanCode.toUpperCase().startsWith('EVENTOS-')) {
+            final events = EventService.eventsNotifier.value;
+            for (final ev in events) {
+              if (ev.qrCode == cleanCode ||
+                  ev.externalId == cleanCode ||
+                  ev.id == cleanCode ||
+                  (ev.qrCode != null && ev.qrCode!.toUpperCase() == cleanCode.toUpperCase())) {
+                targetEventId = ev.id;
+                break;
+              }
+            }
+            targetEventId ??= cleanCode;
           } else if (hasEventIdParam && uri != null) {
-            targetEventId = uri.queryParameters['id'] ?? uri.queryParameters['event_id'];
+            targetEventId = uri.queryParameters['id'] ??
+                uri.queryParameters['event_id'] ??
+                uri.queryParameters['evento'];
           } else if (cleanCode.startsWith('event_')) {
             targetEventId = cleanCode.substring('event_'.length).split('?').first;
           } else if (cleanCode.startsWith('evt_')) {
@@ -145,11 +162,21 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           } else if (looksLikeUuid) {
             targetEventId = cleanCode;
           } else {
-            targetEventId = cleanCode.split('?').first;
+            final events = EventService.eventsNotifier.value;
+            for (final ev in events) {
+              if (ev.id == cleanCode ||
+                  ev.qrCode == cleanCode ||
+                  ev.externalId == cleanCode ||
+                  (ev.qrCode != null && cleanCode.contains(ev.qrCode!))) {
+                targetEventId = ev.id;
+                break;
+              }
+            }
+            targetEventId ??= cleanCode.split('?').first;
           }
         }
 
-        // Si todavía no lo encontramos en memoria, intentamos refrescar la lista de eventos del backend
+        // Si todavía no lo encontramos en memoria, sincronizamos con backend
         if (targetEventId == null || !EventService.eventsNotifier.value.any((e) => e.id == targetEventId)) {
           if (ConnectivityService.isOnline) {
             try {
@@ -161,9 +188,33 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             if (ev.qrCode == cleanCode ||
                 cleanCode.contains(ev.id) ||
                 (ev.qrCode != null && cleanCode.contains(ev.qrCode!)) ||
-                (targetEventId != null && (ev.id == targetEventId || ev.id.contains(targetEventId)))) {
+                (targetEventId != null &&
+                    (ev.id == targetEventId ||
+                        ev.id.contains(targetEventId) ||
+                        ev.externalId == targetEventId ||
+                        ev.qrCode == targetEventId))) {
               targetEventId = ev.id;
               break;
+            }
+          }
+
+          // Si aún no está en la lista en memoria, consultar directamente el endpoint por ID o QR
+          if (ConnectivityService.isOnline && (targetEventId == null || !EventService.eventsNotifier.value.any((e) => e.id == targetEventId))) {
+            if (targetEventId != null && targetEventId.isNotEmpty) {
+              try {
+                final fetched = await EventService.getEventById(targetEventId);
+                if (fetched != null) {
+                  targetEventId = fetched.id;
+                }
+              } catch (_) {}
+            }
+            if ((targetEventId == null || !EventService.eventsNotifier.value.any((e) => e.id == targetEventId)) && cleanCode != targetEventId) {
+              try {
+                final fetched = await EventService.getEventById(cleanCode);
+                if (fetched != null) {
+                  targetEventId = fetched.id;
+                }
+              } catch (_) {}
             }
           }
         }
