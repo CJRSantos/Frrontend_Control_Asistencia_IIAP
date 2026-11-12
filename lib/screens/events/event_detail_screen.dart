@@ -687,17 +687,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  void _handleOpenQrDisplay() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EventQrDisplayScreen(
-          event: _currentEvent,
-          initialMode: EventQrMode.registered,
-        ),
-      ),
-    );
-  }
-
   Widget _buildTabItem({
     required int index,
     required IconData icon,
@@ -1586,81 +1575,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 4. DOS BOTONES DE ACCIÓN PRINCIPALES (Solo si tiene permisos: Supervisor, Gestor, Admin o Encargado)
-                  if (canProjectQr || canManage) ...[
-                    Row(
-                      children: [
-                        // Botón 1: Proyectar QR
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: themePrimary,
-                              foregroundColor: isDark ? Colors.white : const Color(0xFF064E3B),
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onPressed: _handleOpenQrDisplay,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.qr_code_scanner_rounded, size: 19, color: darkGreen),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'QR',
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: darkGreen,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        // Botón 2: Registro Manual
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                              foregroundColor: const Color(0xFFF59E0B),
-                              elevation: 0,
-                              side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onPressed: _handleManualRegisterAttendee,
-                            child: const FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.person_add_alt_1_rounded, size: 18, color: Color(0xFFF59E0B)),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Registro Manual',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFF59E0B),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                  ],
-
-                  // 5. BARRA DE NAVEGACIÓN DE PESTAÑAS (TABS - Adaptativas según rol)
+                  // BARRA DE NAVEGACIÓN DE PESTAÑAS (TABS - Adaptativas según rol)
                   Container(
                     decoration: BoxDecoration(
                       border: Border(
