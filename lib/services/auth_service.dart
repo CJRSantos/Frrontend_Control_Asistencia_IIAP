@@ -271,15 +271,15 @@ class AuthService {
   }
 
   static Future<void> logout() async {
-    if (!kIsWeb) {
-      try {
+    try {
+      if (!kIsWeb) {
         if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
-          await _googleSignIn.signOut();
+          await _googleSignIn.signOut().timeout(const Duration(milliseconds: 800), onTimeout: () => null);
         }
-      } catch (_) {}
-    } else {
-      try { await _googleSignIn.signOut(); } catch (_) {}
-    }
+      } else {
+        await _googleSignIn.signOut().timeout(const Duration(milliseconds: 800), onTimeout: () => null);
+      }
+    } catch (_) {}
     await StorageService.clearSession();
   }
 

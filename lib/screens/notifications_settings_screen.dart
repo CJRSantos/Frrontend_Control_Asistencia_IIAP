@@ -430,110 +430,136 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        return SafeArea(
-          child: Responsive.constrained(
-            context,
-            maxTabletWidth: 500,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white24 : Colors.black12,
-                        borderRadius: BorderRadius.circular(2),
+        return StatefulBuilder(
+          builder: (modalCtx, setModalState) {
+            return SafeArea(
+              child: Responsive.constrained(
+                context,
+                maxTabletWidth: 500,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white24 : Colors.black12,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Tono de Alerta y Notificación',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Elige la acústica con la que sonarán los recordatorios de asistencia.',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...tones.map((t) {
-                    final isSelected = t['id'] == _alertToneId;
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 2),
-                      leading: Icon(
-                        isSelected ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
-                        color: isSelected ? const Color(0xFF10B981) : (isDark ? Colors.white38 : Colors.black38),
-                        size: 22,
-                      ),
-                      title: Text(
-                        t['title']!,
+                      const SizedBox(height: 18),
+                      Text(
+                        'Tono de Alerta y Notificación',
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
-                      subtitle: Text(
-                        t['desc']!,
+                      const SizedBox(height: 6),
+                      Text(
+                        'Toca cualquier tono para escuchar su sonido acústico y elegir tu preferido.',
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 12.5,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                         ),
                       ),
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setString('notif_alert_tone', t['id']!);
-                        if (mounted) setState(() => _alertToneId = t['id']!);
-                        if (_notifHapticEnabled) {
-                          if (t['id'] == 'alarma_energizada') {
-                            HapticFeedback.heavyImpact();
-                          } else if (t['id'] == 'campana_suave') {
-                            HapticFeedback.lightImpact();
-                          } else {
-                            HapticFeedback.selectionClick();
-                          }
-                        }
-                        await NotificationService.reloadPreferences();
-                        if (_isMasterEnabled) {
-                          await NotificationService.scheduleAllAttendanceReminders();
-                          await NotificationService.syncEventSettings(
-                            eventsEnabled: _notifEvents,
-                            closeEnabled: _notifEventClose,
-                            events: EventService.eventsNotifier.value,
-                          );
-                        }
-                        if (mounted) {
-                          AppToast.show(
-                            context,
-                            title: 'Tono acústico actualizado',
-                            subtitle: t['title']!,
-                            icon: Icons.volume_up_rounded,
-                            accentColor: const Color(0xFF10B981),
-                          );
-                        }
-                      },
-                    );
-                  }),
-                ],
+                      const SizedBox(height: 16),
+                      ...tones.map((t) {
+                        final isSelected = t['id'] == _alertToneId;
+                        return ListTile(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          tileColor: isSelected
+                              ? (isDark ? const Color(0xFF0F3224) : const Color(0xFFE8F5E9))
+                              : Colors.transparent,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
+                          leading: Icon(
+                            isSelected ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
+                            color: isSelected ? const Color(0xFF10B981) : (isDark ? Colors.white38 : Colors.black38),
+                            size: 22,
+                          ),
+                          title: Text(
+                            t['title']!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          subtitle: Text(
+                            t['desc']!,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                          trailing: isSelected
+                              ? const Icon(Icons.volume_up_rounded, color: Color(0xFF10B981), size: 20)
+                              : null,
+                          onTap: () async {
+                            setModalState(() => _alertToneId = t['id']!);
+                            if (mounted) setState(() => _alertToneId = t['id']!);
+
+                            // 1. Reproducir sonido de inmediato al tocar
+                            await NotificationService.previewTone(t['id']!);
+
+                            // 2. Vibración háptica si está habilitada
+                            if (_notifHapticEnabled) {
+                              if (t['id'] == 'alarma_energizada') {
+                                HapticFeedback.heavyImpact();
+                              } else if (t['id'] == 'campana_suave') {
+                                HapticFeedback.lightImpact();
+                              } else {
+                                HapticFeedback.selectionClick();
+                              }
+                            }
+
+                            // 3. Persistir selección
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setString('notif_alert_tone', t['id']!);
+                            await NotificationService.reloadPreferences();
+                            if (_isMasterEnabled) {
+                              await NotificationService.scheduleAllAttendanceReminders();
+                              await NotificationService.syncEventSettings(
+                                eventsEnabled: _notifEvents,
+                                closeEnabled: _notifEventClose,
+                                events: EventService.eventsNotifier.value,
+                              );
+                            }
+                          },
+                        );
+                      }),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          onPressed: () {
+                            NotificationService.stopAudioPreview();
+                            Navigator.pop(ctx);
+                          },
+                          child: const Text('Aceptar y Guardar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
-    );
+    ).then((_) => NotificationService.stopAudioPreview());
   }
 
   void _showInfoModal() {
@@ -722,25 +748,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
             tooltip: 'Información y Diagnóstico',
             onPressed: _showInfoModal,
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16, left: 4),
-            child: Center(
-              child: ValueListenableBuilder<UserModel?>(
-                valueListenable: StorageService.currentUserNotifier,
-                builder: (context, user, _) {
-                  return AppCachedAvatar(
-                    imageUrl: user?.photoUrl,
-                    name: user?.fullName ?? 'Usuario',
-                    size: 34,
-                    border: Border.all(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.4),
-                      width: 1.5,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _isLoading

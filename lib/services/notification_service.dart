@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:local_notifier/local_notifier.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -12,6 +13,7 @@ import '../services/attendance_service.dart';
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  static final AudioPlayer _audioPlayer = AudioPlayer();
 
   static bool _isInitialized = false;
 
@@ -21,6 +23,50 @@ class NotificationService {
   static bool _cachedHapticEnabled = true;
   static bool _cachedHighPriorityDoze = true;
   static String _cachedTone = 'institucional';
+
+  static String getRawSoundResource(String tone) {
+    switch (tone) {
+      case 'campana_suave':
+        return 'sonido2';
+      case 'alarma_energizada':
+        return 'sonido3';
+      case 'sistema':
+        return 'sonido4';
+      case 'institucional':
+      default:
+        return 'sonido1';
+    }
+  }
+
+  static String getAssetSoundPath(String tone) {
+    switch (tone) {
+      case 'campana_suave':
+        return 'sounds/sonido2.mp3';
+      case 'alarma_energizada':
+        return 'sounds/sonido3.mp3';
+      case 'sistema':
+        return 'sounds/sonido4.mp3';
+      case 'institucional':
+      default:
+        return 'sounds/sonido1.mp3';
+    }
+  }
+
+  static Future<void> previewTone(String tone) async {
+    try {
+      await _audioPlayer.stop();
+      final soundPath = getAssetSoundPath(tone);
+      await _audioPlayer.play(AssetSource(soundPath));
+    } catch (e) {
+      debugPrint('[NotificationService] Error reproduciendo audio: $e');
+    }
+  }
+
+  static Future<void> stopAudioPreview() async {
+    try {
+      await _audioPlayer.stop();
+    } catch (_) {}
+  }
 
   static Future<void> reloadPreferences() async {
     try {
@@ -164,6 +210,10 @@ class NotificationService {
     // de tono acústico, vibración y prioridad sin quedar atado a la caché inmutable del canal anterior
     final String effectiveChannelId = '${channelId}_${_cachedTone}_${vib ? 'v1' : 'v0'}_${doze ? 'hi' : 'std'}';
 
+    final String rawSound = getRawSoundResource(_cachedTone);
+    final RawResourceAndroidNotificationSound androidSound =
+        RawResourceAndroidNotificationSound(rawSound);
+
     final androidDetails = AndroidNotificationDetails(
       effectiveChannelId,
       channelName,
@@ -175,14 +225,16 @@ class NotificationService {
       enableVibration: vib,
       vibrationPattern: vib ? Int64List.fromList([0, 250, 200, 250]) : null,
       playSound: true,
+      sound: androidSound,
       fullScreenIntent: false,
       category: AndroidNotificationCategory.reminder,
     );
 
-    const darwinDetails = DarwinNotificationDetails(
+    final darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: '$rawSound.mp3',
     );
 
     return NotificationDetails(
@@ -211,6 +263,7 @@ class NotificationService {
           body: body,
         );
         await notification.show();
+        previewTone(_cachedTone);
         return;
       }
 

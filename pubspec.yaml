@@ -37,6 +37,7 @@ dependencies:
   local_notifier: ^0.1.6
   cached_network_image: ^3.4.1
   quick_actions: ^1.1.1
+  audioplayers: ^6.7.1
 
 dev_dependencies:
   flutter_test:
@@ -56,3 +57,4 @@ flutter:
     - assets/app_icon.jpg
     - assets/images/
     - assets/images/wallpapers/
+    - assets/sounds/
