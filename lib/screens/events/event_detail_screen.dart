@@ -286,6 +286,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   void _handleDesignateManagerQr() {
+    final currentUser = StorageService.currentUser;
+    final canDesignate = currentUser?.isSuperAdmin == true || currentUser?.isAdmin == true;
+    if (!canDesignate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Acceso denegado. Se requiere uno de los siguientes roles: SUPERADMIN, ADMIN'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => QrDisplayScreen(
@@ -534,170 +545,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     EventCertificateModal.show(context, event: _currentEvent, attendee: myAttendee);
   }
 
-  String _toCalendarFormat(DateTime dt) {
-    final utc = dt.toUtc();
-    return '${utc.year}${utc.month.toString().padLeft(2, '0')}${utc.day.toString().padLeft(2, '0')}T${utc.hour.toString().padLeft(2, '0')}${utc.minute.toString().padLeft(2, '0')}${utc.second.toString().padLeft(2, '0')}Z';
-  }
-
-  Future<void> _handleAddToCalendar() async {
-    final startStr = _toCalendarFormat(_currentEvent.startDate);
-    final endStr = _toCalendarFormat(_currentEvent.endDate);
-    final title = Uri.encodeComponent(_currentEvent.title);
-    final desc = Uri.encodeComponent(_currentEvent.description.isNotEmpty ? _currentEvent.description : 'Evento Institucional IIAP');
-    final loc = Uri.encodeComponent(_currentEvent.location);
-
-    final googleUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=$title&dates=$startStr/$endStr&details=$desc&location=$loc';
-    final outlookUrl = 'https://outlook.live.com/calendar/0/deeplink/compose?subject=$title&startdt=${_currentEvent.startDate.toIso8601String()}&enddt=${_currentEvent.endDate.toIso8601String()}&body=$desc&location=$loc';
-
-    final width = MediaQuery.sizeOf(context).width;
-    final isTabletOrDesktop = width >= 640;
-
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      constraints: BoxConstraints(maxWidth: isTabletOrDesktop ? 520 : double.infinity),
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(ctx).size.height * 0.85,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: ThemeService.cardBg(ctx),
-                borderRadius: isTabletOrDesktop
-                    ? BorderRadius.circular(24)
-                    : const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(20, isTabletOrDesktop ? 22 : 16, 20, 28),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (!isTabletOrDesktop) ...[
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    const Row(
-                      children: [
-                        Icon(Icons.calendar_month_rounded, color: Color(0xFF2563EB), size: 24),
-                        SizedBox(width: 10),
-                        Text(
-                          'Añadir a mi Calendario',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Selecciona el calendario de tu preferencia para sincronizar este evento:',
-                      style: TextStyle(fontSize: 12.5, color: ThemeService.subtextColor(ctx)),
-                    ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        side: BorderSide(color: ThemeService.cardBorder(ctx)),
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4285F4).withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.event_available_rounded, color: Color(0xFF4285F4), size: 20),
-                      ),
-                      title: const Text('Google Calendar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: const Text('Sincronizar en Android, iPhone o Web', style: TextStyle(fontSize: 12)),
-                      trailing: const Icon(Icons.open_in_new_rounded, size: 18),
-                      onTap: () async {
-                        Navigator.of(ctx).pop();
-                        final uri = Uri.parse(googleUrl);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        side: BorderSide(color: ThemeService.cardBorder(ctx)),
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0078D4).withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.email_outlined, color: Color(0xFF0078D4), size: 20),
-                      ),
-                      title: const Text('Outlook / Microsoft 365', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: const Text('Calendario corporativo', style: TextStyle(fontSize: 12)),
-                      trailing: const Icon(Icons.open_in_new_rounded, size: 18),
-                      onTap: () async {
-                        Navigator.of(ctx).pop();
-                        final uri = Uri.parse(outlookUrl);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        side: BorderSide(color: ThemeService.cardBorder(ctx)),
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: ThemeService.primaryColor(ctx).withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.copy_rounded, color: ThemeService.primaryColor(ctx), size: 20),
-                      ),
-                      title: const Text('Copiar Datos del Evento', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: const Text('Título, fecha, hora y ubicación en portapapeles', style: TextStyle(fontSize: 12)),
-                      trailing: const Icon(Icons.check_rounded, size: 18),
-                      onTap: () {
-                        Navigator.of(ctx).pop();
-                        final text = '${_currentEvent.title}\nFecha: ${_formatDateTime(_currentEvent.startDate)}\nLugar: ${_currentEvent.location}\n${_currentEvent.description}';
-                        Clipboard.setData(ClipboardData(text: text));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('¡Datos del evento copiados al portapapeles!'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildTabItem({
     required int index,
     required IconData icon,
@@ -884,6 +731,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Widget _buildManagersCard(BuildContext context, bool isDark) {
+    final currentUser = StorageService.currentUser;
+    final canDesignateQr = currentUser?.isAdmin == true || currentUser?.isSuperAdmin == true;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -999,20 +848,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   label: const Text('+ Asignar Gestor', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0D9488),
-                    side: const BorderSide(color: Color(0xFF0D9488)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              if (canDesignateQr) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0D9488),
+                      side: const BorderSide(color: Color(0xFF0D9488)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: _handleDesignateManagerQr,
+                    icon: const Icon(Icons.qr_code_2_rounded, size: 17),
+                    label: const Text('Designar con QR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
-                  onPressed: _handleDesignateManagerQr,
-                  icon: const Icon(Icons.qr_code_2_rounded, size: 17),
-                  label: const Text('Designar con QR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                 ),
-              ),
+              ],
             ],
           ),
         ],
@@ -1657,32 +1508,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             const SizedBox(height: 16),
                             _buildShiftsInfoRow(context, _currentEvent.shifts.where((s) => s.enabled).toList()),
                           ],
-                          const SizedBox(height: 20),
-
-                          // Botón Añadir a mi Calendario
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                foregroundColor: mintGreen,
-                                elevation: 0,
-                                side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              ),
-                              onPressed: _handleAddToCalendar,
-                              icon: const Icon(Icons.calendar_month_outlined, color: mintGreen, size: 19),
-                              label: const Text(
-                                'Añadir a mi Calendario',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13.5,
-                                  color: mintGreen,
-                                ),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
