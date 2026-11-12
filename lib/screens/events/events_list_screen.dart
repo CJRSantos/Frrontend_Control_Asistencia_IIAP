@@ -350,12 +350,15 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
         : event.attendeesCount;
 
     return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
+      onTap: () async {
+        final result = await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => EventDetailScreen(event: event),
           ),
         );
+        if (result == true && mounted) {
+          _loadEvents();
+        }
       },
       borderRadius: BorderRadius.circular(18),
       child: Container(

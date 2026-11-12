@@ -417,21 +417,48 @@ class EventService {
       throw ApiException('Solo Administradores y Supervisores pueden eliminar eventos.', 403);
     }
 
-    final existingEvent = eventsNotifier.value.where((e) => e.id == eventId).firstOrNull;
+    final cleanId = eventId.trim();
+    final existingEvent = eventsNotifier.value.where((e) => e.id == cleanId || e.id == eventId).firstOrNull;
     if (existingEvent != null && existingEvent.isEventosMirror) {
       throw ApiException('Este evento se administra desde el Sistema de Eventos.', 409);
     }
 
-    try {
-      await ApiClient.delete(ApiConfig.eventById(eventId));
-    } catch (e) {
-      if (e is ApiException) rethrow;
-    }
-
+    // 1. Remoción optimista inmediata de la memoria reactiva (desaparece al instante en la UI)
     final list = List<EventModel>.from(eventsNotifier.value);
-    list.removeWhere((e) => e.id == eventId);
+    list.removeWhere((e) =>
+        e.id == cleanId ||
+        e.id == eventId ||
+        (existingEvent != null && (e.id == existingEvent.id || (existingEvent.externalId != null && e.id == existingEvent.externalId))) ||
+        (e.externalId != null && (e.externalId == cleanId || (existingEvent != null && e.externalId == existingEvent.externalId))));
     eventsNotifier.value = list;
-    await _saveToLocalCache(list);
+
+    // 2. Persistir inmediatamente en caché local en disco (forzado sin retraso)
+    await _saveToLocalCache(list, force: true);
+
+    // 3. Cancelar alertas y recordatorios locales del evento en el SO
+    NotificationService.cancelEventReminders(cleanId);
+
+    // 4. Llamada al backend para eliminación definitiva
+    try {
+      await ApiClient.delete(ApiConfig.eventById(cleanId));
+    } catch (e) {
+      if (e is ApiException) {
+        // Si el evento ya no existe en el backend (404), la eliminación fue exitosa
+        if (e.statusCode == 404) return;
+
+        // Si falló por falta de permisos o error del servidor, restaurar el evento en memoria
+        if (existingEvent != null) {
+          final restoreList = List<EventModel>.from(eventsNotifier.value);
+          if (!restoreList.any((e) => e.id == existingEvent.id)) {
+            restoreList.add(existingEvent);
+            restoreList.sort((a, b) => b.startDate.compareTo(a.startDate));
+            eventsNotifier.value = restoreList;
+            await _saveToLocalCache(restoreList, force: true);
+          }
+        }
+        rethrow;
+      }
+    }
   }
 
   /// Elimina a un participante de un evento (Solo Administrador y Supervisor)

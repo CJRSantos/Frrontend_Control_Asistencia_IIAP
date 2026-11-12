@@ -409,7 +409,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Evento eliminado')),
           );
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true);
         }
       } catch (e) {
         if (mounted) {
