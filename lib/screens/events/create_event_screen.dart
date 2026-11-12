@@ -1453,7 +1453,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: _isSubmitting ? null : _handleSubmit,
+                onPressed: _isSubmitting ? null : _handleSave,
                 icon: _isSubmitting
                     ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.check_rounded, size: 18),
@@ -1973,7 +1973,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          onPressed: _isSubmitting ? null : _handleSubmit,
+                          onPressed: _isSubmitting ? null : _handleSave,
                           icon: _isSubmitting
                               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                               : const Icon(Icons.save_rounded, size: 19),
@@ -2375,7 +2375,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          onPressed: _isSubmitting ? null : _handleSubmit,
+                          onPressed: _isSubmitting ? null : _handleSave,
                           icon: _isSubmitting
                               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                               : const Icon(Icons.save_rounded, size: 19),
