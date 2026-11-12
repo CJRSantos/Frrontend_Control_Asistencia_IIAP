@@ -1306,14 +1306,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               onPressed: _confirmDelete,
             ),
           ],
-          Padding(
-            padding: const EdgeInsets.only(right: 16, left: 4),
-            child: AppCachedAvatar(
-              imageUrl: StorageService.currentUser?.photoUrl,
-              name: StorageService.currentUser?.fullName ?? 'U',
-              size: 34,
-            ),
-          ),
         ],
       ),
       body: SafeArea(

@@ -1435,22 +1435,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             fontSize: 18,
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: ValueListenableBuilder<UserModel?>(
-              valueListenable: StorageService.currentUserNotifier,
-              builder: (context, user, _) {
-                final currentUser = user ?? StorageService.currentUser;
-                return AppCachedAvatar(
-                  imageUrl: currentUser?.photoUrl,
-                  name: currentUser?.fullName ?? 'U',
-                  size: 34,
-                );
-              },
-            ),
-          ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

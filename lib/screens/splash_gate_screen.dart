@@ -24,11 +24,11 @@ class _SplashGateScreenState extends State<SplashGateScreen> with SingleTickerPr
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 280),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.88, end: 1.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOutBack),
+    _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
     );
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -46,8 +46,7 @@ class _SplashGateScreenState extends State<SplashGateScreen> with SingleTickerPr
   }
 
   Future<void> _initAppAndNavigate() async {
-    // Permitir al usuario ver el splash institucional de IIAP con fluidez (~700ms)
-    // mientras en paralelo se verifica la sesión en disco
+    // Apertura ultrarrápida: verificación instantánea de sesión sin demoras artificiales
     final startTime = DateTime.now();
 
     if (StorageService.tokenSync == null) {
@@ -58,7 +57,7 @@ class _SplashGateScreenState extends State<SplashGateScreen> with SingleTickerPr
     final token = StorageService.tokenSync ?? await StorageService.getToken();
 
     final elapsed = DateTime.now().difference(startTime).inMilliseconds;
-    const minSplashDuration = 700;
+    const minSplashDuration = 180;
     if (elapsed < minSplashDuration) {
       await Future.delayed(Duration(milliseconds: minSplashDuration - elapsed));
     }
@@ -67,7 +66,6 @@ class _SplashGateScreenState extends State<SplashGateScreen> with SingleTickerPr
     _hasNavigated = true;
 
     // Si hay usuario o token guardado localmente, se va al HomeScreen de forma instantánea.
-    // Nunca pide login de nuevo si ya tiene cuenta iniciada.
     if (user != null || (token != null && token.isNotEmpty)) {
       _navigateTo(const HomeScreen());
     } else {
@@ -79,7 +77,7 @@ class _SplashGateScreenState extends State<SplashGateScreen> with SingleTickerPr
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 350),
+        transitionDuration: const Duration(milliseconds: 200),
         pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
