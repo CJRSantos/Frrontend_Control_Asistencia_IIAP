@@ -66,19 +66,13 @@ class _DashboardTabState extends State<DashboardTab> {
 
   void _startRealtimeSync() {
     _realtimeTimer?.cancel();
-    // Sincronización en tiempo real continua e inteligente con guard de concurrencia
-    int syncCycles = 0;
-    _realtimeTimer = Timer.periodic(const Duration(milliseconds: 3500), (_) async {
+    // Sincronización escalable y fluida: 15s para soportar alta concurrencia de usuarios sin saturar la red ni el servidor
+    _realtimeTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
       if (!mounted || _isRealtimeSyncing) return;
+      if (!ConnectivityService.isOnline) return;
       _isRealtimeSyncing = true;
       try {
-        syncCycles++;
-        // Sincronizar perfil periodicamente para detectar cambios de rol a SUPERVISOR sin reiniciar
-        if (syncCycles % 3 == 0) {
-          await AuthService.getProfile();
-        }
         await _fetchAttendanceData();
-        await EventService.getEvents();
       } finally {
         _isRealtimeSyncing = false;
       }
@@ -3416,52 +3410,6 @@ class _DashboardTabState extends State<DashboardTab> {
 
         // Campana interactiva con modo silencio
         _buildCircularMuteBell(context),
-
-        const SizedBox(width: 8),
-
-        // Avatar de usuario
-        InkWell(
-          onTap: () => _openPhotoViewer(user),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF34D399),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: (user.photoUrl != null && user.photoUrl!.isNotEmpty)
-                  ? CachedNetworkImage(
-                      imageUrl: user.photoUrl!,
-                      fit: BoxFit.cover,
-                      fadeInDuration: const Duration(milliseconds: 150),
-                      placeholder: (_, __) => const Icon(
-                        Icons.person,
-                        color: Color(0xFF0F172A),
-                        size: 21,
-                      ),
-                      errorWidget: (_, __, ___) => const Icon(
-                        Icons.person,
-                        color: Color(0xFF0F172A),
-                        size: 21,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.person,
-                      color: Color(0xFF0F172A),
-                      size: 21,
-                    ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -4628,39 +4576,6 @@ _buildCircularMuteBell(context),
         ),
         const SizedBox(width: 10),
         _buildMuteNotificationBell(context),
-        const SizedBox(width: 6),
-        InkWell(
-          onTap: () {
-            widget.onNavigateToProfile?.call();
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF34D399),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: (user.photoUrl != null && user.photoUrl!.isNotEmpty)
-                  ? CachedNetworkImage(
-                      imageUrl: user.photoUrl!,
-                      fit: BoxFit.cover,
-                      fadeInDuration: const Duration(milliseconds: 150),
-                      placeholder: (_, __) => const Icon(Icons.person, color: Color(0xFF0F172A), size: 21),
-                      errorWidget: (_, __, ___) => const Icon(Icons.person, color: Color(0xFF0F172A), size: 21),
-                    )
-                  : const Icon(Icons.person, color: Color(0xFF0F172A), size: 21),
-            ),
-          ),
-        ),
       ],
     );
   }
