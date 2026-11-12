@@ -381,16 +381,26 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (event.imageUrl != null && event.imageUrl!.trim().isNotEmpty) ...[
-              Container(
-                height: 120,
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 12),
-                child: EventImageWidget(
-                  imageUrl: event.imageUrl,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  borderRadius: BorderRadius.circular(12),
+              GestureDetector(
+                onTap: () => EventImageWidget.showFullScreen(
+                  context,
+                  event.imageUrl,
+                  title: event.title,
+                ),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    height: 120,
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: EventImageWidget(
+                      imageUrl: event.imageUrl,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
             ],

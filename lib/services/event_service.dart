@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,40 @@ class EventService {
   static const String _knownEventIdsKey = 'known_event_ids_v2';
 
   static final ValueNotifier<List<EventModel>> eventsNotifier = ValueNotifier<List<EventModel>>([]);
+
+  /// Notificador reactivo cuando se crea un nuevo evento institucional para avisar a la interfaz en primer plano
+  static final ValueNotifier<EventModel?> newEventAlertNotifier = ValueNotifier<EventModel?>(null);
+
+  static Timer? _liveSyncTimer;
+  static bool _isSyncing = false;
+
+  /// Inicia la sincronización continua en tiempo real (cada 10 segundos)
+  static void startLiveSync({Duration interval = const Duration(seconds: 10)}) {
+    _liveSyncTimer?.cancel();
+    _liveSyncTimer = Timer.periodic(interval, (_) async {
+      if (_isSyncing) return;
+      _isSyncing = true;
+      try {
+        if (ConnectivityService.isOnline) {
+          await getEvents();
+        }
+      } catch (_) {
+      } finally {
+        _isSyncing = false;
+      }
+    });
+
+    // Sincronización inmediata al arrancar
+    if (ConnectivityService.isOnline) {
+      getEvents();
+    }
+  }
+
+  /// Detiene la sincronización en tiempo real al suspender la app
+  static void stopLiveSync() {
+    _liveSyncTimer?.cancel();
+    _liveSyncTimer = null;
+  }
 
   /// Agrega o actualiza un evento en la memoria local y lo persiste de inmediato
   static void addOrUpdateLocalEvent(EventModel event) {
@@ -147,6 +182,9 @@ class EventService {
             title: '📢 Nuevo Evento: ${ev.title}',
             body: '${ev.location} • Inicia el $dayStr a las $timeStr. ¡Participa!',
           );
+
+          // Emitir a la interfaz para mostrar aviso visual reactivo en pantalla a cualquier rol conectado
+          newEventAlertNotifier.value = ev;
         }
         await prefs.setStringList(_knownEventIdsKey, knownIds.toList());
       }
@@ -273,6 +311,17 @@ class EventService {
         current.insert(0, serverEvent);
         eventsNotifier.value = current;
         await _saveToLocalCache(current);
+
+        // Marcar el ID retornado por el servidor como conocido para evitar auto-notificación
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final knownIds = prefs.getStringList(_knownEventIdsKey) ?? [];
+          if (!knownIds.contains(serverEvent.id)) {
+            knownIds.add(serverEvent.id);
+            await prefs.setStringList(_knownEventIdsKey, knownIds);
+          }
+        } catch (_) {}
+
         return serverEvent;
       }
     } catch (e) {
@@ -293,6 +342,10 @@ class EventService {
 
   /// Actualiza un evento
   static Future<EventModel> updateEvent(EventModel event) async {
+    if (event.isEventosMirror) {
+      throw ApiException('Este evento se administra desde el Sistema de Eventos.', 409);
+    }
+
     try {
       final updatePayload = {
         'title': event.title,
@@ -333,7 +386,9 @@ class EventService {
         _updateLocalList(updated);
         return updated;
       }
-    } catch (_) {}
+    } catch (e) {
+      if (e is ApiException) rethrow;
+    }
 
     _updateLocalList(event);
     return event;
@@ -362,9 +417,16 @@ class EventService {
       throw ApiException('Solo Administradores y Supervisores pueden eliminar eventos.', 403);
     }
 
+    final existingEvent = eventsNotifier.value.where((e) => e.id == eventId).firstOrNull;
+    if (existingEvent != null && existingEvent.isEventosMirror) {
+      throw ApiException('Este evento se administra desde el Sistema de Eventos.', 409);
+    }
+
     try {
       await ApiClient.delete(ApiConfig.eventById(eventId));
-    } catch (_) {}
+    } catch (e) {
+      if (e is ApiException) rethrow;
+    }
 
     final list = List<EventModel>.from(eventsNotifier.value);
     list.removeWhere((e) => e.id == eventId);

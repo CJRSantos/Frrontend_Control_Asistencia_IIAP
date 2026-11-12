@@ -132,6 +132,8 @@ class EventAttendeeModel {
   final String? notes;
   final String? shift;
   final String? photoUrl;
+  final String? eventosPersonId;
+  final String? eventosRegistrationId;
 
   EventAttendeeModel({
     required this.id,
@@ -151,6 +153,8 @@ class EventAttendeeModel {
     this.notes,
     this.shift,
     this.photoUrl,
+    this.eventosPersonId,
+    this.eventosRegistrationId,
   });
 
   factory EventAttendeeModel.fromJson(Map<String, dynamic> json) {
@@ -179,6 +183,8 @@ class EventAttendeeModel {
           json['photoUrl']?.toString() ??
           json['user_photo']?.toString() ??
           json['avatar_url']?.toString(),
+      eventosPersonId: json['eventos_person_id']?.toString() ?? json['eventosPersonId']?.toString(),
+      eventosRegistrationId: json['eventos_registration_id']?.toString() ?? json['eventosRegistrationId']?.toString(),
     );
   }
 
@@ -201,6 +207,8 @@ class EventAttendeeModel {
       'notes': notes,
       'shift': shift,
       'photo_url': photoUrl,
+      if (eventosPersonId != null) 'eventos_person_id': eventosPersonId,
+      if (eventosRegistrationId != null) 'eventos_registration_id': eventosRegistrationId,
     };
   }
 }

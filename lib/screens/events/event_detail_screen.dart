@@ -430,7 +430,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           children: [
             Icon(Icons.person_remove_rounded, color: Color(0xFFDC2626), size: 24),
             SizedBox(width: 8),
-            Text('¿Estas Seguro?'),
+            Expanded(
+              child: Text(
+                '¿Estás Seguro?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: Text(
@@ -1337,34 +1343,79 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 children: [
                   // 0. PORTADA OFICIAL DEL EVENTO (SI POSEE)
                   if (_currentEvent.imageUrl != null && _currentEvent.imageUrl!.trim().isNotEmpty) ...[
-                    Container(
-                      height: 190,
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF1F323A) : const Color(0xFFCBD5E1),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                    GestureDetector(
+                      onTap: () => EventImageWidget.showFullScreen(
+                        context,
+                        _currentEvent.imageUrl,
+                        title: _currentEvent.title,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(19),
-                        child: EventImageWidget(
-                          imageUrl: _currentEvent.imageUrl,
-                          fit: BoxFit.cover,
-                          height: 190,
-                          width: double.infinity,
-                          fallbackWidget: const Center(
-                            child: Icon(Icons.apartment_rounded, color: Color(0xFF10B981), size: 48),
-                          ),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: Stack(
+                          children: [
+                            Container(
+                              height: 190,
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF1F323A) : const Color(0xFFCBD5E1),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(19),
+                                child: Hero(
+                                  tag: 'event_image_hero_${_currentEvent.imageUrl.hashCode}',
+                                  child: EventImageWidget(
+                                    imageUrl: _currentEvent.imageUrl,
+                                    fit: BoxFit.cover,
+                                    height: 190,
+                                    width: double.infinity,
+                                    fallbackWidget: const Center(
+                                      child: Icon(Icons.apartment_rounded, color: Color(0xFF10B981), size: 48),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Indicador visual flotante de "Ver imagen / pantalla completa"
+                            Positioned(
+                              right: 12,
+                              bottom: 26,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.72),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.fullscreen_rounded, color: Colors.white, size: 16),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Ver imagen',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
