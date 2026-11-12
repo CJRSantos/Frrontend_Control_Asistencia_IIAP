@@ -430,12 +430,17 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.65),
       builder: (ctx) {
-        return Center(
+        return Align(
+          alignment: Alignment.bottomCenter,
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 520),
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: MediaQuery.of(ctx).size.height * 0.90,
+            ),
             decoration: BoxDecoration(
               color: bgCol,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -450,258 +455,322 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
             ),
             child: SafeArea(
               top: false,
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Drag Handle
-                      Center(
-                        child: Container(
-                          width: 42,
-                          height: 4.5,
-                          margin: const EdgeInsets.only(bottom: 14),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                      ),
-
-                      // User Profile Header Card
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: borderCol),
-                        ),
-                        child: Row(
-                          children: [
-                            // Avatar con iniciales
-                            CircleAvatar(
-                              radius: 22,
-                              backgroundColor: primary.withValues(alpha: 0.15),
-                              child: Text(
-                                u.fullName.isNotEmpty
-                                    ? u.fullName.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
-                                    : 'U',
-                                style: TextStyle(
-                                  color: primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Encabezado Fijo y Draggable (permite deslizar hacia abajo para salir)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onVerticalDragEnd: (details) {
+                      if ((details.primaryVelocity ?? 0) > 120 && Navigator.of(ctx).canPop()) {
+                        Navigator.of(ctx).pop();
+                      }
+                    },
+                    onVerticalDragUpdate: (details) {
+                      if ((details.primaryDelta ?? 0) > 6 && Navigator.of(ctx).canPop()) {
+                        Navigator.of(ctx).pop();
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 10),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Barra de arrastre con botón para cerrar
+                          Row(
+                            children: [
+                              const SizedBox(width: 32),
+                              Expanded(
+                                child: Center(
+                                  child: Container(
+                                    width: 44,
+                                    height: 5,
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  ),
                                 ),
                               ),
+                              IconButton(
+                                icon: Icon(Icons.close_rounded, size: 22, color: textMuted),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                splashRadius: 20,
+                                onPressed: () {
+                                  if (Navigator.of(ctx).canPop()) {
+                                    Navigator.of(ctx).pop();
+                                  }
+                                },
+                                tooltip: 'Cerrar',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Tarjeta de perfil de usuario
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: borderCol),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    u.fullName,
-                                    style: const TextStyle(
-                                      fontSize: 15,
+                            child: Row(
+                              children: [
+                                // Avatar con iniciales
+                                CircleAvatar(
+                                  radius: 22,
+                                  backgroundColor: primary.withValues(alpha: 0.15),
+                                  child: Text(
+                                    u.fullName.isNotEmpty
+                                        ? u.fullName.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
+                                        : 'U',
+                                    style: TextStyle(
+                                      color: primary,
                                       fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.2,
+                                      fontSize: 15,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 3),
-                                  Row(
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      if (u.documentNumber != null && u.documentNumber!.isNotEmpty) ...[
-                                        Text(
-                                          'DNI: ${u.documentNumber}',
-                                          style: TextStyle(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w500,
-                                            color: textMuted,
-                                          ),
+                                      Text(
+                                        u.fullName,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.2,
                                         ),
-                                        Text(' • ', style: TextStyle(color: textMuted, fontSize: 11)),
-                                      ],
-                                      Expanded(
-                                        child: Text(
-                                          u.office.isNotEmpty ? u.office : (u.area.isNotEmpty ? u.area : 'Sin área asignada'),
-                                          style: TextStyle(
-                                            fontSize: 11.5,
-                                            color: textMuted,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Row(
+                                        children: [
+                                          if (u.documentNumber != null && u.documentNumber!.isNotEmpty) ...[
+                                            Text(
+                                              'DNI: ${u.documentNumber}',
+                                              style: TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w500,
+                                                color: textMuted,
+                                              ),
+                                            ),
+                                            Text(' • ', style: TextStyle(color: textMuted, fontSize: 11)),
+                                          ],
+                                          Expanded(
+                                            child: Text(
+                                              u.office.isNotEmpty ? u.office : (u.area.isNotEmpty ? u.area : 'Sin área asignada'),
+                                              style: TextStyle(
+                                                fontSize: 11.5,
+                                                color: textMuted,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
+                                const SizedBox(width: 8),
+                                // Badge de Rol Actual
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: _getRoleColor(u.role).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: _getRoleColor(u.role).withValues(alpha: 0.4)),
+                                  ),
+                                  child: Text(
+                                    u.role.displayName,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: _getRoleColor(u.role),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Lista scrollable con detección de swipe hacia abajo
+                  Flexible(
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (scrollInfo) {
+                        if (scrollInfo.metrics.pixels <= 0) {
+                          if (scrollInfo is OverscrollNotification && scrollInfo.overscroll < -6) {
+                            if (Navigator.of(ctx).canPop()) {
+                              Navigator.of(ctx).pop();
+                              return true;
+                            }
+                          }
+                          if (scrollInfo is ScrollUpdateNotification && (scrollInfo.scrollDelta ?? 0) < -12) {
+                            if (Navigator.of(ctx).canPop()) {
+                              Navigator.of(ctx).pop();
+                              return true;
+                            }
+                          }
+                        }
+                        return false;
+                      },
+                      child: SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(18, 4, 18, 20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // SECCIÓN 1: GESTIÓN DE PERFIL Y EQUIPO
+                            Text(
+                              'DATOS Y EQUIPO',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: textMuted,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            // Badge de Rol Actual
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _getRoleColor(u.role).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: _getRoleColor(u.role).withValues(alpha: 0.4)),
+                            const SizedBox(height: 8),
+
+                            _buildSheetActionTile(
+                              icon: Icons.edit_note_rounded,
+                              color: const Color(0xFF10B981),
+                              title: 'Editar Oficina y Área',
+                              subtitle: 'Actualizar la sede, oficina y área asignada',
+                              onTap: () {
+                                Navigator.of(ctx).pop();
+                                _showEditUserOfficeAreaDialog(u);
+                              },
+                            ),
+
+                            if (isAdmin)
+                              _buildSheetActionTile(
+                                icon: Icons.phonelink_erase_rounded,
+                                color: const Color(0xFFD97706),
+                                title: 'Desvincular Celular / Equipo',
+                                subtitle: 'Permitir que el usuario vincule un nuevo dispositivo',
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  _confirmUnbindDevice(u);
+                                },
                               ),
-                              child: Text(
-                                u.role.displayName,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: _getRoleColor(u.role),
-                                ),
+
+                            const SizedBox(height: 14),
+
+                            // SECCIÓN 2: ROLES Y PERMISOS
+                            Text(
+                              'ASIGNACIÓN DE ROLES Y PERMISOS',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: textMuted,
                               ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            if (isSuperAdmin && u.role != UserRole.ADMIN)
+                              _buildSheetActionTile(
+                                icon: Icons.military_tech_rounded,
+                                color: const Color(0xFFD97706),
+                                title: 'Designar Admin / Presidente',
+                                subtitle: 'Otorga permisos de máxima autoridad institucional',
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  _changeUserRole(u, UserRole.ADMIN);
+                                },
+                              ),
+
+                            if (isAdmin && u.role != UserRole.ADMIN_EVENTO)
+                              _buildSheetActionTile(
+                                icon: Icons.event_available_rounded,
+                                color: const Color(0xFF2563EB),
+                                title: 'Designar Admin de Eventos / UO',
+                                subtitle: 'Gestión y control de eventos institucionales y UO',
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  _changeUserRole(u, UserRole.ADMIN_EVENTO);
+                                },
+                              ),
+
+                            if (isAdmin && u.role != UserRole.GESTOR_EVENTO)
+                              _buildSheetActionTile(
+                                icon: Icons.campaign_rounded,
+                                color: const Color(0xFF0D9488),
+                                title: 'Designar Gestor de Eventos / UO',
+                                subtitle: 'Toma de asistencias y soporte en eventos',
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  _changeUserRole(u, UserRole.GESTOR_EVENTO);
+                                },
+                              ),
+
+                            if (isAdmin && u.role != UserRole.SUPERVISOR)
+                              _buildSheetActionTile(
+                                icon: Icons.verified_user_rounded,
+                                color: const Color(0xFF7C3AED),
+                                title: 'Designar Supervisor',
+                                subtitle: 'Supervisar y corregir marcas del personal asignado',
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  _changeUserRole(u, UserRole.SUPERVISOR);
+                                },
+                              ),
+
+                            if (u.role != UserRole.USER)
+                              _buildSheetActionTile(
+                                icon: Icons.person_outline_rounded,
+                                color: const Color(0xFF64748B),
+                                title: 'Cambiar a Rol Colaborador',
+                                subtitle: 'Rol básico (solo marca y consulta su propia asistencia)',
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  _changeUserRole(u, UserRole.USER);
+                                },
+                              ),
+
+                            const SizedBox(height: 14),
+
+                            // SECCIÓN 3: ZONA DE PELIGRO
+                            Text(
+                              'ZONA DE RIESGO',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: const Color(0xFFEF4444).withValues(alpha: 0.9),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            _buildSheetActionTile(
+                              icon: Icons.delete_outline_rounded,
+                              color: const Color(0xFFEF4444),
+                              title: 'Eliminar Cuenta',
+                              subtitle: 'Borra al colaborador; podrá registrarse nuevamente',
+                              isDanger: true,
+                              onTap: () {
+                                Navigator.of(ctx).pop();
+                                _confirmDeleteUser(u);
+                              },
                             ),
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 18),
-
-                      // SECCIÓN 1: GESTIÓN DE PERFIL Y EQUIPO
-                      Text(
-                        'DATOS Y EQUIPO',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                          color: textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      _buildSheetActionTile(
-                        icon: Icons.edit_note_rounded,
-                        color: const Color(0xFF10B981),
-                        title: 'Editar Oficina y Área',
-                        subtitle: 'Actualizar la sede, oficina y área asignada',
-                        onTap: () {
-                          Navigator.of(ctx).pop();
-                          _showEditUserOfficeAreaDialog(u);
-                        },
-                      ),
-
-                      if (isAdmin)
-                        _buildSheetActionTile(
-                          icon: Icons.phonelink_erase_rounded,
-                          color: const Color(0xFFD97706),
-                          title: 'Desvincular Celular / Equipo',
-                          subtitle: 'Permitir que el usuario vincule un nuevo dispositivo',
-                          onTap: () {
-                            Navigator.of(ctx).pop();
-                            _confirmUnbindDevice(u);
-                          },
-                        ),
-
-                      const SizedBox(height: 14),
-
-                      // SECCIÓN 2: ROLES Y PERMISOS
-                      Text(
-                        'ASIGNACIÓN DE ROLES Y PERMISOS',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                          color: textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      if (isSuperAdmin && u.role != UserRole.ADMIN)
-                        _buildSheetActionTile(
-                          icon: Icons.military_tech_rounded,
-                          color: const Color(0xFFD97706),
-                          title: 'Designar Admin / Presidente',
-                          subtitle: 'Otorga permisos de máxima autoridad institucional',
-                          onTap: () {
-                            Navigator.of(ctx).pop();
-                            _changeUserRole(u, UserRole.ADMIN);
-                          },
-                        ),
-
-                      if (isAdmin && u.role != UserRole.ADMIN_EVENTO)
-                        _buildSheetActionTile(
-                          icon: Icons.event_available_rounded,
-                          color: const Color(0xFF2563EB),
-                          title: 'Designar Admin de Eventos / UO',
-                          subtitle: 'Gestión y control de eventos institucionales y UO',
-                          onTap: () {
-                            Navigator.of(ctx).pop();
-                            _changeUserRole(u, UserRole.ADMIN_EVENTO);
-                          },
-                        ),
-
-                      if (isAdmin && u.role != UserRole.GESTOR_EVENTO)
-                        _buildSheetActionTile(
-                          icon: Icons.campaign_rounded,
-                          color: const Color(0xFF0D9488),
-                          title: 'Designar Gestor de Eventos / UO',
-                          subtitle: 'Toma de asistencias y soporte en eventos',
-                          onTap: () {
-                            Navigator.of(ctx).pop();
-                            _changeUserRole(u, UserRole.GESTOR_EVENTO);
-                          },
-                        ),
-
-                      if (isAdmin && u.role != UserRole.SUPERVISOR)
-                        _buildSheetActionTile(
-                          icon: Icons.verified_user_rounded,
-                          color: const Color(0xFF7C3AED),
-                          title: 'Designar Supervisor',
-                          subtitle: 'Supervisar y corregir marcas del personal asignado',
-                          onTap: () {
-                            Navigator.of(ctx).pop();
-                            _changeUserRole(u, UserRole.SUPERVISOR);
-                          },
-                        ),
-
-                      if (u.role != UserRole.USER)
-                        _buildSheetActionTile(
-                          icon: Icons.person_outline_rounded,
-                          color: const Color(0xFF64748B),
-                          title: 'Cambiar a Rol Colaborador',
-                          subtitle: 'Rol básico (solo marca y consulta su propia asistencia)',
-                          onTap: () {
-                            Navigator.of(ctx).pop();
-                            _changeUserRole(u, UserRole.USER);
-                          },
-                        ),
-
-                      const SizedBox(height: 14),
-
-                      // SECCIÓN 3: ZONA DE PELIGRO
-                      Text(
-                        'ZONA DE RIESGO',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                          color: const Color(0xFFEF4444).withValues(alpha: 0.9),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      _buildSheetActionTile(
-                        icon: Icons.delete_outline_rounded,
-                        color: const Color(0xFFEF4444),
-                        title: 'Eliminar Cuenta',
-                        subtitle: 'Borra al colaborador; podrá registrarse nuevamente',
-                        isDanger: true,
-                        onTap: () {
-                          Navigator.of(ctx).pop();
-                          _confirmDeleteUser(u);
-                        },
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -991,17 +1060,29 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
                 Row(
                   children: [
                     Container(
@@ -1023,6 +1104,11 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                               style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      tooltip: 'Cerrar',
                     ),
                   ],
                 ),
@@ -1306,6 +1392,13 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                             ),
                           ],
                         ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close_rounded, size: 22, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        tooltip: 'Cerrar',
                       ),
                     ],
                   ),
