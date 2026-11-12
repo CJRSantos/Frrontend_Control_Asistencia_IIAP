@@ -4,6 +4,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/api_config.dart';
 import '../../models/event_model.dart';
 import '../../services/theme_service.dart';
 
@@ -88,24 +90,19 @@ class EventCertificateModal extends StatelessWidget {
     return 'IIAP-CERT-${hex.substring(0, 4)}-${hex.substring(4, 8)}-${hex.substring(8, 12)}';
   }
 
-  String _buildQrPayload(String certCode) {
-    final buffer = StringBuffer();
-    buffer.writeln('CONSTANCIA DE ASISTENCIA - IIAP');
-    buffer.writeln('ESTADO: VERIFICADO Y AUTÉNTICO');
-    buffer.writeln('----------------------------------------');
-    buffer.writeln('Participante: ${attendee.userName}');
-    if (attendee.documentNumber != null && attendee.documentNumber!.isNotEmpty) {
-      buffer.writeln('Documento: ${attendee.documentNumber}');
+  String _buildQrUrl(String certCode) {
+    const defaultHost = 'https://dev-api-control.iiap.gob.pe';
+    String baseUrl = ApiConfig.defaultPublicRegistrationUrl;
+    if (baseUrl.isEmpty || baseUrl.contains('dev-registro-eventos.iiap.gob.pe')) {
+      baseUrl = defaultHost;
     }
-    buffer.writeln('Evento: ${event.title}');
-    buffer.writeln('Tipo: ${event.type.displayName}');
-    buffer.writeln('Fecha Evento: ${_formatDateTime(event.startDate)}');
-    buffer.writeln('Sede: ${event.location}');
-    buffer.writeln('Acreditación: ${_formatDateTime(attendee.registeredAt)}');
-    buffer.writeln('Código Validación: $certCode');
-    buffer.writeln('----------------------------------------');
-    buffer.write('Instituto de Investigaciones de la Amazonía Peruana');
-    return buffer.toString();
+    baseUrl = baseUrl.replaceAll(RegExp(r'/$'), '');
+    final nameEncoded = Uri.encodeComponent(attendee.userName);
+    final eventEncoded = Uri.encodeComponent(event.title);
+    final doc = attendee.documentNumber ?? '';
+    final timeEncoded = Uri.encodeComponent(_formatDateTime(attendee.registeredAt));
+
+    return '$baseUrl/registro.html?cert=$certCode&id=${event.id}&name=$nameEncoded&dni=$doc&event=$eventEncoded&time=$timeEncoded';
   }
 
   Future<void> _handlePrintPdf(BuildContext context) async {
@@ -490,17 +487,31 @@ class EventCertificateModal extends StatelessWidget {
                     // Código QR de Validación + Hash
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: QrImageView(
-                            data: _buildQrPayload(certCode),
-                            version: QrVersions.auto,
-                            size: 72,
+                        Tooltip(
+                          message: 'Toca para abrir la constancia oficial en el navegador',
+                          child: InkWell(
+                            onTap: () async {
+                              final uri = Uri.parse(_buildQrUrl(certCode));
+                              try {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              } catch (_) {}
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                              ),
+                              child: QrImageView(
+                                data: _buildQrUrl(certCode),
+                                version: QrVersions.auto,
+                                size: 84,
+                                gapless: true,
+                                errorCorrectionLevel: QrErrorCorrectLevel.M,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -528,6 +539,39 @@ class EventCertificateModal extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: ThemeService.subtextColor(context),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              InkWell(
+                                onTap: () async {
+                                  final uri = Uri.parse(_buildQrUrl(certCode));
+                                  try {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  } catch (_) {}
+                                },
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: primary.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: primary.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.open_in_browser_rounded, size: 14, color: primary),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Verificar en línea',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],

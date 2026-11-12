@@ -764,6 +764,10 @@
           <span class="summary-label">Hora de Registro</span>
           <span class="summary-val" id="sumTime">-</span>
         </div>
+        <div class="summary-row" id="rowCert" style="display: none;">
+          <span class="summary-label">Cód. Verificación</span>
+          <span class="summary-val" id="sumCert" style="font-family: monospace; font-weight: bold; color: var(--primary);">-</span>
+        </div>
         <div class="summary-row">
           <span class="summary-label">Estado</span>
           <span class="summary-val" style="color: var(--primary);">✓ REGISTRADO OFICIAL</span>
@@ -788,9 +792,38 @@
     (function () {
       // 1. Obtener parámetros de la URL
       const urlParams = new URLSearchParams(window.location.search);
+      const certParam = urlParams.get('cert');
       const eventId = urlParams.get('id') || urlParams.get('event_id') || '';
       const paramTitle = urlParams.get('title') || '';
       const paramLocation = urlParams.get('location') || '';
+
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+      if (certParam) {
+        const fc = document.getElementById('formCard');
+        const sc = document.getElementById('successCard');
+        if (fc) fc.style.display = 'none';
+        if (sc) sc.style.display = 'block';
+        const stTitle = document.querySelector('.success-title');
+        if (stTitle) stTitle.textContent = 'Constancia Oficial Verificada';
+        const stMsg = document.querySelector('.success-message');
+        if (stMsg) stMsg.textContent = 'Certificado digital emitido y autenticado oficialmente por el Instituto de Investigaciones de la Amazonía Peruana (IIAP).';
+        const elName = document.getElementById('sumName');
+        if (elName) elName.textContent = urlParams.get('name') || 'Participante';
+        const elDni = document.getElementById('sumDni');
+        if (elDni) elDni.textContent = urlParams.get('dni') || '-';
+        const elEvent = document.getElementById('sumEvent');
+        if (elEvent) elEvent.textContent = urlParams.get('event') || (paramTitle || 'Evento Institucional IIAP');
+        const elTime = document.getElementById('sumTime');
+        if (elTime) elTime.textContent = urlParams.get('time') || now.toLocaleDateString('es-PE', options);
+        const rowCert = document.getElementById('rowCert');
+        const sumCert = document.getElementById('sumCert');
+        if (rowCert && sumCert) {
+          rowCert.style.display = 'flex';
+          sumCert.textContent = certParam;
+        }
+      }
 
       const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
         ? 'http://localhost:3000/api'

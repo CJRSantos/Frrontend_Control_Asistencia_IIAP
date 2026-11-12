@@ -75,6 +75,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     try {
       // 0. Si es un código de Constancia de Asistencia / Certificado Digital emitido por el IIAP
       if (cleanCode.contains('CONSTANCIA DE ASISTENCIA') ||
+          cleanCode.contains('cert=') ||
           cleanCode.startsWith('IIAP_CERT:') ||
           cleanCode.contains('IIAP-CERT-')) {
         await _showCertificateValidationDialog(cleanCode);
@@ -599,11 +600,31 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   }
 
   Future<void> _showCertificateValidationDialog(String rawPayload) async {
-    final lines = rawPayload
-        .split('\n')
-        .map((l) => l.trim())
-        .where((l) => l.isNotEmpty && !l.startsWith('---'))
-        .toList();
+    List<String> lines = [];
+    if (rawPayload.startsWith('http://') || rawPayload.startsWith('https://')) {
+      final uri = Uri.tryParse(rawPayload);
+      if (uri != null) {
+        final cert = uri.queryParameters['cert'] ?? '';
+        final name = uri.queryParameters['name'] ?? '';
+        final dni = uri.queryParameters['dni'] ?? '';
+        final evt = uri.queryParameters['event'] ?? '';
+        final time = uri.queryParameters['time'] ?? '';
+
+        if (name.isNotEmpty) lines.add('Participante: $name');
+        if (dni.isNotEmpty) lines.add('Documento: $dni');
+        if (evt.isNotEmpty) lines.add('Evento: $evt');
+        if (time.isNotEmpty) lines.add('Acreditación: $time');
+        if (cert.isNotEmpty) lines.add('Código Validación: $cert');
+      }
+    }
+
+    if (lines.isEmpty) {
+      lines = rawPayload
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty && !l.startsWith('---'))
+          .toList();
+    }
 
     await showDialog(
       context: context,
