@@ -1669,8 +1669,8 @@ class _AttendanceTabState extends State<AttendanceTab> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                isAdmin ? 'Control Institucional' : 'Control de Asistencias',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5, letterSpacing: -0.2),
+                                isAdmin ? 'Control General' : 'Control Asistencias',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15.5, letterSpacing: -0.2),
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
@@ -1730,23 +1730,25 @@ class _AttendanceTabState extends State<AttendanceTab> {
                       indicatorColor: primaryColor,
                       unselectedLabelColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       indicatorWeight: 3,
+                      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                       tabs: [
                         const Tab(
-                          icon: Icon(Icons.corporate_fare_rounded, size: 20),
-                          text: 'Registro General',
+                          icon: Icon(Icons.corporate_fare_rounded, size: 19),
+                          text: 'General',
                         ),
                         const Tab(
-                          icon: Icon(Icons.person_outline_rounded, size: 20),
-                          text: 'Mis Asistencias',
+                          icon: Icon(Icons.person_outline_rounded, size: 19),
+                          text: 'Mis Marcas',
                         ),
                         Tab(
                           icon: Badge(
                             isLabelVisible: _pendingCheckouts.isNotEmpty,
                             label: Text('${_pendingCheckouts.length}'),
                             backgroundColor: Colors.amber[800],
-                            child: const Icon(Icons.pending_actions_rounded, size: 20),
+                            child: const Icon(Icons.pending_actions_rounded, size: 19),
                           ),
-                          text: 'Pendientes de Salida',
+                          text: 'Pendientes',
                         ),
                       ],
                     ),
@@ -2032,387 +2034,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
     );
   }
 
-  Widget _buildSummaryHeroCard({
-    required BuildContext context,
-    required List<ShiftJourneyRecord> allJourneys,
-    required String currentFilter,
-    required ValueChanged<String> onFilterChanged,
-    required bool showSearch,
-  }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = ThemeService.primaryColor(context);
-
-    final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final nowMinutes = now.hour * 60 + now.minute;
-
-    bool isMissingCheckout(ShiftJourneyRecord j) {
-      if (j.checkOut != null) return false;
-      final isMorning = j.shift == AttendanceShift.MORNING;
-      final isPastDay = j.workDate.compareTo(todayStr) < 0;
-      final scheduledExitMins = isMorning ? 13 * 60 : 18 * 60 + 30;
-      final isPastExitTime = j.workDate == todayStr ? nowMinutes >= scheduledExitMins : true;
-      return isPastDay || isPastExitTime;
-    }
-
-    final total = allJourneys.length;
-    final completed = allJourneys.where((j) => j.isCompleted).length;
-    final onTime = allJourneys.where((j) => j.checkIn?.status == AttendanceStatus.ON_TIME).length;
-    final lateCount = allJourneys.where((j) => j.checkIn?.status == AttendanceStatus.LATE).length;
-    final missing = allJourneys.where(isMissingCheckout).length;
-
-    final totalWithCheckIn = onTime + lateCount;
-    final punctuality = totalWithCheckIn > 0
-        ? ((onTime / totalWithCheckIn) * 100).round()
-        : (total > 0 ? 100 : 0);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cardBg(context),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _cardBorder(context), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Fila superior: Icono + Titulo + Badge Oficial (100% elástica y sin desbordamiento)
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(5.5),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(
-                  Icons.insights_rounded,
-                  size: 15,
-                  color: primaryColor,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  'RESUMEN DE ASISTENCIAS',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.35),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 5.5,
-                      height: 5.5,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'OFICIAL',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF10B981),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Fila de 4 KPIs
-          Row(
-            children: [
-              _buildStatTile(
-                label: 'Jornadas',
-                value: '$total',
-                icon: Icons.calendar_month_rounded,
-                color: primaryColor,
-                isDark: isDark,
-              ),
-              const SizedBox(width: 6),
-              _buildStatTile(
-                label: 'Puntualidad',
-                value: '$punctuality%',
-                icon: Icons.check_circle_rounded,
-                color: const Color(0xFF10B981),
-                isDark: isDark,
-              ),
-              const SizedBox(width: 6),
-              _buildStatTile(
-                label: 'Tardanzas',
-                value: '$lateCount',
-                icon: Icons.access_time_filled_rounded,
-                color: const Color(0xFFF59E0B),
-                isDark: isDark,
-              ),
-              const SizedBox(width: 6),
-              _buildStatTile(
-                label: 'Sin salida',
-                value: '$missing',
-                icon: Icons.warning_rounded,
-                color: const Color(0xFFEF4444),
-                isDark: isDark,
-              ),
-            ],
-          ),
-
-          // Buscador si es Vista de Administrador/Supervisor (showSearch)
-          if (showSearch) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _searchController,
-              onChanged: (val) {
-                setState(() => _searchQuery = val);
-              },
-              decoration: InputDecoration(
-                hintText: 'Buscar por colaborador, DNI o fecha...',
-                hintStyle: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                ),
-                prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, size: 16),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: _innerBoxBg(context),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: _cardBorder(context)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: _cardBorder(context).withValues(alpha: 0.5)),
-                ),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 12),
-
-          // Chips de filtro interactivo
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip(
-                  label: 'Todas',
-                  count: total,
-                  filterKey: 'all',
-                  currentFilter: currentFilter,
-                  onTap: () => onFilterChanged('all'),
-                  accentColor: primaryColor,
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                _buildFilterChip(
-                  label: 'Completadas',
-                  count: completed,
-                  filterKey: 'completed',
-                  currentFilter: currentFilter,
-                  onTap: () => onFilterChanged('completed'),
-                  accentColor: const Color(0xFF10B981),
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                _buildFilterChip(
-                  label: 'A tiempo',
-                  count: onTime,
-                  filterKey: 'ontime',
-                  currentFilter: currentFilter,
-                  onTap: () => onFilterChanged('ontime'),
-                  accentColor: const Color(0xFF10B981),
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                _buildFilterChip(
-                  label: 'Tardanzas',
-                  count: lateCount,
-                  filterKey: 'late',
-                  currentFilter: currentFilter,
-                  onTap: () => onFilterChanged('late'),
-                  accentColor: const Color(0xFFF59E0B),
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                _buildFilterChip(
-                  label: 'Sin salida',
-                  count: missing,
-                  filterKey: 'missing',
-                  currentFilter: currentFilter,
-                  onTap: () => onFilterChanged('missing'),
-                  accentColor: const Color(0xFFEF4444),
-                  isDark: isDark,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatTile({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7.5),
-        decoration: BoxDecoration(
-          color: _innerBoxBg(context),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.05),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 14.5, color: color),
-            const SizedBox(height: 3),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: color,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip({
-    required String label,
-    required int count,
-    required String filterKey,
-    required String currentFilter,
-    required VoidCallback onTap,
-    required Color accentColor,
-    required bool isDark,
-  }) {
-    final isSelected = currentFilter == filterKey;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? accentColor.withValues(alpha: 0.2)
-                : (isDark ? const Color(0xFF0F1A22) : const Color(0xFFF1F5F9)),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isSelected
-                  ? accentColor
-                  : (isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.06)),
-              width: isSelected ? 1.4 : 1.0,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected
-                      ? (isDark ? Colors.white : accentColor)
-                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? accentColor
-                      : (isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.08)),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$count',
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    color: isSelected
-                        ? Colors.white
-                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildJourneyList(
     List<ShiftJourneyRecord> journeys,
     bool isLoading,
@@ -2512,19 +2133,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
           itemCount: filtered.isEmpty ? 2 : filtered.length + 1,
           itemBuilder: (context, index) {
             if (index == 0) {
-              if (!showUserName) {
-                return _buildCompactSummaryBar(
-                  context: context,
-                  allJourneys: journeys,
-                  currentFilter: activeFilter,
-                  onFilterChanged: (newFilter) {
-                    setState(() {
-                      _myFilter = newFilter;
-                    });
-                  },
-                );
-              }
-              return _buildSummaryHeroCard(
+              final summaryBar = _buildCompactSummaryBar(
                 context: context,
                 allJourneys: journeys,
                 currentFilter: activeFilter,
@@ -2537,7 +2146,61 @@ class _AttendanceTabState extends State<AttendanceTab> {
                     }
                   });
                 },
-                showSearch: showUserName,
+              );
+
+              if (!showUserName) {
+                return summaryBar;
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  summaryBar,
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) {
+                        setState(() => _searchQuery = val);
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por colaborador, DNI o fecha...',
+                        hintStyle: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                        ),
+                        prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 16),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: _innerBoxBg(context),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: _cardBorder(context), width: 1.1),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: _cardBorder(context).withValues(alpha: 0.6),
+                            width: 1.1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: primaryColor, width: 1.4),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               );
             }
 
