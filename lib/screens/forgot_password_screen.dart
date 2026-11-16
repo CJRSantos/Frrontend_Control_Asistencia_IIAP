@@ -367,7 +367,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           AppTextField(
             controller: _newPasswordController,
             label: 'Nueva Contraseña',
-            hint: 'Mínimo 6 caracteres',
+            hint: 'Mínimo 8 caracteres',
             prefixIcon: Icons.lock_outline_rounded,
             obscureText: _obscurePassword,
             suffixIcon: IconButton(
@@ -382,8 +382,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               if (value == null || value.isEmpty) {
                 return 'Ingresa tu nueva contraseña';
               }
-              if (value.length < 6) {
-                return 'La contraseña debe tener al menos 6 caracteres';
+              if (value.length < 8) {
+                return 'La contraseña debe tener al menos 8 caracteres';
               }
               return null;
             },
