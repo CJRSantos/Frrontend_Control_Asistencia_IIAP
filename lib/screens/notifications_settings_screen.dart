@@ -1248,13 +1248,14 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                 textSub: textSub,
                                 primaryColor: primaryColor,
                               ),
-                              const SizedBox(height: 24),
                             ],
-                          ),
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
+                ),
         );
       },
     );
