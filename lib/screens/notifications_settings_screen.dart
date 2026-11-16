@@ -803,179 +803,60 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // --- 1. BANNER PRINCIPAL: RECORDATORIOS LOCALES ---
+                            // --- 1. BANNER PRINCIPAL: SWITCH MAESTRO ---
                             Container(
-                              padding: const EdgeInsets.all(18),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                               decoration: BoxDecoration(
                                 color: cardBg,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(color: cardBorder),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  // Badges superiores responsivos con Wrap anti-overflow
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: Wrap(
-                                          spacing: 8,
-                                          runSpacing: 6,
-                                          crossAxisAlignment: WrapCrossAlignment.center,
-                                          children: [
-                                            // Badge 1: 100% OFFLINE
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: primaryColor.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(20),
-                                                border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Container(
-                                                    width: 6,
-                                                    height: 6,
-                                                    decoration: BoxDecoration(
-                                                      color: primaryColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  Text(
-                                                    '100% OFFLINE',
-                                                    style: TextStyle(
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: primaryColor,
-                                                      letterSpacing: 0.4,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-
-                                            // Badge 2: IIAP Core
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
-                                                borderRadius: BorderRadius.circular(20),
-                                                border: Border.all(color: cardBorder),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(Icons.shield_outlined, size: 12, color: primaryColor),
-                                                  const SizedBox(width: 5),
-                                                  const Text(
-                                                    'IIAP Core',
-                                                    style: TextStyle(
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: Color(0xFF94A3B8),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Icon(
-                                        Icons.fact_check_outlined,
-                                        size: 18,
-                                        color: textSub.withValues(alpha: 0.6),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 14),
-
-                                  Text(
-                                    'Recordatorios Locales',
-                                    style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.bold,
-                                      color: textWhite,
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-
-                                  Text(
-                                    'Las alarmas programadas se activarán con precisión milimétrica incluso sin conexión a internet.',
-                                    style: TextStyle(
-                                      fontSize: 12.5,
-                                      color: textSub,
-                                      height: 1.45,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  // Switch Maestro
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                    padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: isDark
-                                          ? (hasWallpaper
-                                              ? ThemeService.containerColor(context).withValues(alpha: 0.28)
-                                              : ThemeService.containerColor(context).withValues(alpha: 0.45))
-                                          : const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: cardBorder.withValues(alpha: 0.7)),
+                                      color: primaryColor.withValues(alpha: 0.18),
+                                      shape: BoxShape.circle,
                                     ),
-                                    child: Row(
+                                    child: Icon(
+                                      Icons.notifications_active_rounded,
+                                      color: primaryColor,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: primaryColor.withValues(alpha: 0.18),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.notifications_active_rounded,
-                                            color: primaryColor,
-                                            size: 20,
+                                        Text(
+                                          'Activar todos los recordatorios',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: textWhite,
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Activar todos los recordatorios',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: textWhite,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                _isMasterEnabled
-                                                    ? '$_activeCount activos en este dispositivo'
-                                                    : 'Recordatorios en pausa (0 activos)',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: _isMasterEnabled ? primaryColor : const Color(0xFFEF4444),
-                                                ),
-                                              ),
-                                            ],
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _isMasterEnabled
+                                              ? '$_activeCount activos en este dispositivo'
+                                              : 'Recordatorios en pausa (0 activos)',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: _isMasterEnabled ? primaryColor : const Color(0xFFEF4444),
                                           ),
-                                        ),
-                                        CupertinoSwitch(
-                                          value: _isMasterEnabled,
-                                          activeTrackColor: primaryColor,
-                                          inactiveTrackColor: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                                          onChanged: _toggleMasterSwitch,
                                         ),
                                       ],
                                     ),
+                                  ),
+                                  CupertinoSwitch(
+                                    value: _isMasterEnabled,
+                                    activeTrackColor: primaryColor,
+                                    inactiveTrackColor: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                    onChanged: _toggleMasterSwitch,
                                   ),
                                 ],
                               ),
@@ -1367,42 +1248,13 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                 textSub: textSub,
                                 primaryColor: primaryColor,
                               ),
+                              const SizedBox(height: 24),
                             ],
-
-                            const SizedBox(height: 28),
-
-                            // --- 5. FOOTER: SINCRONIZADO NATIVAMENTE ---
-                            Center(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.shield_outlined,
-                                    size: 15,
-                                    color: primaryColor,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      'Sincronizado nativamente con el Administrador de Alarmas del SO',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 11.5,
-                                        color: textSub.withValues(alpha: 0.9),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
         );
       },
     );

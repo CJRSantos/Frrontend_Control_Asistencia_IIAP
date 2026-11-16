@@ -4092,7 +4092,7 @@ _buildCircularMuteBell(context),
                 Text('$cargo • $dependencia', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF8FA3AF), fontSize: 11, fontWeight: FontWeight.w500)),
                 if (user.documentNumber?.isNotEmpty == true) ...[
                   const SizedBox(height: 5),
-                  Text('DNI ${_maskDni(user.documentNumber)}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF8FA3AF), letterSpacing: 0.2)),
+                  Text('DNI ${user.documentNumber!.trim()}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF8FA3AF), letterSpacing: 0.2)),
                 ],
               ],
             ),
@@ -4408,50 +4408,29 @@ _buildCircularMuteBell(context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: themeColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: themeColor.withValues(alpha: 0.35), width: 1.2),
-                        ),
-                        child: Icon(Icons.qr_code_scanner_rounded, color: themeColor, size: 26),
-                      ),
-                      Positioned(
-                        top: -3,
-                        right: -3,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: themeColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _cardBg(context), width: 2),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: themeColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: themeColor.withValues(alpha: 0.35)),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: themeColor.withValues(alpha: 0.35), width: 1.2),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.circle, color: themeColor, size: 6.5),
-                        const SizedBox(width: 5),
-                        Text('Cámara Lista', style: TextStyle(color: themeColor, fontSize: 10.5, fontWeight: FontWeight.bold)),
-                      ],
+                    child: Icon(Icons.qr_code_scanner_rounded, color: themeColor, size: 26),
+                  ),
+                  Positioned(
+                    top: -3,
+                    right: -3,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: themeColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _cardBg(context), width: 2),
+                      ),
                     ),
                   ),
                 ],
