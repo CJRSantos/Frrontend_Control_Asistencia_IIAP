@@ -1705,20 +1705,25 @@ class _AttendanceTabState extends State<AttendanceTab> {
                         onPressed: _isGeneratingPdf ? null : _exportPdfReport,
                       ),
                       if (isAdmin)
-                        IconButton(
-                          icon: const Icon(Icons.cleaning_services_rounded),
-                          tooltip: 'Reinicio Semanal (Viernes 10:00 PM)',
-                          onPressed: _confirmWeeklyReset,
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert_rounded),
+                          tooltip: 'Opciones avanzadas',
+                          onSelected: (val) {
+                            if (val == 'reset') _confirmWeeklyReset();
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'reset',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.cleaning_services_rounded, size: 18, color: Colors.orange),
+                                  SizedBox(width: 10),
+                                  Text('Reinicio semanal', style: TextStyle(fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      IconButton(
-                        icon: const Icon(Icons.refresh_rounded),
-                        tooltip: 'Actualizar',
-                        onPressed: () {
-                          _loadAllRecords();
-                          _loadPendingCheckouts();
-                          _loadMyRecords();
-                        },
-                      ),
                     ],
                     bottom: TabBar(
                       labelColor: primaryColor,
@@ -1823,13 +1828,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
                     ),
                   ],
                 ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.refresh_rounded),
-                    tooltip: 'Actualizar',
-                    onPressed: _loadMyRecords,
-                  ),
-                ],
               ),
               body: _buildJourneyList(
                 ShiftJourneyRecord.groupFromRecords(_myRecords),
@@ -2347,20 +2345,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               ),
             ),
-            const SizedBox(height: 24),
-            Center(
-              child: OutlinedButton.icon(
-                onPressed: onRefresh,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Actualizar ahora'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryColor,
-                  side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                ),
-              ),
-            ),
           ],
         ),
       );
@@ -2536,20 +2520,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
                 fontSize: 13,
                 height: 1.4,
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Center(
-              child: OutlinedButton.icon(
-                onPressed: onRefresh,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Actualizar lista'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryColor,
-                  side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                ),
               ),
             ),
           ],

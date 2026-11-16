@@ -1876,13 +1876,6 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
           isAdmin ? 'Gestión de Personal y Horarios' : 'Control de Horarios de Personal',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Recargar lista completa',
-            onPressed: () => _loadData(resetSearch: true),
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
