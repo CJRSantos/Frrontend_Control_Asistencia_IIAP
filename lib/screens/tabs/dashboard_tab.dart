@@ -127,15 +127,6 @@ class _DashboardTabState extends State<DashboardTab> {
     await AuthService.getProfile();
     await _fetchAttendanceData();
     await EventService.getEvents();
-    if (mounted) {
-      AppToast.show(
-        context,
-        title: 'Sincronización Exitosa',
-        subtitle: 'Información de turnos y cuadrilla al día.',
-        icon: Icons.sync_rounded,
-        accentColor: const Color(0xFF10B981),
-      );
-    }
   }
 
   void _openPhotoViewer(UserModel user) {
@@ -1166,15 +1157,6 @@ class _DashboardTabState extends State<DashboardTab> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    InkWell(
-                      onTap: _refreshAll,
-                      borderRadius: BorderRadius.circular(8),
-                      child: const Padding(
-                        padding: EdgeInsets.all(2.0),
-                        child: Icon(Icons.sync_rounded, color: Color(0xFF94A3B8), size: 18),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -2093,23 +2075,6 @@ class _DashboardTabState extends State<DashboardTab> {
                       ],
                     ),
                   ),
-                  InkWell(
-                    onTap: _refreshAll,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.all(9),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF18262B),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF263C45)),
-                      ),
-                      child: const Icon(
-                        Icons.swap_horiz_rounded,
-                        color: Color(0xFFCBD5E1),
-                        size: 20,
-                      ),
-                    ),
-                  ),
                 ],
               ),
 
@@ -3003,8 +2968,6 @@ class _DashboardTabState extends State<DashboardTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildSupervisorTopStatusBar(),
-        const SizedBox(height: 12),
         _buildSupervisorHeader(context, user),
         const SizedBox(height: 18),
         _buildSupervisorWelcomeCard(context, user),
@@ -3023,52 +2986,6 @@ class _DashboardTabState extends State<DashboardTab> {
         const SizedBox(height: 22),
         _buildSupervisorEventsSection(context, user, events),
         const SizedBox(height: 28),
-      ],
-    );
-  }
-
-  Widget _buildSupervisorTopStatusBar() {
-    return Row(
-      children: [
-        const Icon(Icons.shield_outlined, color: Color(0xFF10B981), size: 14),
-        const SizedBox(width: 6),
-        const Flexible(
-          child: Text(
-            'SISTEMA BIOMÉTRICO IIAP',
-            style: TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const Spacer(),
-        ValueListenableBuilder<bool>(
-          valueListenable: ConnectivityService.isOnlineNotifier,
-          builder: (context, isOnline, _) {
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.circle,
-                  color: isOnline ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                  size: 6.5,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  isOnline ? 'En línea' : 'Sin conexión',
-                  style: TextStyle(
-                    color: isOnline ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
       ],
     );
   }
@@ -3355,23 +3272,6 @@ _buildCircularMuteBell(context),
                       ],
                     ),
                   ],
-                ),
-              ),
-              InkWell(
-                onTap: _refreshAll,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF18262B),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF263C45)),
-                  ),
-                  child: const Icon(
-                    Icons.sync_rounded,
-                    color: Color(0xFF8FA3AF),
-                    size: 19,
-                  ),
                 ),
               ),
             ],
@@ -4023,39 +3923,6 @@ _buildCircularMuteBell(context),
     );
   }
 
-  Widget _buildSmallWelcomeMuteBell(BuildContext context) {
-    final themeColor = ThemeService.primaryColor(context);
-    return ValueListenableBuilder<bool>(
-      valueListenable: NotificationService.isMutedNotifier,
-      builder: (context, isMuted, _) {
-        return InkWell(
-          onTap: () async {
-            final muted = await NotificationService.toggleMute();
-            if (context.mounted) {
-              _showNotificationFeedback(context, muted);
-            }
-          },
-          borderRadius: BorderRadius.circular(15),
-          child: Container(
-            padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: isMuted ? const Color(0xFF2E1212) : const Color(0xFF1A2A30),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isMuted ? const Color(0xFF7F1D1D) : themeColor.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Icon(
-              isMuted ? Icons.notifications_off_rounded : Icons.notifications_active_outlined,
-              size: 14,
-              color: isMuted ? const Color(0xFFEF4444) : themeColor,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildUserTopHeader(BuildContext context, UserModel user) {
     return Row(
       children: [
@@ -4219,45 +4086,14 @@ _buildCircularMuteBell(context),
                       decoration: BoxDecoration(color: themeColor, shape: BoxShape.circle),
                       child: const Icon(Icons.check, size: 9.5, color: Colors.black),
                     ),
-                    const Spacer(),
-                    _buildSmallWelcomeMuteBell(context),
                   ],
                 ),
                 const SizedBox(height: 3),
                 Text('$cargo • $dependencia', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF8FA3AF), fontSize: 11, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 7),
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    ValueListenableBuilder<bool>(
-                      valueListenable: ConnectivityService.isOnlineNotifier,
-                      builder: (context, isOnline, _) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isOnline ? const Color(0xFF0F3224) : const Color(0xFF2E1212),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: isOnline ? const Color(0xFF176044) : const Color(0xFF7F1D1D),
-                            ),
-                          ),
-                          child: Text(
-                            isOnline ? 'USUARIO ACTIVO' : 'DESCONECTADO',
-                            style: TextStyle(
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.bold,
-                              color: isOnline ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    Text('•  DNI ${_maskDni(user.documentNumber)}', style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: Color(0xFF8FA3AF), letterSpacing: 0.2)),
-                  ],
-                ),
+                if (user.documentNumber?.isNotEmpty == true) ...[
+                  const SizedBox(height: 5),
+                  Text('DNI ${user.documentNumber!.trim()}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF8FA3AF), letterSpacing: 0.2)),
+                ],
               ],
             ),
           ),
@@ -4572,50 +4408,29 @@ _buildCircularMuteBell(context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: themeColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: themeColor.withValues(alpha: 0.35), width: 1.2),
-                        ),
-                        child: Icon(Icons.qr_code_scanner_rounded, color: themeColor, size: 26),
-                      ),
-                      Positioned(
-                        top: -3,
-                        right: -3,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: themeColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _cardBg(context), width: 2),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: themeColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: themeColor.withValues(alpha: 0.35)),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: themeColor.withValues(alpha: 0.35), width: 1.2),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.circle, color: themeColor, size: 6.5),
-                        const SizedBox(width: 5),
-                        Text('Cámara Lista', style: TextStyle(color: themeColor, fontSize: 10.5, fontWeight: FontWeight.bold)),
-                      ],
+                    child: Icon(Icons.qr_code_scanner_rounded, color: themeColor, size: 26),
+                  ),
+                  Positioned(
+                    top: -3,
+                    right: -3,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: themeColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _cardBg(context), width: 2),
+                      ),
                     ),
                   ),
                 ],
@@ -5097,154 +4912,60 @@ _buildCircularMuteBell(context),
           return const SizedBox.shrink();
         }
 
-        // Caso 1: Hay marcajes pendientes de sincronizar (con o sin internet)
+        // Solo mostrar un aviso sutil si hay marcajes pendientes de sincronización automática
         if (pendingCount > 0) {
           return Container(
             margin: const EdgeInsets.only(bottom: 14),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDark
                     ? [const Color(0xFF451A03), const Color(0xFF291002)]
                     : [const Color(0xFFFEF3C7), const Color(0xFFFDE68A)],
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.5) : const Color(0xFFF59E0B),
-                width: 1.2,
+                width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFD97706).withValues(alpha: isDark ? 0.2 : 0.15),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
             ),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD97706).withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.cloud_upload_rounded,
-                    color: Color(0xFFD97706),
-                    size: 20,
-                  ),
+                const Icon(
+                  Icons.cloud_upload_rounded,
+                  color: Color(0xFFD97706),
+                  size: 18,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        pendingCount == 1
-                            ? '1 marcaje guardado offline'
-                            : '$pendingCount marcajes guardados offline',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF78350F),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        isOnline
-                            ? 'Internet disponible. Listo para sincronizar.'
-                            : 'Sin señal. Se enviarán al detectar conexión.',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    pendingCount == 1
+                        ? '1 marcaje guardado offline (se enviará automáticamente al reconectar)'
+                        : '$pendingCount marcajes offline (se enviarán automáticamente al reconectar)',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : const Color(0xFF78350F),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                if (isSyncing)
+                if (isSyncing) ...[
+                  const SizedBox(width: 8),
                   const SizedBox(
-                    width: 24,
-                    height: 24,
+                    width: 16,
+                    height: 16,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2.2,
+                      strokeWidth: 2,
                       color: Color(0xFFD97706),
                     ),
-                  )
-                else
-                  ElevatedButton(
-                    onPressed: isOnline
-                        ? () async {
-                            final res = await OfflineSyncService.syncPendingRecords();
-                            if (context.mounted) {
-                              AppToast.show(
-                                context,
-                                title: res.successCount > 0 ? 'Sincronización Exitosa' : 'Aviso',
-                                subtitle: res.message,
-                                icon: res.successCount > 0 ? Icons.cloud_done_rounded : Icons.info_outline_rounded,
-                                accentColor: res.successCount > 0 ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                              );
-                            }
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      backgroundColor: const Color(0xFFD97706),
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: isDark ? const Color(0xFF33200B) : const Color(0xFFFDE68A),
-                      disabledForegroundColor: isDark ? const Color(0xFF785532) : const Color(0xFFB45309),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: Text(
-                      isOnline ? 'Enviar' : 'En cola',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
                   ),
+                ],
               ],
             ),
           );
         }
 
-        // Caso 2: Sin internet y sin marcajes pendientes (aviso informativo sutil)
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF1E293B).withValues(alpha: 0.8)
-                : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.wifi_off_rounded,
-                size: 16,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Modo Sin Conexión activo. Tus marcajes se guardarán en este teléfono.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
+        return const SizedBox.shrink();
       },
     );
   }

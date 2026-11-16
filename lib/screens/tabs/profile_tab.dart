@@ -2631,41 +2631,7 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
                   ),
 
-                  const SizedBox(height: 22),
-
-                  // Sello Institucional
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const LeafLogo(size: 28),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Instituto de Investigaciones de la Amazonía Peruana',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: ThemeService.subtextColor(context),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
