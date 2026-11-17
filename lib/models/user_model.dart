@@ -101,7 +101,7 @@ class UserModel {
   bool get canManageEvents =>
       isAdmin || isSupervisor || role == UserRole.ADMIN_EVENTO || role == UserRole.GESTOR_EVENTO;
   bool get canUseFacialRecognition =>
-      isAdmin || isSupervisor || role == UserRole.ADMIN_EVENTO || role == UserRole.GESTOR_EVENTO;
+      isAdmin || isSupervisor;
 
   /// Oficina asignada al usuario (vacía por defecto si no ha sido configurada)
   String get office {
