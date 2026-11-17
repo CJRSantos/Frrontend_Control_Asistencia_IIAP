@@ -716,7 +716,7 @@ class _DashboardTabState extends State<DashboardTab> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
           ),
           content: const Text(
-            'El Control Biométrico Facial está reservado exclusivamente para los roles autorizados (Administradores, Supervisores y Gestores de Asistencia).',
+            'El Control Biométrico Facial está reservado exclusivamente para los roles autorizados (Administradores y Supervisores).',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFFCBD5E1)),
           ),
@@ -1412,108 +1412,110 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
         ),
 
-        const SizedBox(height: 10),
+        if (user.isAdmin) ...[
+          const SizedBox(height: 10),
 
-        // Tarjeta Reconocimiento Facial [BIOMÉTRICO]
-        InkWell(
-          onTap: () => _handleReconocimientoFacial(context),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _cardBg(context),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _cardBorder(context), width: 1.2),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F2E23),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF16533D)),
+          // Tarjeta Reconocimiento Facial [BIOMÉTRICO]
+          InkWell(
+            onTap: () => _handleReconocimientoFacial(context),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _cardBg(context),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _cardBorder(context), width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F2E23),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF16533D)),
+                    ),
+                    child: const Icon(
+                      Icons.face_retouching_natural_rounded,
+                      color: Color(0xFF34D399),
+                      size: 26,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.face_retouching_natural_rounded,
-                    color: Color(0xFF34D399),
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Control Biométrico Facial',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Flexible(
+                              child: Text(
+                                'Control Biométrico Facial',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0C3827),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF156947)),
-                            ),
-                            child: const Text(
-                              'BIOMÉTRICO',
-                              style: TextStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF34D399),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0C3827),
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(color: const Color(0xFF156947)),
+                              ),
+                              child: const Text(
+                                'BIOMÉTRICO',
+                                style: TextStyle(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF34D399),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Escaneo continuo con cámara e identificación con IA...',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF8FA3AF),
-                          height: 1.3,
+                          ],
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF34D399), size: 5.5),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Reconocimiento facial automático',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF34D399),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Escaneo continuo con cámara e identificación con IA...',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF8FA3AF),
+                            height: 1.3,
                           ),
-                        ],
-                      ),
-                    ],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 5),
+                        const Row(
+                          children: [
+                            Icon(Icons.circle, color: Color(0xFF34D399), size: 5.5),
+                            SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                'Reconocimiento facial automático',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF34D399),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 22),
-              ],
+                  const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 22),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
 
         const SizedBox(height: 22),
 
@@ -2339,109 +2341,6 @@ class _DashboardTabState extends State<DashboardTab> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF38BDF8),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 22),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 10),
-
-        // Tarjeta Reconocimiento Facial [BIOMÉTRICO]
-        InkWell(
-          onTap: () => _handleReconocimientoFacial(context),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _cardBg(context),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _cardBorder(context), width: 1.2),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F2E23),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF16533D)),
-                  ),
-                  child: const Icon(
-                    Icons.face_retouching_natural_rounded,
-                    color: Color(0xFF34D399),
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Control Biométrico Facial',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0C3827),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF156947)),
-                            ),
-                            child: const Text(
-                              'BIOMÉTRICO',
-                              style: TextStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF34D399),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Escaneo facial continuo y validación biométrica...',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF8FA3AF),
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF34D399), size: 5.5),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Reconocimiento facial automático',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF34D399),
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -4473,40 +4372,6 @@ _buildCircularMuteBell(context),
                   ),
                 ),
               ),
-              if (user.canUseFacialRecognition) ...[
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(color: themeColor.withValues(alpha: 0.6), width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                    onPressed: () => _handleReconocimientoFacial(context),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Icon(Icons.face_retouching_natural_rounded, size: 20, color: themeColor),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'Control Biométrico Facial',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.2, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded, size: 20, color: themeColor),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
