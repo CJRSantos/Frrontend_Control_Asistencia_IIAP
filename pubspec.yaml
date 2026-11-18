@@ -56,5 +56,4 @@ flutter:
   assets:
     - assets/app_icon.jpg
     - assets/images/
-    - assets/images/wallpapers/
     - assets/sounds/
