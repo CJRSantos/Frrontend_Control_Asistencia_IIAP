@@ -2210,144 +2210,6 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  // --- DIÁLOGO PARA ELIMINAR / DESACTIVAR CUENTA PROPIA ---
-  Future<void> _showDeleteAccountDialog(UserModel user) async {
-    final passwordController = TextEditingController();
-    bool obscurePassword = true;
-    bool isSubmitting = false;
-    String? errorMessage;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            backgroundColor: ThemeService.cardBg(context),
-            title: const Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 26),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Eliminar Cuenta',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
-                  ),
-                ),
-              ],
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '¿Estás seguro de que deseas eliminar tu cuenta de ${user.fullName}?\n\nEsta acción borrará tu acceso y liberará tu correo y DNI para que puedas registrarte nuevamente cuando lo desees.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Ingresa tu contraseña para confirmar *',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: obscurePassword,
-                    decoration: InputDecoration(
-                      hintText: 'Tu contraseña actual',
-                      prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          size: 20,
-                        ),
-                        onPressed: () => setModalState(() => obscurePassword = !obscurePassword),
-                      ),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                  ),
-                  if (errorMessage != null) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isSubmitting ? null : () => Navigator.of(ctx).pop(),
-                child: const Text('Cancelar'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: isSubmitting
-                    ? null
-                    : () async {
-                        final pw = passwordController.text.trim();
-                        if (pw.isEmpty) {
-                          setModalState(() => errorMessage = 'Debes ingresar tu contraseña actual.');
-                          return;
-                        }
-
-                        setModalState(() {
-                          isSubmitting = true;
-                          errorMessage = null;
-                        });
-
-                        try {
-                          final msg = await AuthService.deleteMyAccount(pw).timeout(const Duration(seconds: 8));
-                          Navigator.of(ctx).pop();
-
-                          final nav = StorageService.navigatorKey.currentState ?? Navigator.of(context, rootNavigator: true);
-                          nav.pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
-                            (route) => false,
-                          );
-
-                          AppToast.show(
-                            StorageService.navigatorKey.currentContext ?? context,
-                            title: 'Cuenta Eliminada',
-                            subtitle: '$msg Puedes registrarte nuevamente cuando lo desees.',
-                            icon: Icons.check_circle_rounded,
-                            accentColor: const Color(0xFFEF4444),
-                          );
-                        } catch (e) {
-                          setModalState(() {
-                            isSubmitting = false;
-                            errorMessage = e.toString().replaceAll('Exception: ', '');
-                          });
-                        }
-                      },
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('Eliminar Definitivamente'),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   Future<void> _handleLogout() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -2911,7 +2773,7 @@ class _ProfileTabState extends State<ProfileTab> {
             context: context,
             icon: Icons.history_rounded,
             title: 'Cambiar Contraseña',
-            subtitle: 'Mínimo 8 caract., mayúscula, números ...',
+            subtitle: 'Actualiza tu clave de acceso institucional',
             onTap: () => _showChangePasswordDialog(user),
           ),
           const SizedBox(height: 10),
@@ -2921,7 +2783,7 @@ class _ProfileTabState extends State<ProfileTab> {
             context: context,
             icon: Icons.mail_outline_rounded,
             title: 'Cambiar Correo Electrónico',
-            subtitle: 'Actualiza tu contacto sin perder histori...',
+            subtitle: 'Correo para confirmaciones y alertas',
             onTap: () => _showChangeEmailDialog(user),
           ),
           const SizedBox(height: 10),
@@ -2931,26 +2793,13 @@ class _ProfileTabState extends State<ProfileTab> {
             context: context,
             icon: Icons.notifications_active_outlined,
             title: 'Configuración de Notificaciones',
-            subtitle: 'Alertas de asistencia, turno y alarmas o...',
+            subtitle: 'Alarmas de entrada, refrigerio y salida',
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const NotificationsSettingsScreen()),
               );
             },
           ),
-
-          // Opción Eliminar Mi Cuenta (para cuentas regulares que no sean SuperAdmin)
-          if (!user.isSuperAdmin) ...[
-            const SizedBox(height: 10),
-            _buildSecurityTile(
-              context: context,
-              icon: Icons.delete_outline_rounded,
-              title: 'Eliminar Mi Cuenta',
-              subtitle: 'Desactiva tu acceso permanentemente',
-              isDanger: true,
-              onTap: () => _showDeleteAccountDialog(user),
-            ),
-          ],
         ],
       ),
     );

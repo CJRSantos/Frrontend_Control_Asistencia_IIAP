@@ -883,7 +883,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                     child: _buildScheduleCard(
                                       title: 'Entrada Mañana',
                                       timeBadge: _formatTimeBadge(_morningEntryTime),
-                                      subtitle: 'Aviso para registrar ingreso matutino',
                                       icon: Icons.wb_sunny_rounded,
                                       iconColor: const Color(0xFFF59E0B),
                                       value: _notifMorningEntry && _isMasterEnabled,
@@ -906,7 +905,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                     child: _buildScheduleCard(
                                       title: 'Salida Mañana',
                                       timeBadge: _formatTimeBadge(_morningExitTime),
-                                      subtitle: 'Recordatorio para refrigerio y colación',
                                       icon: Icons.restaurant_rounded,
                                       iconColor: primaryColor,
                                       value: _notifMorningExit && _isMasterEnabled,
@@ -933,7 +931,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                     child: _buildScheduleCard(
                                       title: 'Entrada Tarde',
                                       timeBadge: _formatTimeBadge(_afternoonEntryTime),
-                                      subtitle: 'Reingreso puntual de jornada vespertina',
                                       icon: Icons.access_time_filled_rounded,
                                       iconColor: primaryColor,
                                       value: _notifAfternoonEntry && _isMasterEnabled,
@@ -956,7 +953,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                     child: _buildScheduleCard(
                                       title: 'Salida Tarde',
                                       timeBadge: _formatTimeBadge(_afternoonExitTime),
-                                      subtitle: 'Cierre oficial y firma de salida diaria',
                                       icon: Icons.nightlight_round,
                                       iconColor: const Color(0xFF94A3B8),
                                       value: _notifAfternoonExit && _isMasterEnabled,
@@ -980,7 +976,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                               _buildScheduleCard(
                                 title: 'Entrada Mañana',
                                 timeBadge: _formatTimeBadge(_morningEntryTime),
-                                subtitle: 'Aviso para registrar ingreso matutino',
                                 icon: Icons.wb_sunny_rounded,
                                 iconColor: const Color(0xFFF59E0B),
                                 value: _notifMorningEntry && _isMasterEnabled,
@@ -1000,7 +995,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                               _buildScheduleCard(
                                 title: 'Salida Mañana',
                                 timeBadge: _formatTimeBadge(_morningExitTime),
-                                subtitle: 'Recordatorio para refrigerio y colación',
                                 icon: Icons.restaurant_rounded,
                                 iconColor: primaryColor,
                                 value: _notifMorningExit && _isMasterEnabled,
@@ -1020,7 +1014,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                               _buildScheduleCard(
                                 title: 'Entrada Tarde',
                                 timeBadge: _formatTimeBadge(_afternoonEntryTime),
-                                subtitle: 'Reingreso puntual de jornada vespertina',
                                 icon: Icons.access_time_filled_rounded,
                                 iconColor: primaryColor,
                                 value: _notifAfternoonEntry && _isMasterEnabled,
@@ -1040,7 +1033,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                               _buildScheduleCard(
                                 title: 'Salida Tarde',
                                 timeBadge: _formatTimeBadge(_afternoonExitTime),
-                                subtitle: 'Cierre oficial y firma de salida diaria',
                                 icon: Icons.nightlight_round,
                                 iconColor: const Color(0xFF94A3B8),
                                 value: _notifAfternoonExit && _isMasterEnabled,
@@ -1313,7 +1305,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   Widget _buildScheduleCard({
     required String title,
     required String timeBadge,
-    required String subtitle,
+    String? subtitle,
     required IconData icon,
     Color? iconColor,
     required bool value,
@@ -1328,8 +1320,8 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   }) {
     final effectiveIconColor = iconColor ?? primaryColor;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
@@ -1338,19 +1330,20 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               color: isDark ? primaryColor.withValues(alpha: 0.16) : primaryColor.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: effectiveIconColor, size: 20),
+            child: Icon(icon, color: effectiveIconColor, size: 19),
           ),
           const SizedBox(width: 12),
 
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
@@ -1360,7 +1353,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13.5,
                           fontWeight: FontWeight.bold,
                           color: textWhite,
                         ),
@@ -1402,16 +1395,18 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: textSub,
+                if (subtitle != null && subtitle.trim().isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: textSub,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

@@ -1512,10 +1512,11 @@ class _AttendanceTabState extends State<AttendanceTab> {
               }
             }
 
-            // 1. Administrador General y Roles de Gestión: TabBar con "Registro General", "Mis Asistencias", "Pendientes de Salida"
+            // 1. Administrador General y Roles de Gestión: TabBar
             if (canManageAttendance) {
+              final showMyMarksTab = !isAdmin;
               return DefaultTabController(
-                length: 3,
+                length: showMyMarksTab ? 3 : 2,
                 child: Scaffold(
                   backgroundColor: hasWallpaper ? Colors.transparent : ThemeService.scaffoldBg(context),
                   appBar: AppBar(
@@ -1587,10 +1588,11 @@ class _AttendanceTabState extends State<AttendanceTab> {
                           icon: Icon(Icons.corporate_fare_rounded, size: 19),
                           text: 'General',
                         ),
-                        const Tab(
-                          icon: Icon(Icons.person_outline_rounded, size: 19),
-                          text: 'Mis Marcas',
-                        ),
+                        if (showMyMarksTab)
+                          const Tab(
+                            icon: Icon(Icons.person_outline_rounded, size: 19),
+                            text: 'Mis Marcas',
+                          ),
                         Tab(
                           icon: Badge(
                             isLabelVisible: _pendingCheckouts.isNotEmpty,
@@ -1615,12 +1617,13 @@ class _AttendanceTabState extends State<AttendanceTab> {
                         showUserName: true,
                         canEdit: canEditAttendance,
                       ),
-                      _buildJourneyList(
-                        ShiftJourneyRecord.groupFromRecords(_myRecords),
-                        _isLoadingMy,
-                        _loadMyRecords,
-                        showUserName: false,
-                      ),
+                      if (showMyMarksTab)
+                        _buildJourneyList(
+                          ShiftJourneyRecord.groupFromRecords(_myRecords),
+                          _isLoadingMy,
+                          _loadMyRecords,
+                          showUserName: false,
+                        ),
                       _buildPendingList(
                         _pendingCheckouts,
                         _isLoadingPending,
@@ -1774,42 +1777,39 @@ class _AttendanceTabState extends State<AttendanceTab> {
           onTap: () {
             onFilterChanged(isSelected ? 'all' : filterKey);
           },
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
             decoration: BoxDecoration(
               color: isSelected ? color.withValues(alpha: isDark ? 0.22 : 0.12) : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               border: isSelected ? Border.all(color: color.withValues(alpha: 0.5), width: 1) : null,
             ),
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, size: 13, color: color),
-                    const SizedBox(width: 4),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
+                Icon(icon, size: 12, color: color),
+                const SizedBox(width: 3.5),
                 Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  value,
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? color : ThemeService.subtextColor(context),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? color : ThemeService.subtextColor(context),
+                    ),
                   ),
                 ),
               ],
@@ -1820,19 +1820,12 @@ class _AttendanceTabState extends State<AttendanceTab> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
       decoration: BoxDecoration(
         color: _cardBg(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _cardBorder(context), width: 1.1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _cardBorder(context), width: 1.0),
       ),
       child: Row(
         children: [
@@ -1845,11 +1838,11 @@ class _AttendanceTabState extends State<AttendanceTab> {
           ),
           Container(
             width: 1,
-            height: 22,
-            color: _cardBorder(context).withValues(alpha: 0.5),
+            height: 14,
+            color: _cardBorder(context).withValues(alpha: 0.4),
           ),
           buildItem(
-            label: 'Puntualidad',
+            label: 'Puntual',
             value: '$punctuality%',
             icon: Icons.check_circle_rounded,
             color: const Color(0xFF10B981),
@@ -1857,8 +1850,8 @@ class _AttendanceTabState extends State<AttendanceTab> {
           ),
           Container(
             width: 1,
-            height: 22,
-            color: _cardBorder(context).withValues(alpha: 0.5),
+            height: 14,
+            color: _cardBorder(context).withValues(alpha: 0.4),
           ),
           buildItem(
             label: 'Tardanzas',
@@ -1869,8 +1862,8 @@ class _AttendanceTabState extends State<AttendanceTab> {
           ),
           Container(
             width: 1,
-            height: 22,
-            color: _cardBorder(context).withValues(alpha: 0.5),
+            height: 14,
+            color: _cardBorder(context).withValues(alpha: 0.4),
           ),
           buildItem(
             label: 'Sin salida',
@@ -2005,9 +1998,8 @@ class _AttendanceTabState extends State<AttendanceTab> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  summaryBar,
                   Container(
-                    margin: const EdgeInsets.only(bottom: 12),
+                    margin: const EdgeInsets.only(bottom: 8),
                     child: TextField(
                       controller: _searchController,
                       onChanged: (val) {
@@ -2050,6 +2042,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
                       ),
                     ),
                   ),
+                  summaryBar,
                 ],
               );
             }
