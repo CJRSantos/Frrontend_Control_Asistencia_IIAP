@@ -799,10 +799,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
     bool enableCheckOut = journey.checkOut != null || (journey.checkIn != null && journey.isPendingCheckOut);
 
     AttendanceStatus inStatus = journey.checkIn?.status ?? AttendanceStatus.ON_TIME;
-    final obsController = TextEditingController(
-      text: journey.checkIn?.observation ?? journey.checkOut?.observation ?? 'Ajuste de horarios por Administrador',
-    );
-
     bool isSubmitting = false;
 
     String formatTimeOfDay(TimeOfDay t) {
@@ -968,35 +964,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
                                   ),
                                 ),
                               ],
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            // Nota explicativa
-                            Container(
-                              padding: const EdgeInsets.all(11),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFD97706).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.3)),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Icon(Icons.info_outline_rounded, color: Color(0xFFF59E0B), size: 16),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Si el colaborador llegó a tiempo pero olvidó marcar en la mañana y marcó a la 1:00 PM, establece aquí su Entrada (ej: 08:00 AM) y su Salida (01:00 PM).',
-                                      style: TextStyle(
-                                        fontSize: 11.5,
-                                        color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
-                                        height: 1.35,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
 
                             const SizedBox(height: 14),
@@ -1312,39 +1279,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
                                 ],
                               ),
                             ),
-
-                            const SizedBox(height: 14),
-
-                            // Observación / Motivo
-                            const Text(
-                              'Motivo / Observación de la corrección *',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: obsController,
-                              maxLines: 2,
-                              decoration: InputDecoration(
-                                hintText: 'Ej. Olvido de marca matutina / Salida regularizada',
-                                hintStyle: TextStyle(fontSize: 12, color: isDark ? Colors.grey[500] : Colors.grey[400]),
-                                prefixIcon: const Icon(Icons.edit_note_rounded, size: 20),
-                                filled: true,
-                                fillColor: surfaceBg,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: borderCol),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: borderCol),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: primary, width: 1.5),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              ),
-                            ),
                           ],
                         ),
                       ),
@@ -1430,7 +1364,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
                                               checkInTime: inStr,
                                               checkInStatus: inStatus,
                                               checkOutTime: outStr,
-                                              observation: obsController.text.trim(),
                                             );
                                             nav.pop();
                                             scaffoldMessenger.showSnackBar(
@@ -1548,69 +1481,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
     );
   }
 
-  Future<void> _confirmWeeklyReset() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.cleaning_services_rounded, color: Colors.orange),
-            SizedBox(width: 10),
-            Expanded(child: Text('Reinicio Semanal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-          ],
-        ),
-        content: const Text(
-          'El sistema reinicia automáticamente todo el historial de asistencias los viernes a las 10:00 PM para evitar saturar la base de datos y la aplicación para todos (admin, supervisores y personal).\n\n¿Deseas ejecutar un reinicio manual en este momento?',
-          style: TextStyle(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Reiniciar Ahora'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reiniciando historial semanal...')),
-      );
-      try {
-        final res = await AttendanceService.clearWeeklyHistory();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.green,
-              content: Text(res['message']?.toString() ?? 'Historial semanal reiniciado exitosamente.'),
-            ),
-          );
-          _loadAllRecords();
-          _loadPendingCheckouts();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.red,
-              content: Text('Error al reiniciar historial: $e'),
-            ),
-          );
-        }
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -1704,26 +1574,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
                         tooltip: 'Exportar Reporte PDF (Entradas y Salidas)',
                         onPressed: _isGeneratingPdf ? null : _exportPdfReport,
                       ),
-                      if (isAdmin)
-                        PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert_rounded),
-                          tooltip: 'Opciones avanzadas',
-                          onSelected: (val) {
-                            if (val == 'reset') _confirmWeeklyReset();
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'reset',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.cleaning_services_rounded, size: 18, color: Colors.orange),
-                                  SizedBox(width: 10),
-                                  Text('Reinicio semanal', style: TextStyle(fontSize: 13)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
                     ],
                     bottom: TabBar(
                       labelColor: primaryColor,
