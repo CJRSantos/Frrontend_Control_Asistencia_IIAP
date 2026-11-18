@@ -753,15 +753,6 @@ class _DashboardTabState extends State<DashboardTab> {
     }
   }
 
-  String _maskDni(String? dni) {
-    if (dni == null || dni.trim().isEmpty) return '7492****';
-    final clean = dni.trim();
-    if (clean.length > 4) {
-      return '${clean.substring(0, 4)}****';
-    }
-    return clean;
-  }
-
   String _formatTime(DateTime dt) {
     final hour = dt.hour;
     final minute = dt.minute;
