@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../utils/responsive.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/theme_service.dart';
@@ -698,13 +699,36 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(
-                        item.assetPath!,
-                        fit: BoxFit.cover,
-                        cacheWidth: 360,
-                        gaplessPlayback: true,
-                        filterQuality: FilterQuality.low,
-                      ),
+                      item.networkUrl != null && item.networkUrl!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: item.networkUrl!,
+                              fit: BoxFit.cover,
+                              memCacheWidth: 360,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              placeholder: (context, url) => Container(
+                                color: Colors.black26,
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => item.assetPath != null
+                                  ? Image.asset(item.assetPath!, fit: BoxFit.cover)
+                                  : Container(
+                                      color: Colors.black38,
+                                      child: const Icon(Icons.broken_image_rounded, color: Colors.white54),
+                                    ),
+                            )
+                          : Image.asset(
+                              item.assetPath ?? '',
+                              fit: BoxFit.cover,
+                              cacheWidth: 360,
+                              gaplessPlayback: true,
+                              filterQuality: FilterQuality.low,
+                            ),
                       if (isSelected)
                         Positioned(
                           top: 10,

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'theme_service.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,7 @@ class WallpaperItem {
   final WallpaperType type;
   final String? assetPath;
   final String? customFilePath;
+  final String? networkUrl;
 
   const WallpaperItem({
     required this.id,
@@ -21,17 +23,26 @@ class WallpaperItem {
     required this.type,
     this.assetPath,
     this.customFilePath,
+    this.networkUrl,
   });
 
   bool get hasWallpaper => type != WallpaperType.none;
 
   ImageProvider? get imageProvider {
-    if (type == WallpaperType.preset && assetPath != null) {
-      return ResizeImage.resizeIfNeeded(
-        1080,
-        null,
-        AssetImage(assetPath!),
-      );
+    if (type == WallpaperType.preset) {
+      if (networkUrl != null && networkUrl!.isNotEmpty) {
+        return ResizeImage.resizeIfNeeded(
+          1080,
+          null,
+          CachedNetworkImageProvider(networkUrl!),
+        );
+      } else if (assetPath != null) {
+        return ResizeImage.resizeIfNeeded(
+          1080,
+          null,
+          AssetImage(assetPath!),
+        );
+      }
     } else if (type == WallpaperType.custom && customFilePath != null) {
       final file = File(customFilePath!);
       if (file.existsSync()) {
@@ -47,6 +58,9 @@ class WallpaperItem {
 }
 
 class WallpaperService {
+  static const String _cloudinaryBase =
+      'https://res.cloudinary.com/do6cx6xcr/image/upload/f_auto,q_auto/';
+
   static const String _keyWallpaperId = 'active_wallpaper_id_v2';
   static const String _keyWallpaperType = 'active_wallpaper_type_v2';
   static const String _keyCustomPath = 'active_wallpaper_custom_path_v2';
@@ -65,70 +79,70 @@ class WallpaperService {
       title: 'SECURITY MATRIX LOCK',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-72450.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-72450.jpg',
     ),
     WallpaperItem(
       id: 'backiee_218350',
       title: 'DATA BREACH GLITCH',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-218350.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-218350.jpg',
     ),
     WallpaperItem(
       id: 'backiee_106859',
       title: 'ANONYMOUS MÁSCARA',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-106859.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-106859.jpg',
     ),
     WallpaperItem(
       id: 'backiee_116398',
       title: 'ANONYMOUS TYPO',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-116398.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-116398.jpg',
     ),
     WallpaperItem(
       id: 'backiee_226979',
       title: 'SOMBRAS ANONYMOUS',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-226979.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-226979.jpg',
     ),
     WallpaperItem(
       id: 'backiee_251643',
       title: 'SILENCE HOODED',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-251643.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-251643.jpg',
     ),
     WallpaperItem(
       id: 'backiee_272113',
       title: 'CYBER THEFT SCREEN',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-272113.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-272113.jpg',
     ),
     WallpaperItem(
       id: 'backiee_76116',
       title: 'V FOR VENDETTA AMOLED',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-76116.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-76116.jpg',
     ),
     WallpaperItem(
       id: 'backiee_376386',
       title: 'CRYSTAL BLIND HALO',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-376386.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-376386.jpg',
     ),
     WallpaperItem(
       id: 'backiee_377102',
       title: 'OJOS DORADOS GLOW',
       category: 'Cyber & Hackers',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-377102.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-377102.jpg',
     ),
 
     // === CATEGORÍA: SUPERDEPORTIVOS & MOTOR ===
@@ -137,42 +151,42 @@ class WallpaperService {
       title: 'LAMBORGHINI CYBER NEO',
       category: 'Superdeportivos & Motor',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-271014.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-271014.jpg',
     ),
     WallpaperItem(
       id: 'backiee_336692',
       title: 'PORSCHE 911 NOIR',
       category: 'Superdeportivos & Motor',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-336692.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-336692.jpg',
     ),
     WallpaperItem(
       id: 'backiee_318259',
       title: 'DARK BMW LIGHTS AMOLED',
       category: 'Superdeportivos & Motor',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-318259.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-318259.jpg',
     ),
     WallpaperItem(
       id: 'backiee_268681',
       title: 'DODGE CHALLENGER NEÓN',
       category: 'Superdeportivos & Motor',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-268681.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-268681.jpg',
     ),
     WallpaperItem(
       id: 'backiee_48041',
       title: 'CARBON FIBER HOT ROD',
       category: 'Superdeportivos & Motor',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-48041.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-48041.jpg',
     ),
     WallpaperItem(
       id: 'backiee_371513',
       title: 'SUNSET LUXURY MANSION',
       category: 'Superdeportivos & Motor',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-371513.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-371513.jpg',
     ),
 
     // === CATEGORÍA: FUTURISTA & MECHA ===
@@ -181,21 +195,21 @@ class WallpaperService {
       title: 'MECHA PILOT HUD',
       category: 'Futurista & Mecha',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-314124.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-314124.jpg',
     ),
     WallpaperItem(
       id: 'backiee_58135',
       title: 'TERMINATOR CYBER SKULLS',
       category: 'Futurista & Mecha',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-58135.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-58135.jpg',
     ),
     WallpaperItem(
       id: 'backiee_58919',
       title: 'T-800 ENDOSKELETON',
       category: 'Futurista & Mecha',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-58919.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-58919.jpg',
     ),
 
     // === CATEGORÍA: AVENTURA & ÉPICO ===
@@ -204,56 +218,56 @@ class WallpaperService {
       title: 'NAVÍO PIRATA TORMENTA',
       category: 'Aventura & Épico',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-329746.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-329746.jpg',
     ),
     WallpaperItem(
       id: 'backiee_70030',
       title: 'GALIÓN REAL OCÉANO',
       category: 'Aventura & Épico',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-70030.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-70030.jpg',
     ),
     WallpaperItem(
       id: 'backiee_76222',
       title: 'EXPRESO VAPOR C6120',
       category: 'Aventura & Épico',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-76222.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-76222.jpg',
     ),
     WallpaperItem(
       id: 'backiee_67041',
       title: 'NIGHT RUNWAY LANDING',
       category: 'Aventura & Épico',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-67041.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-67041.jpg',
     ),
     WallpaperItem(
       id: 'backiee_341668',
       title: 'MAFIA MONEY TABLE NOIR',
       category: 'Aventura & Épico',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-341668.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-341668.jpg',
     ),
     WallpaperItem(
       id: 'backiee_376037',
       title: 'GUERRERA DORADA PALADÍN',
       category: 'Aventura & Épico',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-376037.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-376037.jpg',
     ),
     WallpaperItem(
       id: 'backiee_376827',
       title: 'BRISA MARINA & GAVIOTAS',
       category: 'Aventura & Épico',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-376827.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-376827.jpg',
     ),
     WallpaperItem(
       id: 'backiee_376833',
       title: 'SILUETA ATARDECER SKYLINE',
       category: 'Aventura & Épico',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-376833.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-376833.jpg',
     ),
 
     // === CATEGORÍA: GAMING & ESTILO ===
@@ -262,49 +276,49 @@ class WallpaperService {
       title: 'XBOX GAMING ELITE',
       category: 'Gaming & Estilo',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-47564.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-47564.jpg',
     ),
     WallpaperItem(
       id: 'backiee_371043',
       title: 'MAFIA QUEEN ARSENAL',
       category: 'Gaming & Estilo',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-371043.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-371043.jpg',
     ),
     WallpaperItem(
       id: 'backiee_33718',
       title: 'WALL-E EXPLORER',
       category: 'Gaming & Estilo',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-33718.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-33718.jpg',
     ),
     WallpaperItem(
       id: 'backiee_376766',
       title: 'MANGA NOIR AVIATOR',
       category: 'Gaming & Estilo',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-376766.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-376766.jpg',
     ),
     WallpaperItem(
       id: 'backiee_376786',
       title: 'GAMER YELLOW HOODIE',
       category: 'Gaming & Estilo',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-376786.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-376786.jpg',
     ),
     WallpaperItem(
       id: 'backiee_376350',
       title: 'ANIME SUNSET SMILE',
       category: 'Gaming & Estilo',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-376350.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-376350.jpg',
     ),
     WallpaperItem(
       id: 'backiee_376681',
       title: 'CYBER CITY GLAMOUR',
       category: 'Gaming & Estilo',
       type: WallpaperType.preset,
-      assetPath: 'assets/images/wallpapers/backiee-376681.jpg',
+      networkUrl: '${_cloudinaryBase}backiee-376681.jpg',
     ),
   ];
 
