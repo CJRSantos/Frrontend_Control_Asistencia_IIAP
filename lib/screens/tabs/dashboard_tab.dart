@@ -167,7 +167,7 @@ class _DashboardTabState extends State<DashboardTab> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
           content: const Text(
-            'La función Generar QR con cifrado SHA-256 está reservada exclusivamente para el Administrador y los Supervisores autorizados para la toma de asistencia.',
+            'La función Generar QR está reservada exclusivamente para el Administrador y los Supervisores autorizados para la toma de asistencia.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, height: 1.4),
           ),
@@ -298,7 +298,7 @@ class _DashboardTabState extends State<DashboardTab> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Para proyectar un código QR de evento con cifrado dinámico SHA-256 y rotación de 15s, primero debes programar o seleccionar un evento para tu Unidad Organizativa.',
+                    'Para proyectar un código QR de evento con rotación dinámica, primero debes programar o seleccionar un evento para tu Unidad Organizativa.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12.5,
@@ -505,7 +505,7 @@ class _DashboardTabState extends State<DashboardTab> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Toca un evento para proyectar su código QR rotativo SHA-256 en pantalla.',
+                    'Toca un evento para proyectar su código QR rotativo en pantalla.',
                     style: TextStyle(
                       fontSize: 11.5,
                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -1167,48 +1167,19 @@ class _DashboardTabState extends State<DashboardTab> {
         const SizedBox(height: 22),
 
         // 4. Control de Asistencia [ 🔒 SHA-256 ]
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Control de Asistencia',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 0.2,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F2D42),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFF1D4ED8).withValues(alpha: 0.5)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.lock_rounded, size: 11.5, color: Color(0xFF60A5FA)),
-                  SizedBox(width: 4),
-                  Text(
-                    'SHA-256',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF60A5FA),
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        const Text(
+          'Control de Asistencia',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 0.2,
+          ),
         ),
 
         const SizedBox(height: 12),
 
-        // Tarjeta Generar QR de Evento [SHA-256]
+        // Tarjeta Generar QR de Evento
         InkWell(
           onTap: () => _handleGenerarQrEvento(context, featuredEvent),
           borderRadius: BorderRadius.circular(20),
@@ -1235,70 +1206,29 @@ class _DashboardTabState extends State<DashboardTab> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Generar QR de Evento',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F3224),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF176044)),
-                            ),
-                            child: const Text(
-                              'SHA-256',
-                              style: TextStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF10B981),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Emisión institucional con cifrado de rotación automática cada 15 segundos par...',
+                      Text(
+                        'Generar QR de Evento',
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Proyecta el código QR oficial para registrar participantes',
+                        style: TextStyle(
+                          fontSize: 11.5,
                           color: Color(0xFF8FA3AF),
                           height: 1.3,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF10B981), size: 5.5),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Modo Pantalla / Kiosko activo',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF10B981),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -1338,70 +1268,29 @@ class _DashboardTabState extends State<DashboardTab> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Escanear QR Asistente',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0E2A38),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF155E75)),
-                            ),
-                            child: const Text(
-                              'CÁMARA',
-                              style: TextStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF38BDF8),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Registra asistencia escaneando el código QR individual o credencial física...',
+                      Text(
+                        'Escanear QR Asistente',
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Escanea credenciales o códigos QR de los participantes',
+                        style: TextStyle(
+                          fontSize: 11.5,
                           color: Color(0xFF8FA3AF),
                           height: 1.3,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF38BDF8), size: 5.5),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Sensor óptico activo',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF38BDF8),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -2010,48 +1899,19 @@ class _DashboardTabState extends State<DashboardTab> {
         const SizedBox(height: 22),
 
         // 4. Control de Asistencia: Generar QR de Evento + Escanear QR
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Control de Asistencia',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 0.2,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F2D42),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFF1D4ED8).withValues(alpha: 0.5)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.lock_rounded, size: 11.5, color: Color(0xFF60A5FA)),
-                  SizedBox(width: 4),
-                  Text(
-                    'SHA-256',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF60A5FA),
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        const Text(
+          'Control de Asistencia',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 0.2,
+          ),
         ),
 
         const SizedBox(height: 12),
 
-        // Tarjeta Generar QR de Evento [SHA-256]
+        // Tarjeta Generar QR de Evento
         InkWell(
           onTap: () => _handleGenerarQrEvento(context, featuredEvent),
           borderRadius: BorderRadius.circular(20),
@@ -2078,68 +1938,29 @@ class _DashboardTabState extends State<DashboardTab> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Generar QR de Evento',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F3224),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF176044)),
-                            ),
-                            child: const Text(
-                              'SHA-256',
-                              style: TextStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF10B981),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Emisión institucional dinámica\n(rotación automática cada 15s) ...',
+                      Text(
+                        'Generar QR de Evento',
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Proyecta el código QR oficial del evento',
+                        style: TextStyle(
+                          fontSize: 11.5,
                           color: Color(0xFF8FA3AF),
                           height: 1.3,
                         ),
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.slideshow_rounded, color: Color(0xFF10B981), size: 13),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Modo Presentación disponible',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF10B981),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -2152,7 +1973,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
         const SizedBox(height: 10),
 
-        // Tarjeta Escanear QR de Asistencia [CÁMARA]
+        // Tarjeta Escanear QR de Asistencia
         InkWell(
           onTap: () => _handleEscanearQr(context),
           borderRadius: BorderRadius.circular(20),
@@ -2179,68 +2000,29 @@ class _DashboardTabState extends State<DashboardTab> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Escanear QR de Asistencia',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF102847),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF1E3A8A)),
-                            ),
-                            child: const Text(
-                              'CÁMARA',
-                              style: TextStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF60A5FA),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Registra asistencia física leyendo el fotocheck de participante o...',
+                      Text(
+                        'Escanear QR de Asistencia',
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Escanea códigos QR de participantes',
+                        style: TextStyle(
+                          fontSize: 11.5,
                           color: Color(0xFF8FA3AF),
                           height: 1.3,
                         ),
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF38BDF8), size: 5.5),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Sensor óptico calibrado',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF38BDF8),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -2588,41 +2370,6 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
         ),
 
-        const SizedBox(height: 14),
-
-        // Banner Inferior de Seguridad Perimetral: 🛡️ Seguridad perimetral activa ... 🔄 v2.4
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0E1A1E),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF1B2E36)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.shield_rounded, color: Color(0xFF10B981), size: 15),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Seguridad perimetral activa con validación criptogr...',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Color(0xFF8FA3AF), fontSize: 10.5),
-                ),
-              ),
-              Icon(Icons.sync_rounded, color: Color(0xFF10B981), size: 13),
-              SizedBox(width: 4),
-              Text(
-                'v2.4',
-                style: TextStyle(
-                  color: Color(0xFF10B981),
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-
         const SizedBox(height: 28),
       ],
     );
@@ -2738,26 +2485,24 @@ class _DashboardTabState extends State<DashboardTab> {
     }).toList();
 
     final uniqueUserIds = todayRecs.map((r) => r.userId).toSet();
-    final presentesCount = uniqueUserIds.isNotEmpty ? uniqueUserIds.length : 28;
-    const totalAsignados = 30;
+    final presentesCount = uniqueUserIds.length;
+    final totalAsignados = uniqueUserIds.length;
 
     final onTimeUserIds = todayRecs
         .where((r) => r.status == AttendanceStatus.ON_TIME)
         .map((r) => r.userId)
         .toSet();
-    final puntualesCount = uniqueUserIds.isNotEmpty ? onTimeUserIds.length : 26;
-    final puntualidadPercent = uniqueUserIds.isNotEmpty
-        ? ((puntualesCount / (presentesCount > 0 ? presentesCount : 1)) * 100).round()
-        : 93;
+    final puntualesCount = onTimeUserIds.length;
+    final puntualidadPercent = presentesCount > 0
+        ? ((puntualesCount / presentesCount) * 100).round()
+        : 100;
 
     final lateUserIds = todayRecs
         .where((r) => r.status == AttendanceStatus.LATE)
         .map((r) => r.userId)
         .toSet();
-    final alertasCount = uniqueUserIds.isNotEmpty ? lateUserIds.length : 2;
-    final tardanzasStr = uniqueUserIds.isNotEmpty
-        ? '$alertasCount tard. / 0 falta'
-        : '1 tard. / 1 falta';
+    final alertasCount = lateUserIds.length;
+    final tardanzasStr = '$alertasCount tard. / 0 faltas';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2945,30 +2690,6 @@ _buildCircularMuteBell(context),
                         fontWeight: FontWeight.w900,
                         color: Color(0xFFFBBF24),
                         letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF09291E),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF135A40)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.circle, color: Color(0xFF10B981), size: 6.5),
-                    SizedBox(width: 5),
-                    Text(
-                      'Cripto-Nodo Activo',
-                      style: TextStyle(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF34D399),
-                        letterSpacing: 0.2,
                       ),
                     ),
                   ],
@@ -3235,30 +2956,9 @@ _buildCircularMuteBell(context),
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Control de Asistencia',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.2),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F2D42),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFF1D4ED8).withValues(alpha: 0.5)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.lock_rounded, size: 11.5, color: Color(0xFF60A5FA)),
-                  SizedBox(width: 4),
-                  Text('SHA-256', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF60A5FA), letterSpacing: 0.4)),
-                ],
-              ),
-            ),
-          ],
+        const Text(
+          'Control de Asistencia',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.2),
         ),
         const SizedBox(height: 12),
         InkWell(
@@ -3283,49 +2983,19 @@ _buildCircularMuteBell(context),
                   child: const Icon(Icons.grid_view_rounded, color: Color(0xFF10B981), size: 26),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Generar QR de Turno',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F3224),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF176044)),
-                            ),
-                            child: const Text('SHA-256', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
-                          ),
-                        ],
+                      Text(
+                        'Generar QR de Turno',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Emisión institucional con cifrado SHA-256\n(Rotación automática cada 15s)',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), height: 1.3),
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF10B981), size: 5.5),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Listo para proyectar / mostrar al personal',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF10B981)),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      SizedBox(height: 4),
+                      Text(
+                        'Proyecta el código QR para la marcación del turno',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFF8FA3AF), height: 1.3),
                       ),
                     ],
                   ),
@@ -3358,49 +3028,19 @@ _buildCircularMuteBell(context),
                   child: const Icon(Icons.filter_center_focus_rounded, color: Color(0xFF38BDF8), size: 26),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Escanear QR Institucional',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF102847),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF1E3A8A)),
-                            ),
-                            child: const Text('CÁMARA', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFF60A5FA))),
-                          ),
-                        ],
+                      Text(
+                        'Escanear QR Institucional',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Registra tu asistencia o valida cuadrilla escaneando fotocheck institucional',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), height: 1.3),
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF38BDF8), size: 5.5),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Óptica lista • Detector biométrico en espera',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF38BDF8)),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      SizedBox(height: 4),
+                      Text(
+                        'Escanea credenciales o fotochecks de los colaboradores',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFF8FA3AF), height: 1.3),
                       ),
                     ],
                   ),
@@ -3434,49 +3074,19 @@ _buildCircularMuteBell(context),
                   child: const Icon(Icons.face_retouching_natural_rounded, color: Color(0xFF34D399), size: 26),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Flexible(
-                            child: Text(
-                              'Control Biométrico Facial',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0C3827),
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFF156947)),
-                            ),
-                            child: const Text('BIOMÉTRICO', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFF34D399))),
-                          ),
-                        ],
+                      Text(
+                        'Control Biométrico Facial',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Escaneo facial continuo y registro automático de entrada o salida',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF8FA3AF), height: 1.3),
-                      ),
-                      const SizedBox(height: 5),
-                      const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF34D399), size: 5.5),
-                          SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              'Reconocimiento facial automático',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF34D399)),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      SizedBox(height: 4),
+                      Text(
+                        'Escaneo continuo con cámara e identificación con IA',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFF8FA3AF), height: 1.3),
                       ),
                     ],
                   ),
@@ -4061,7 +3671,7 @@ _buildCircularMuteBell(context),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              entry?.observation?.isNotEmpty == true ? entry!.observation! : 'Molinete Principal #02',
+                              entry != null ? (entry.observation?.isNotEmpty == true ? entry.observation! : 'Entrada confirmada') : 'Sin registro',
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 10, color: Color(0xFF8FA3AF)),
                             ),
@@ -4131,7 +3741,7 @@ _buildCircularMuteBell(context),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              exit != null ? 'Jornada Finalizada' : 'Previsto: 04:30 PM',
+                              exit != null ? 'Salida confirmada' : 'Pendiente de registrar',
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 10, color: Color(0xFF8FA3AF)),
                             ),
@@ -4155,34 +3765,10 @@ _buildCircularMuteBell(context),
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Flexible(
-              child: Text(
-                'CONTROL DE ASISTENCIA',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.6),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-              decoration: BoxDecoration(
-                color: themeColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: themeColor.withValues(alpha: 0.35)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.lock_rounded, size: 11.5, color: themeColor),
-                  const SizedBox(width: 4),
-                  Text('SHA-256', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: themeColor, letterSpacing: 0.4)),
-                ],
-              ),
-            ),
-          ],
+        const Text(
+          'CONTROL DE ASISTENCIA',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.6),
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 12),
         Container(
@@ -4232,7 +3818,7 @@ _buildCircularMuteBell(context),
               const SizedBox(height: 16),
               const Text('Escanear QR Institucional', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: 0.2)),
               const SizedBox(height: 6),
-              const Text('Registra tu ingreso o salida escaneando el código QR oficial proyectado en tu sede física, auditorio o estación de evento.', style: TextStyle(color: Color(0xFF8FA3AF), fontSize: 12, height: 1.45)),
+              const Text('Escanea el código QR proyectado para registrar tu jornada diaria', style: TextStyle(color: Color(0xFF8FA3AF), fontSize: 12, height: 1.35)),
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
