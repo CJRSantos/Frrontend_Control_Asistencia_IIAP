@@ -348,23 +348,44 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
-  String _formatDateTime(DateTime date) {
-    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
-    final day = date.day.toString().padLeft(2, '0');
-    final month = months[date.month - 1];
-    final year = date.year;
-    final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
-    final minute = date.minute.toString().padLeft(2, '0');
-    final ampm = date.hour >= 12 ? 'p. m.' : 'a. m.';
-    return '$day $month $year, ${hour.toString().padLeft(2, '0')}:$minute $ampm';
-  }
-
   String _formatAttendeeTime(DateTime date) {
     final local = date.toLocal();
     final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
     final minute = local.minute.toString().padLeft(2, '0');
     final ampm = local.hour >= 12 ? 'p. m.' : 'a. m.';
     return '${hour.toString().padLeft(2, '0')}:$minute $ampm';
+  }
+
+  String _formatScheduleRange(DateTime start, DateTime end) {
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
+    final startDay = start.day.toString().padLeft(2, '0');
+    final startMonth = months[start.month - 1];
+    final startHour = start.hour % 12 == 0 ? 12 : start.hour % 12;
+    final startMin = start.minute.toString().padLeft(2, '0');
+    final startAmpm = start.hour >= 12 ? 'p. m.' : 'a. m.';
+
+    final endDay = end.day.toString().padLeft(2, '0');
+    final endMonth = months[end.month - 1];
+    final endHour = end.hour % 12 == 0 ? 12 : end.hour % 12;
+    final endMin = end.minute.toString().padLeft(2, '0');
+    final endAmpm = end.hour >= 12 ? 'p. m.' : 'a. m.';
+
+    final isSameDay = start.year == end.year && start.month == end.month && start.day == end.day;
+    if (isSameDay) {
+      return '$startDay $startMonth ${start.year} • ${startHour.toString().padLeft(2, '0')}:$startMin $startAmpm — ${endHour.toString().padLeft(2, '0')}:$endMin $endAmpm';
+    } else {
+      return '$startDay $startMonth, ${startHour.toString().padLeft(2, '0')}:$startMin $startAmpm → $endDay $endMonth ${end.year}, ${endHour.toString().padLeft(2, '0')}:$endMin $endAmpm';
+    }
+  }
+
+  String _formatOrganizerRole(String role) {
+    final clean = role.toLowerCase().trim();
+    if (clean.contains('admin_evento')) return 'Admin de Evento';
+    if (clean.contains('gestor')) return 'Gestor de Evento';
+    if (clean.contains('admin')) return 'Administrador';
+    if (clean.contains('supervisor')) return 'Supervisor';
+    if (clean.contains('user') || clean.contains('employee')) return 'Colaborador';
+    return 'Organizador';
   }
 
   Future<void> _handleScanAttendance() async {
@@ -1383,7 +1404,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // 3. SUBTÍTULO (Fecha de Inicio • Asistentes)
+                  // 3. SUBTÍTULO (Asistentes Registrados • Ubicación)
                   Wrap(
                     spacing: 8,
                     runSpacing: 4,
@@ -1392,29 +1413,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.calendar_today_outlined, size: 14, color: mintGreen),
-                          const SizedBox(width: 6),
-                          Text(
-                            _formatDateTime(_currentEvent.startDate),
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: mintGreen,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Text(
-                        '•',
-                        style: TextStyle(fontSize: 14, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.people_outline_rounded, size: 16, color: mintGreen),
+                          const Icon(Icons.people_outline_rounded, size: 15, color: mintGreen),
                           const SizedBox(width: 5),
                           Text(
-                            '${_currentEvent.attendees.length >= _currentEvent.attendeesCount ? _currentEvent.attendees.length : _currentEvent.attendeesCount} Asistentes',
+                            '${_currentEvent.attendees.length >= _currentEvent.attendeesCount ? _currentEvent.attendees.length : _currentEvent.attendeesCount} Asistentes registrados',
                             style: const TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
@@ -1423,6 +1425,27 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           ),
                         ],
                       ),
+                      if (_currentEvent.location.isNotEmpty) ...[
+                        const Text(
+                          '•',
+                          style: TextStyle(fontSize: 14, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF94A3B8)),
+                            const SizedBox(width: 4),
+                            Text(
+                              _currentEvent.location,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -1477,31 +1500,26 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         children: [
                           _buildInfoItem(
                             icon: Icons.calendar_today_rounded,
-                            iconBgColor: const Color(0xFF0D9488),
-                            label: 'FECHA DE INICIO',
-                            value: _formatDateTime(_currentEvent.startDate),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildInfoItem(
-                            icon: Icons.event_repeat_rounded,
-                            iconBgColor: const Color(0xFF0284C7),
-                            label: 'CULMINACIÓN',
-                            value: _formatDateTime(_currentEvent.endDate),
+                            iconBgColor: const Color(0xFF10B981),
+                            label: 'FECHA Y HORARIO',
+                            value: _formatScheduleRange(_currentEvent.startDate, _currentEvent.endDate),
                           ),
                           const SizedBox(height: 16),
                           _buildInfoItem(
                             icon: Icons.location_on_outlined,
-                            iconBgColor: const Color(0xFF10B981),
+                            iconBgColor: const Color(0xFF0284C7),
                             label: 'UBICACIÓN',
                             value: _currentEvent.location,
                           ),
-                          const SizedBox(height: 16),
-                          _buildInfoItem(
-                            icon: Icons.shield_outlined,
-                            iconBgColor: const Color(0xFFF59E0B),
-                            label: 'ORGANIZADOR',
-                            value: '${_currentEvent.createdByName} (${_currentEvent.createdByRole.toUpperCase()})',
-                          ),
+                          if (_currentEvent.createdByName.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            _buildInfoItem(
+                              icon: Icons.person_outline_rounded,
+                              iconBgColor: const Color(0xFFF59E0B),
+                              label: 'ORGANIZADOR',
+                              value: '${_currentEvent.createdByName} (${_formatOrganizerRole(_currentEvent.createdByRole)})',
+                            ),
+                          ],
                           if (_currentEvent.shifts.where((s) => s.enabled).isNotEmpty) ...[
                             const SizedBox(height: 16),
                             _buildShiftsInfoRow(context, _currentEvent.shifts.where((s) => s.enabled).toList()),
@@ -1509,46 +1527,39 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
 
-                    // Tarjeta 2: Descripción y Temario
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: cardBg,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: cardBorder),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Row(
-                            children: [
-                              Icon(Icons.description_outlined, color: mintGreen, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Descripción y Temario',
-                                style: TextStyle(
-                                  fontSize: 16.5,
-                                  fontWeight: FontWeight.bold,
+                    // Tarjeta 2: Descripción y Temario (solo si hay contenido)
+                    if (_currentEvent.description.trim().isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: cardBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.description_outlined, color: mintGreen, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Descripción y Temario',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0B131E) : const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                              ],
                             ),
-                            child: _buildDescriptionContent(isDark),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            _buildDescriptionContent(isDark),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
 
                     // Banner de Constancia de Asistencia si ya está acreditado
                     if (isAlreadyRegistered) ...[
@@ -1672,28 +1683,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         ),
                       ),
                     ],
-
-                    // Botón para que usuario regular/supervisor escanee asistencia si está habilitado
-                    if (canScanAttendance && !isAlreadyRegistered && _currentEvent.requiresAttendance && _currentEvent.status != EventStatus.CANCELLED) ...[
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                          onPressed: _handleScanAttendance,
-                          icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
-                          label: const Text(
-                            'Escanear QR de Asistencia',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                        ),
-                      ),
-                    ],
                   ] else if (canProjectQr && _selectedTab == 1) ...[
                     // PESTAÑA 1: Control & QR (solo visible para roles autorizados)
                     _buildQrOptionCard(
@@ -1782,6 +1771,40 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: (canScanAttendance &&
+              !isAlreadyRegistered &&
+              _currentEvent.requiresAttendance &&
+              _currentEvent.status != EventStatus.CANCELLED)
+          ? SafeArea(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                decoration: BoxDecoration(
+                  color: hasWallpaper ? cardBg : ThemeService.cardBg(context),
+                  border: Border(
+                    top: BorderSide(color: cardBorder, width: 0.8),
+                  ),
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: _handleScanAttendance,
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
+                    label: const Text(
+                      'Escanear QR de Asistencia',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
       },
     );
