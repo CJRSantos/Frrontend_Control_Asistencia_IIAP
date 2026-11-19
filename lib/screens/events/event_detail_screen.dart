@@ -1797,7 +1797,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     onPressed: _handleScanAttendance,
                     icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
                     label: const Text(
-                      'Escanear QR de Asistencia',
+                      'Escanea tu Asistencia',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ),
