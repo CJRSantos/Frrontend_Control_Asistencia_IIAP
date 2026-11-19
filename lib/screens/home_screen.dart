@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/user_model.dart';
@@ -29,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   final Set<int> _activatedTabs = {0};
   final List<int> _tabHistory = [0];
+  final ScrollController _navScrollController = ScrollController();
   DateTime? _lastBackPressTime;
   Timer? _syncTimer;
   bool _isSyncing = false;
@@ -49,6 +51,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
     if (HomeScreen.currentTabNotifier.value != index) {
       HomeScreen.currentTabNotifier.value = index;
+    }
+    // Centrar suavemente el elemento seleccionado si la barra inferior es desplazable
+    if (_navScrollController.hasClients) {
+      const itemWidth = 84.0;
+      final screenWidth = MediaQuery.sizeOf(context).width;
+      final targetOffset = (index * itemWidth) + (itemWidth / 2) - (screenWidth / 2);
+      _navScrollController.animateTo(
+        targetOffset.clamp(0.0, _navScrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
     }
   }
 
@@ -136,6 +149,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     EventService.newEventAlertNotifier.removeListener(_onNewEventAlert);
     EventService.stopLiveSync();
     _syncTimer?.cancel();
+    _navScrollController.dispose();
     super.dispose();
   }
 
@@ -228,16 +242,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           pages = [
             DashboardTab(
               key: const ValueKey('tab_dashboard'),
-              onNavigateToHistory: () => _selectTab(1),
-              onNavigateToProfile: () => _selectTab(3),
+              onNavigateToHistory: () => _selectTab(2),
+              onNavigateToProfile: () => _selectTab(4),
             ),
             _activatedTabs.contains(1)
+                ? const EventsListScreen(key: ValueKey('tab_events'))
+                : const SizedBox.shrink(key: ValueKey('tab_events_placeholder')),
+            _activatedTabs.contains(2)
                 ? const AttendanceTab(key: ValueKey('tab_attendance'))
                 : const SizedBox.shrink(key: ValueKey('tab_attendance_placeholder')),
-            _activatedTabs.contains(2)
+            _activatedTabs.contains(3)
                 ? const SupervisorsTab(key: ValueKey('tab_supervisors'))
                 : const SizedBox.shrink(key: ValueKey('tab_supervisors_placeholder')),
-            _activatedTabs.contains(3)
+            _activatedTabs.contains(4)
                 ? const ProfileTab(key: ValueKey('tab_profile'))
                 : const SizedBox.shrink(key: ValueKey('tab_profile_placeholder')),
           ];
@@ -249,14 +266,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               label: 'Inicio',
             ),
             const NavigationDestination(
+              icon: Icon(Icons.event_outlined),
+              selectedIcon: Icon(Icons.event_rounded),
+              label: 'Eventos',
+            ),
+            const NavigationDestination(
               icon: Icon(Icons.access_time_rounded),
               selectedIcon: Icon(Icons.access_time_filled_rounded),
-              label: 'Asistencias',
+              label: 'Asistencia',
             ),
             NavigationDestination(
               icon: const Icon(Icons.groups_outlined),
               selectedIcon: const Icon(Icons.groups_rounded),
-              label: isAdmin ? 'Personal' : 'Horarios',
+              label: isAdmin ? 'Personal' : 'Personal',
             ),
             const NavigationDestination(
               icon: Icon(Icons.person_outline_rounded),
@@ -265,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ];
         } else {
-          // Colaborador regular: Inicio, Eventos, Asistencias, Perfil
+          // Colaborador regular: Inicio, Eventos, Asistencia, Perfil
           pages = [
             DashboardTab(
               key: const ValueKey('tab_dashboard'),
@@ -297,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             const NavigationDestination(
               icon: Icon(Icons.access_time_rounded),
               selectedIcon: Icon(Icons.access_time_filled_rounded),
-              label: 'Asistencias',
+              label: 'Asistencia',
             ),
             const NavigationDestination(
               icon: Icon(Icons.person_outline_rounded),
@@ -454,14 +476,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             index: safeIndex,
             children: pages,
           ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: safeIndex,
-            onDestinationSelected: _selectTab,
-            backgroundColor: ThemeService.cardBg(context),
-            indicatorColor: ThemeService.containerColor(context),
-            elevation: 2,
-            destinations: destinations,
-          ),
+          bottomNavigationBar: destinations.length > 4
+              ? Container(
+                  color: ThemeService.cardBg(context),
+                  child: SingleChildScrollView(
+                    controller: _navScrollController,
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: SizedBox(
+                      width: math.max(MediaQuery.sizeOf(context).width, destinations.length * 84.0),
+                      child: NavigationBar(
+                        selectedIndex: safeIndex,
+                        onDestinationSelected: _selectTab,
+                        backgroundColor: Colors.transparent,
+                        indicatorColor: ThemeService.containerColor(context),
+                        elevation: 0,
+                        destinations: destinations,
+                      ),
+                    ),
+                  ),
+                )
+              : NavigationBar(
+                  selectedIndex: safeIndex,
+                  onDestinationSelected: _selectTab,
+                  backgroundColor: ThemeService.cardBg(context),
+                  indicatorColor: ThemeService.containerColor(context),
+                  elevation: 2,
+                  destinations: destinations,
+                ),
         );
       },
       ),

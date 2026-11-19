@@ -232,30 +232,7 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     }
   }
 
-  void _copyHashToClipboard() {
-    if (_qrData == null) return;
-    Clipboard.setData(ClipboardData(text: _qrData!.qrCode));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Hash SHA-256 copiado:\n${_qrData!.qrCode.substring(0, 24)}...',
-                style: const TextStyle(fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFF16A34A),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -268,11 +245,11 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     final String subtitle;
     if (widget.customTitle != null) {
       title = widget.customTitle!;
-      subtitle = widget.customSubtitle ?? 'Escanear para confirmar designación';
+      subtitle = widget.customSubtitle ?? 'Escanear con la app institucional';
     } else if (widget.mode == QrMode.roleAssignment) {
       final roleText = widget.targetRole != null ? UserRole.fromString(widget.targetRole).displayName : 'Designación';
       title = 'Designar $roleText';
-      subtitle = widget.customSubtitle ?? 'El usuario debe escanear este QR con su app';
+      subtitle = widget.customSubtitle ?? 'Escanear con la app institucional';
     } else if (isAttendance) {
       title = 'Generador de Código QR';
       subtitle = 'Válido por 5 minutos • Renovación por escaneo';
@@ -294,7 +271,9 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
       appBar: AppBar(
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           IconButton(
@@ -312,7 +291,7 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.refresh_rounded),
-            tooltip: 'Generar nuevo QR SHA',
+            tooltip: 'Generar nuevo QR',
             onPressed: (_isLoading || _isGeneratingNew) ? null : () => _loadQr(forceNew: true),
           ),
         ],
@@ -351,10 +330,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildHeaderBanner(isDark, isAttendance, subtitle),
-        if (!isAttendance) ...[
-          const SizedBox(height: 14),
-          _buildQuotaBanner(isDark),
-        ],
         const SizedBox(height: 18),
         _buildRotatedBadge(),
         _buildQrCard(context, isDark),
@@ -389,10 +364,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHeaderBanner(isDark, isAttendance, subtitle),
-              if (!isAttendance) ...[
-                const SizedBox(height: 14),
-                _buildQuotaBanner(isDark),
-              ],
               const SizedBox(height: 18),
               if (_qrData != null && !_isLoading && _errorMessage == null) ...[
                 _buildTimerCard(isDark),
@@ -432,156 +403,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     );
   }
 
-  /// Tarjeta de Cupos / Disponibilidad de Roles
-  Widget _buildQuotaBanner(bool isDark) {
-    if (widget.mode == QrMode.attendance) return const SizedBox.shrink();
-
-    final isSupervisor = widget.mode == QrMode.supervisorAssignment || widget.targetRole == 'SUPERVISOR';
-
-    if (isSupervisor) {
-      final avail = _availableSlots ?? 2;
-      final max = _maxSupervisors ?? 3;
-      final hasSlots = avail > 0;
-      final color = hasSlots ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
-
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: isDark ? 0.15 : 0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: isDark ? 0.4 : 0.3)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.shield_rounded, color: color, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Cupos de Supervisores',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: isDark ? 0.25 : 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: color),
-                        ),
-                        child: Text(
-                          '$avail de $max',
-                          style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    hasSlots
-                        ? 'Disponibles: $avail de $max'
-                        : 'Sin cupos disponibles (0 de $max)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Para Admin de Eventos / UO y Gestor de Eventos / UO (Sin límite)
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.15 : 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.4 : 0.25)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.all_inclusive_rounded, color: Color(0xFF2563EB), size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Cupos para este Rol',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.25 : 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF2563EB)),
-                      ),
-                      child: const Text(
-                        'Sin límite',
-                        style: TextStyle(
-                          color: Color(0xFF2563EB),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'No tiene límite de designaciones para esta sede',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Banner superior descriptivo
   Widget _buildHeaderBanner(bool isDark, bool isAttendance, String subtitle) {
     final hasWallpaper = WallpaperService.currentWallpaper.hasWallpaper;
@@ -590,11 +411,14 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
         : ThemeService.cardBg(context);
     final cardBorder = ThemeService.cardBorder(context);
 
+    final isSupervisor = widget.mode == QrMode.supervisorAssignment || widget.targetRole == 'SUPERVISOR';
+    final hasSlots = isSupervisor && _availableSlots != null && _maxSupervisors != null;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: cardBorder,
         ),
@@ -609,7 +433,7 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
               color: const Color(0xFF16A34A).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
@@ -617,15 +441,16 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
             child: const Icon(
               Icons.verified_user_rounded,
               color: Color(0xFF16A34A),
-              size: 28,
+              size: 24,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
                       child: Text(
@@ -634,35 +459,35 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                             : (widget.mode == QrMode.roleAssignment ? 'Designación de Rol' : 'Designación'),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 14,
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF16A34A).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.4)),
-                      ),
-                      child: const Text(
-                        'SHA-256',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF16A34A),
+                    if (hasSlots)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.4)),
+                        ),
+                        child: Text(
+                          '$_availableSlots de $_maxSupervisors cupos',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF16A34A),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11.5,
                     color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   ),
                 ),
@@ -808,42 +633,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.lock_rounded, size: 14, color: Color(0xFF475569)),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              'SHA: ${_qrData!.qrCode.length >= 18 ? "${_qrData!.qrCode.substring(0, 18)}..." : _qrData!.qrCode}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontFamily: 'monospace',
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: _copyHashToClipboard,
-                            borderRadius: BorderRadius.circular(4),
-                            child: const Padding(
-                              padding: EdgeInsets.all(2),
-                              child: Icon(Icons.copy_rounded, size: 16, color: Color(0xFF2563EB)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
     );
@@ -930,7 +719,7 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
               )
             : const Icon(Icons.autorenew_rounded, size: 20),
         label: Text(
-          _isGeneratingNew ? 'Generando nuevo SHA...' : 'Generar Nuevo QR (SHA)',
+          _isGeneratingNew ? 'Generando nuevo código...' : 'Generar Nuevo Código QR',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
       ),

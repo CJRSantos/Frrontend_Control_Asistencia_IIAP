@@ -1021,8 +1021,8 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                           builder: (_) => const QrDisplayScreen(
                             mode: QrMode.roleAssignment,
                             targetRole: 'ADMIN',
-                            customTitle: 'Designar Admin / Presidente',
-                            customSubtitle: 'El nuevo Presidente escaneará este código con su app',
+                            customTitle: 'Admin Institucional',
+                            customSubtitle: 'Escanear con la app institucional',
                           ),
                         ),
                       );
@@ -1040,8 +1040,8 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                         builder: (_) => const QrDisplayScreen(
                           mode: QrMode.roleAssignment,
                           targetRole: 'ADMIN_EVENTO',
-                          customTitle: 'Designar Admin de Eventos / UO',
-                          customSubtitle: 'Escanear para otorgar administración de eventos de su UO',
+                          customTitle: 'Admin de Eventos',
+                          customSubtitle: 'Escanear con la app institucional',
                         ),
                       ),
                     );
@@ -1059,8 +1059,8 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                         builder: (_) => const QrDisplayScreen(
                           mode: QrMode.roleAssignment,
                           targetRole: 'GESTOR_EVENTO',
-                          customTitle: 'Designar Gestor de Eventos / UO',
-                          customSubtitle: 'Escanear para otorgar rol de Gestor de eventos',
+                          customTitle: 'Gestor de Eventos',
+                          customSubtitle: 'Escanear con la app institucional',
                         ),
                       ),
                     );
@@ -1077,8 +1077,8 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                       MaterialPageRoute(
                         builder: (_) => QrDisplayScreen(
                           mode: QrMode.supervisorAssignment,
-                          customTitle: 'Designar Supervisor de Asistencia',
-                          customSubtitle: 'Escanear para otorgar rol de Supervisor de Asistencia',
+                          customTitle: 'Supervisor de Asistencia',
+                          customSubtitle: 'Escanear con la app institucional',
                           availableSlots: _availableSlots,
                           maxSupervisors: _maxSupervisors,
                         ),
