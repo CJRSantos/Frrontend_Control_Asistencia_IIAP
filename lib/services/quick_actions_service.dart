@@ -151,8 +151,8 @@ class QuickActionsService {
       }
     } else if (shortcutType == actionMyAttendance) {
       navState.popUntil((route) => route.isFirst);
-      // Pestaña Asistencias del empleado (índice 1)
-      HomeScreen.currentTabNotifier.value = 1;
+      final user = StorageService.currentUser;
+      HomeScreen.currentTabNotifier.value = (user != null && user.canManageAttendanceQr) ? 1 : 2;
     }
   }
 

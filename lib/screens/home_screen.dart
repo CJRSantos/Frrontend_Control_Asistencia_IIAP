@@ -8,6 +8,7 @@ import 'tabs/dashboard_tab.dart';
 import 'tabs/attendance_tab.dart';
 import 'tabs/supervisors_tab.dart';
 import 'tabs/profile_tab.dart';
+import 'events/events_list_screen.dart';
 import '../services/theme_service.dart';
 import '../services/notification_service.dart';
 import '../services/quick_actions_service.dart';
@@ -220,50 +221,91 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         final isAdmin = currentUser?.isAdmin == true;
         final canManageStaff = currentUser?.canManageAttendanceQr == true;
 
-        final int profileIndex = canManageStaff ? 3 : 2;
-        final bool isProfileActive = _activatedTabs.contains(profileIndex) || _activatedTabs.contains(2);
+        final List<Widget> pages;
+        final List<NavigationDestination> destinations;
 
-        final List<Widget> pages = [
-          DashboardTab(
-            key: const ValueKey('tab_dashboard'),
-            onNavigateToHistory: () => _selectTab(1),
-            onNavigateToProfile: () => _selectTab(canManageStaff ? 3 : 2),
-          ),
-          _activatedTabs.contains(1)
-              ? const AttendanceTab(key: ValueKey('tab_attendance'))
-              : const SizedBox.shrink(key: ValueKey('tab_attendance_placeholder')),
-          if (canManageStaff)
+        if (canManageStaff) {
+          pages = [
+            DashboardTab(
+              key: const ValueKey('tab_dashboard'),
+              onNavigateToHistory: () => _selectTab(1),
+              onNavigateToProfile: () => _selectTab(3),
+            ),
+            _activatedTabs.contains(1)
+                ? const AttendanceTab(key: ValueKey('tab_attendance'))
+                : const SizedBox.shrink(key: ValueKey('tab_attendance_placeholder')),
             _activatedTabs.contains(2)
                 ? const SupervisorsTab(key: ValueKey('tab_supervisors'))
                 : const SizedBox.shrink(key: ValueKey('tab_supervisors_placeholder')),
-          isProfileActive
-              ? const ProfileTab(key: ValueKey('tab_profile'))
-              : const SizedBox.shrink(key: ValueKey('tab_profile_placeholder')),
-        ];
+            _activatedTabs.contains(3)
+                ? const ProfileTab(key: ValueKey('tab_profile'))
+                : const SizedBox.shrink(key: ValueKey('tab_profile_placeholder')),
+          ];
 
-        final List<NavigationDestination> destinations = [
-          const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Inicio',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.access_time_rounded),
-            selectedIcon: Icon(Icons.access_time_filled_rounded),
-            label: 'Asistencias',
-          ),
-          if (canManageStaff)
+          destinations = [
+            const NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Inicio',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.access_time_rounded),
+              selectedIcon: Icon(Icons.access_time_filled_rounded),
+              label: 'Asistencias',
+            ),
             NavigationDestination(
               icon: const Icon(Icons.groups_outlined),
               selectedIcon: const Icon(Icons.groups_rounded),
               label: isAdmin ? 'Personal' : 'Horarios',
             ),
-          const NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Perfil',
-          ),
-        ];
+            const NavigationDestination(
+              icon: Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(Icons.person_rounded),
+              label: 'Perfil',
+            ),
+          ];
+        } else {
+          // Colaborador regular: Inicio, Eventos, Asistencias, Perfil
+          pages = [
+            DashboardTab(
+              key: const ValueKey('tab_dashboard'),
+              onNavigateToHistory: () => _selectTab(2),
+              onNavigateToProfile: () => _selectTab(3),
+            ),
+            _activatedTabs.contains(1)
+                ? const EventsListScreen(key: ValueKey('tab_events'))
+                : const SizedBox.shrink(key: ValueKey('tab_events_placeholder')),
+            _activatedTabs.contains(2)
+                ? const AttendanceTab(key: ValueKey('tab_attendance'))
+                : const SizedBox.shrink(key: ValueKey('tab_attendance_placeholder')),
+            _activatedTabs.contains(3)
+                ? const ProfileTab(key: ValueKey('tab_profile'))
+                : const SizedBox.shrink(key: ValueKey('tab_profile_placeholder')),
+          ];
+
+          destinations = [
+            const NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Inicio',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.event_outlined),
+              selectedIcon: Icon(Icons.event_rounded),
+              label: 'Eventos',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.access_time_rounded),
+              selectedIcon: Icon(Icons.access_time_filled_rounded),
+              label: 'Asistencias',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(Icons.person_rounded),
+              label: 'Perfil',
+            ),
+          ];
+        }
 
         // Asegurar que el índice no sobrepase si cambia el rol
         final safeIndex = _currentIndex >= pages.length ? 0 : _currentIndex;

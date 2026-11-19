@@ -110,7 +110,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Eventos Institucionales',
+          'Eventos',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         elevation: 0,
