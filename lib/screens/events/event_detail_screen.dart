@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../models/event_model.dart';
 import '../../services/event_service.dart';
 import '../../services/storage_service.dart';
@@ -1111,7 +1110,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         final hasWallpaper = WallpaperService.currentWallpaper.hasWallpaper;
         const mintGreen = Color(0xFF34D399);
         const darkGreen = Color(0xFF064E3B);
-        final themePrimary = ThemeService.primaryColor(context);
 
         final bgColor = hasWallpaper
             ? Colors.transparent

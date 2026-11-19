@@ -1,16 +1,13 @@
 import '../../widgets/event_image_widget.dart';
-import '../home_screen.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import '../../models/event_model.dart';
-import '../../models/user_model.dart';
 import '../../services/event_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/theme_service.dart';
 import '../../services/wallpaper_service.dart';
 import '../../utils/responsive.dart';
-import '../../widgets/app_cached_avatar.dart';
 
 class CreateEventScreen extends StatefulWidget {
   final EventModel? eventToEdit;

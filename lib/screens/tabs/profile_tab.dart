@@ -16,7 +16,6 @@ import '../../widgets/app_cached_avatar.dart';
 import '../wallpaper_screen.dart';
 import '../login_screen.dart';
 import '../notifications_settings_screen.dart';
-import '../../widgets/leaf_logo.dart';
 import '../../widgets/profile_photo_cropper_dialog.dart';
 import '../../widgets/app_toast.dart';
 
@@ -2234,7 +2233,7 @@ class _ProfileTabState extends State<ProfileTab> {
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
     // Redirección inmediata y segura al Login usando el navigatorKey global sin bloqueos
     final nav = StorageService.navigatorKey.currentState ?? Navigator.of(context, rootNavigator: true);
