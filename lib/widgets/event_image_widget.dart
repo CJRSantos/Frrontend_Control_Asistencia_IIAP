@@ -186,8 +186,8 @@ class FullScreenImageViewer extends StatefulWidget {
 }
 
 class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
-  double _verticalDragOffset = 0.0;
   final TransformationController _transformationController = TransformationController();
+  TapDownDetails? _doubleTapDetails;
 
   @override
   void dispose() {
@@ -195,128 +195,128 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
     super.dispose();
   }
 
-  void _onVerticalDragUpdate(DragUpdateDetails details) {
-    if (_transformationController.value.getMaxScaleOnAxis() <= 1.05) {
-      if (details.delta.dy > 0 || _verticalDragOffset > 0) {
-        setState(() {
-          _verticalDragOffset = (_verticalDragOffset + details.delta.dy).clamp(0.0, 450.0);
-        });
-      }
-    }
-  }
-
-  void _onVerticalDragEnd(DragEndDetails details) {
-    if (_verticalDragOffset > 90 || (details.primaryVelocity ?? 0) > 300) {
-      Navigator.of(context).pop();
-    } else if (_verticalDragOffset > 0) {
-      setState(() {
-        _verticalDragOffset = 0.0;
-      });
+  void _handleDoubleTap() {
+    if (_transformationController.value != Matrix4.identity()) {
+      _transformationController.value = Matrix4.identity();
+    } else if (_doubleTapDetails != null) {
+      final position = _doubleTapDetails!.localPosition;
+      final tx = -position.dx * 1.5;
+      final ty = -position.dy * 1.5;
+      final zoomed = Matrix4(
+        2.5, 0.0, 0.0, 0.0,
+        0.0, 2.5, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        tx, ty, 0.0, 1.0,
+      );
+      _transformationController.value = zoomed;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final double dragProgress = (_verticalDragOffset / 300.0).clamp(0.0, 1.0);
-    final double bgOpacity = (0.94 * (1.0 - dragProgress * 0.7)).clamp(0.1, 0.94);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onVerticalDragUpdate: _onVerticalDragUpdate,
-        onVerticalDragEnd: _onVerticalDragEnd,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // 1. Fondo táctil que detecta toque en cualquier lugar para cerrar
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                color: Colors.black.withValues(alpha: bgOpacity),
-              ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Fondo táctil con soporte de toque y deslizamiento hacia abajo para cerrar
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
+            onVerticalDragEnd: (details) {
+              if ((details.primaryVelocity ?? 0) > 180) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.94),
             ),
+          ),
 
-            // 2. Imagen con soporte de zoom táctil y arrastre para cerrar
-            Center(
-              child: Transform.translate(
-                offset: Offset(0, _verticalDragOffset),
-                child: InteractiveViewer(
-                  transformationController: _transformationController,
-                  minScale: 0.5,
-                  maxScale: 5.0,
-                  clipBehavior: Clip.none,
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Hero(
-                      tag: 'event_image_hero_${widget.imageUrl.hashCode}',
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxWidth: size.width * 0.96,
-                          maxHeight: size.height * 0.85,
-                        ),
-                        child: EventImageWidget(
-                          imageUrl: widget.imageUrl,
-                          fit: BoxFit.contain,
-                          fallbackWidget: const Center(
-                            child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 64),
-                          ),
-                        ),
+          // 2. Imagen con soporte completo de zoom táctil (Pinch to Zoom), doble toque y deslizamiento
+          Center(
+            child: GestureDetector(
+              onDoubleTapDown: (d) => _doubleTapDetails = d,
+              onDoubleTap: _handleDoubleTap,
+              child: InteractiveViewer(
+                transformationController: _transformationController,
+                minScale: 1.0,
+                maxScale: 6.0,
+                clipBehavior: Clip.none,
+                onInteractionEnd: (details) {
+                  // Si no está en zoom y el usuario desliza rápidamente hacia abajo, salir
+                  if (_transformationController.value.getMaxScaleOnAxis() <= 1.05 &&
+                      details.velocity.pixelsPerSecond.dy > 320) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: Hero(
+                  tag: 'event_image_hero_${widget.imageUrl.hashCode}',
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: size.width * 0.96,
+                      maxHeight: size.height * 0.85,
+                    ),
+                    child: EventImageWidget(
+                      imageUrl: widget.imageUrl,
+                      fit: BoxFit.contain,
+                      fallbackWidget: const Center(
+                        child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 64),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
+          ),
 
-            // 3. Barra superior con solo botón de retroceso (sin la 'X')
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.85 * (1.0 - dragProgress)),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 28),
-                        tooltip: 'Volver',
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          widget.title ?? 'Imagen del Evento',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 48),
+          // 3. Barra superior con solo botón de retroceso (sin la 'X')
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.85),
+                      Colors.transparent,
                     ],
                   ),
                 ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 28),
+                      tooltip: 'Volver',
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        widget.title ?? 'Imagen del Evento',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

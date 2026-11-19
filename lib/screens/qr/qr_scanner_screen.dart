@@ -932,23 +932,18 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   @override
   Widget build(BuildContext context) {
     final String title;
-    final String instructionText;
     switch (widget.target) {
       case ScanTarget.attendance:
-        title = 'Escanear QR de Asistencia';
-        instructionText = 'Enfoca el código QR emitido por el supervisor o del evento';
+        title = 'Escanear Asistencia';
         break;
       case ScanTarget.eventAttendance:
-        title = 'Escanear QR del Evento';
-        instructionText = 'Enfoca el código QR proyectado en el evento';
+        title = 'Escanear Asistencia';
         break;
       case ScanTarget.supervisorPromotion:
-        title = 'Escanear Ascenso a Supervisor';
-        instructionText = 'Enfoca el QR otorgado por el Administrador';
+        title = 'Escanear Ascenso';
         break;
       case ScanTarget.roleAssignment:
-        title = 'Escanear Asignación de Rol';
-        instructionText = 'Enfoca el QR de designación o rol';
+        title = 'Escanear Rol';
         break;
     }
     final isAttendance = widget.target == ScanTarget.attendance;
@@ -1168,29 +1163,6 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               ),
             ),
 
-          // Instrucciones al pie de pantalla
-          Positioned(
-            bottom: 40,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF4ADE80), size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    instructionText,
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
