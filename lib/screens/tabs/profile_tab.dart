@@ -2214,17 +2214,21 @@ class _ProfileTabState extends State<ProfileTab> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cerrar Sesión'),
-        content: const Text('¿Estás seguro de que deseas salir de tu cuenta?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('¿Cerrar sesión institucional?'),
+        content: const Text('Tendrás que ingresar tus credenciales nuevamente para acceder.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Salir', style: TextStyle(color: Colors.white)),
+            child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

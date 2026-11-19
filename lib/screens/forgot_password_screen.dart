@@ -235,8 +235,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         const SizedBox(height: 14),
                         Text(
                           _currentStep == 1
-                              ? 'Ingresa tu correo electrónico registrado. Te enviaremos un código de seguridad de 6 dígitos para que puedas definir una nueva contraseña.'
-                              : 'Ingresa el código de 6 dígitos que enviamos a ${_emailController.text} y escribe tu nueva contraseña.',
+                              ? 'Te enviaremos un código de 6 dígitos para restablecer tu acceso.'
+                              : 'Ingresa el código de 6 dígitos enviado a ${_emailController.text} y tu nueva contraseña.',
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.4,

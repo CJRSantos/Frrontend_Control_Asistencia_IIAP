@@ -52,10 +52,20 @@ tasks.register("renameReleaseApk") {
     doLast {
         val apkDir = file("${layout.buildDirectory.get()}/outputs/flutter-apk")
         val defaultApk = file("$apkDir/app-release.apk")
+        val arm64Apk = file("$apkDir/app-arm64-v8a-release.apk")
         val namedApk = file("$apkDir/Control Asistencia.apk")
-        if (defaultApk.exists()) {
+        val rootApk = file("${rootDir}/../Control Asistencia.apk")
+
+        if (arm64Apk.exists()) {
+            val rootArm64Apk = file("${rootDir}/../Control Asistencia - arm64.apk")
+            arm64Apk.copyTo(namedApk, overwrite = true)
+            arm64Apk.copyTo(rootApk, overwrite = true)
+            arm64Apk.copyTo(rootArm64Apk, overwrite = true)
+            println("=== APK arm64 optimizado copiado exitosamente como 'Control Asistencia.apk' ===")
+            println("Ubicación 1: ${namedApk.absolutePath}")
+            println("Ubicación 2: ${rootApk.absolutePath}")
+        } else if (defaultApk.exists()) {
             defaultApk.copyTo(namedApk, overwrite = true)
-            val rootApk = file("${rootDir}/../Control Asistencia.apk")
             defaultApk.copyTo(rootApk, overwrite = true)
             println("=== APK renombrado exitosamente como 'Control Asistencia.apk' ===")
             println("Ubicación 1: ${namedApk.absolutePath}")

@@ -357,15 +357,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
-                          Text(
-                            'Completa tus datos para crear tu cuenta en la base de datos institucional y habilitar el registro de marcas QR.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.4,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                            ),
-                          ),
                         ],
                       ),
                     ),
