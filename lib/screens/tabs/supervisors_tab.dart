@@ -476,37 +476,18 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Barra de arrastre con botón para cerrar
-                          Row(
-                            children: [
-                              const SizedBox(width: 32),
-                              Expanded(
-                                child: Center(
-                                  child: Container(
-                                    width: 44,
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                  ),
-                                ),
+                          // Barra de arrastre centrada
+                          Center(
+                            child: Container(
+                              width: 44,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                                borderRadius: BorderRadius.circular(3),
                               ),
-                              IconButton(
-                                icon: Icon(Icons.close_rounded, size: 22, color: textMuted),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                splashRadius: 20,
-                                onPressed: () {
-                                  if (Navigator.of(ctx).canPop()) {
-                                    Navigator.of(ctx).pop();
-                                  }
-                                },
-                                tooltip: 'Cerrar',
-                              ),
-                            ],
+                            ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 14),
 
                           // Tarjeta de perfil de usuario
                           Container(
@@ -538,15 +519,38 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        u.fullName,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.2,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              u.fullName,
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.2,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: _getRoleColor(u.role).withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: _getRoleColor(u.role).withValues(alpha: 0.35)),
+                                            ),
+                                            child: Text(
+                                              u.role.displayName,
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: _getRoleColor(u.role),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 3),
                                       Row(
@@ -576,24 +580,6 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                                         ],
                                       ),
                                     ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // Badge de Rol Actual
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: _getRoleColor(u.role).withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: _getRoleColor(u.role).withValues(alpha: 0.4)),
-                                  ),
-                                  child: Text(
-                                    u.role.displayName,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: _getRoleColor(u.role),
-                                    ),
                                   ),
                                 ),
                               ],
@@ -647,7 +633,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                               icon: Icons.edit_note_rounded,
                               color: const Color(0xFF10B981),
                               title: 'Editar Oficina y Área',
-                              subtitle: 'Sede, oficina y área',
+                              subtitle: 'Asignar sede y dependencia',
                               onTap: () {
                                 Navigator.of(ctx).pop();
                                 _showEditUserOfficeAreaDialog(u);
@@ -758,7 +744,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                               icon: Icons.delete_outline_rounded,
                               color: const Color(0xFFEF4444),
                               title: 'Eliminar Cuenta',
-                              subtitle: 'Dar de baja al colaborador',
+                              subtitle: 'Dar de baja de la institución',
                               isDanger: true,
                               onTap: () {
                                 Navigator.of(ctx).pop();
@@ -965,93 +951,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
     );
   }
 
-  void _showDirectDeleteDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.person_remove_rounded, color: Color(0xFFEF4444)),
-            SizedBox(width: 8),
-            Text('Eliminar por Correo o ID', style: TextStyle(fontSize: 16)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Ingresa el nombre, correo o ID de la cuenta que deseas eliminar (ej: Jhon):',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                hintText: 'ej. Jhon o jhon@iiap.gob.pe',
-                prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              final query = controller.text.trim();
-              if (query.isEmpty) return;
-              Navigator.of(ctx).pop();
 
-              final match = _allUsers.cast<UserModel?>().firstWhere(
-                (u) =>
-                    u != null &&
-                    (u.email.toLowerCase() == query.toLowerCase() ||
-                        u.id == query ||
-                        u.fullName.toLowerCase().contains(query.toLowerCase())),
-                orElse: () => null,
-              );
-
-              if (match != null) {
-                _confirmDeleteUser(match);
-              } else {
-                try {
-                  await UsersService.deleteUser(query);
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Cuenta $query eliminada exitosamente.'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  _loadData();
-                } catch (e) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('No se encontró cuenta para "$query".'),
-                      backgroundColor: const Color(0xFFEF4444),
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Buscar y Eliminar'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showDesignateQrModal() {
     final current = StorageService.currentUser;
@@ -1088,31 +988,26 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF9333EA).withValues(alpha: 0.12),
+                        color: const Color(0xFF0D9488).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF9333EA), size: 24),
+                      child: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF0D9488), size: 24),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Designar Rol mediante Código QR',
+                          Text('Designar Rol con QR',
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text('El colaborador escaneará este código para ascender de inmediato',
+                          Text('El colaborador escaneará este código para ascender',
                               style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      tooltip: 'Cerrar',
-                    ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
                 if (isSuper)
                   _buildRoleQrTile(
                     title: 'Admin / Presidente Institucional',
@@ -1134,8 +1029,8 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                     },
                   ),
                 _buildRoleQrTile(
-                  title: 'Admin de Eventos / Unidad Organizativa',
-                  subtitle: 'Gestión completa de eventos UO',
+                  title: 'Admin de Eventos / UO',
+                  subtitle: 'Gestión y programación de eventos UO',
                   icon: Icons.event_available_rounded,
                   color: const Color(0xFF2563EB),
                   onTap: () {
@@ -1154,7 +1049,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 ),
                 _buildRoleQrTile(
                   title: 'Gestor de Eventos / UO',
-                  subtitle: 'Control y toma de asistencia',
+                  subtitle: 'Registro y control de asistencia',
                   icon: Icons.campaign_rounded,
                   color: const Color(0xFF0D9488),
                   onTap: () {
@@ -1173,7 +1068,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 ),
                 _buildRoleQrTile(
                   title: 'Supervisor de Asistencia',
-                  subtitle: 'Supervisión de marcas de asistencia',
+                  subtitle: 'Supervisión de jornadas y marcas',
                   icon: Icons.verified_user_rounded,
                   color: const Color(0xFF7C3AED),
                   onTap: () {
@@ -1326,12 +1221,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
             }
           }
 
-          // Cálculos para formatos 12h y 24h
+          // Cálculos para formato 12h
           final inH12 = checkInH % 12 == 0 ? 12 : checkInH % 12;
-          final in24Str = '${checkInH.toString().padLeft(2, '0')}:${checkInM.toString().padLeft(2, '0')}';
-
           final outH12 = checkOutH % 12 == 0 ? 12 : checkOutH % 12;
-          final out24Str = '${checkOutH.toString().padLeft(2, '0')}:${checkOutM.toString().padLeft(2, '0')}';
 
           // Cálculo del límite de puntualidad en tiempo real
           final effectiveInH = (checkInH >= 1 && checkInH <= 6) ? checkInH + 12 : checkInH;
@@ -1397,13 +1289,6 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.close_rounded, size: 22, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        tooltip: 'Cerrar',
-                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -1439,238 +1324,218 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                     onTap: () => updatePreset(ScheduleType.personalizado),
                   ),
 
-                  const SizedBox(height: 18),
+                  if (selectedType == ScheduleType.personalizado) ...[
+                    const SizedBox(height: 18),
 
-                  // Visualización y selección manual de horas con controles AM/PM
-                  Row(
-                    children: [
-                      // Tarjeta Hora Entrada
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: selectedType == ScheduleType.personalizado
-                                  ? const Color(0xFF16A34A).withValues(alpha: 0.5)
-                                  : ThemeService.cardBorder(context),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Hora Entrada', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                                  Text(
-                                    in24Str,
-                                    style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
-                                  ),
-                                ],
+                    // Visualización y selección manual de horas con controles AM/PM
+                    Row(
+                      children: [
+                        // Tarjeta Hora Entrada
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFF16A34A).withValues(alpha: 0.5),
+                                width: 1.5,
                               ),
-                              const SizedBox(height: 6),
-                              InkWell(
-                                onTap: pickCheckInTime,
-                                borderRadius: BorderRadius.circular(8),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 2),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.login_rounded, size: 18, color: Color(0xFF16A34A)),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '${inH12.toString().padLeft(2, '0')}:${checkInM.toString().padLeft(2, '0')}',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w800,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Hora Entrada', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                const SizedBox(height: 6),
+                                InkWell(
+                                  onTap: pickCheckInTime,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.login_rounded, size: 18, color: Color(0xFF16A34A)),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${inH12.toString().padLeft(2, '0')}:${checkInM.toString().padLeft(2, '0')}',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
+                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Selector AM / PM explícito
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildAmPmChip(
-                                      label: 'AM',
-                                      isSelected: checkInH < 12,
-                                      isDark: isDark,
-                                      onTap: () {
-                                        if (checkInH >= 12) {
-                                          setSheetState(() {
-                                            checkInH -= 12;
-                                            selectedType = ScheduleType.personalizado;
-                                          });
-                                        }
-                                      },
+                                const SizedBox(height: 8),
+                                // Selector AM / PM explícito
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildAmPmChip(
+                                        label: 'AM',
+                                        isSelected: checkInH < 12,
+                                        isDark: isDark,
+                                        onTap: () {
+                                          if (checkInH >= 12) {
+                                            setSheetState(() {
+                                              checkInH -= 12;
+                                              selectedType = ScheduleType.personalizado;
+                                            });
+                                          }
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: _buildAmPmChip(
-                                      label: 'PM',
-                                      isSelected: checkInH >= 12,
-                                      isDark: isDark,
-                                      onTap: () {
-                                        if (checkInH < 12) {
-                                          setSheetState(() {
-                                            checkInH += 12;
-                                            selectedType = ScheduleType.personalizado;
-                                          });
-                                        }
-                                      },
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: _buildAmPmChip(
+                                        label: 'PM',
+                                        isSelected: checkInH >= 12,
+                                        isDark: isDark,
+                                        onTap: () {
+                                          if (checkInH < 12) {
+                                            setSheetState(() {
+                                              checkInH += 12;
+                                              selectedType = ScheduleType.personalizado;
+                                            });
+                                          }
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Tarjeta Hora Salida
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: selectedType == ScheduleType.personalizado
-                                  ? const Color(0xFFD97706).withValues(alpha: 0.5)
-                                  : ThemeService.cardBorder(context),
-                              width: 1.5,
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Hora Salida', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                                  Text(
-                                    out24Str,
-                                    style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
-                                  ),
-                                ],
+                        ),
+                        const SizedBox(width: 12),
+                        // Tarjeta Hora Salida
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFD97706).withValues(alpha: 0.5),
+                                width: 1.5,
                               ),
-                              const SizedBox(height: 6),
-                              InkWell(
-                                onTap: pickCheckOutTime,
-                                borderRadius: BorderRadius.circular(8),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 2),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.logout_rounded, size: 18, color: Color(0xFFD97706)),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '${outH12.toString().padLeft(2, '0')}:${checkOutM.toString().padLeft(2, '0')}',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w800,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Hora Salida', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                const SizedBox(height: 6),
+                                InkWell(
+                                  onTap: pickCheckOutTime,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.logout_rounded, size: 18, color: Color(0xFFD97706)),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${outH12.toString().padLeft(2, '0')}:${checkOutM.toString().padLeft(2, '0')}',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
+                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Selector AM / PM explícito
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildAmPmChip(
-                                      label: 'AM',
-                                      isSelected: checkOutH < 12,
-                                      isDark: isDark,
-                                      onTap: () {
-                                        if (checkOutH >= 12) {
-                                          setSheetState(() {
-                                            checkOutH -= 12;
-                                            selectedType = ScheduleType.personalizado;
-                                          });
-                                        }
-                                      },
+                                const SizedBox(height: 8),
+                                // Selector AM / PM explícito
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildAmPmChip(
+                                        label: 'AM',
+                                        isSelected: checkOutH < 12,
+                                        isDark: isDark,
+                                        onTap: () {
+                                          if (checkOutH >= 12) {
+                                            setSheetState(() {
+                                              checkOutH -= 12;
+                                              selectedType = ScheduleType.personalizado;
+                                            });
+                                          }
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: _buildAmPmChip(
-                                      label: 'PM',
-                                      isSelected: checkOutH >= 12,
-                                      isDark: isDark,
-                                      onTap: () {
-                                        if (checkOutH < 12) {
-                                          setSheetState(() {
-                                            checkOutH += 12;
-                                            selectedType = ScheduleType.personalizado;
-                                          });
-                                        }
-                                      },
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: _buildAmPmChip(
+                                        label: 'PM',
+                                        isSelected: checkOutH >= 12,
+                                        isDark: isDark,
+                                        onTap: () {
+                                          if (checkOutH < 12) {
+                                            setSheetState(() {
+                                              checkOutH += 12;
+                                              selectedType = ScheduleType.personalizado;
+                                            });
+                                          }
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Tolerancia de Ingreso con indicador en tiempo real
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Tolerancia de ingreso:',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Límite puntual: $tolLimitFormatted',
-                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF16A34A), fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2D5E2A).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
+                    // Tolerancia de Ingreso con indicador en tiempo real
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Tolerancia de ingreso:',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Límite puntual: $tolLimitFormatted',
+                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF16A34A), fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          '+$tolerance min',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2D5E2A), fontSize: 13),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2D5E2A).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '+$tolerance min',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2D5E2A), fontSize: 13),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Slider(
-                    value: tolerance.toDouble().clamp(0.0, 60.0),
-                    min: 0,
-                    max: 60,
-                    divisions: 12,
-                    activeColor: ThemeService.primaryColor(context),
-                    onChanged: (val) {
-                      setSheetState(() => tolerance = val.toInt());
-                    },
-                  ),
+                      ],
+                    ),
+                    Slider(
+                      value: tolerance.toDouble().clamp(0.0, 60.0),
+                      min: 0,
+                      max: 60,
+                      divisions: 12,
+                      activeColor: ThemeService.primaryColor(context),
+                      onChanged: (val) {
+                        setSheetState(() => tolerance = val.toInt());
+                      },
+                    ),
+                  ],
 
                   const SizedBox(height: 14),
 
@@ -1903,80 +1768,58 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                     child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                     children: [
-                      // Botón Designar con QR (Admin, Gestores, Supervisores) (SOLO ADMIN)
+                      // Botón Designar Roles con QR (SOLO ADMIN)
                       if (isAdmin) ...[
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF9333EA),
+                              backgroundColor: const Color(0xFF0D9488),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              elevation: 2,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              elevation: 0,
                             ),
-                            icon: const Icon(Icons.qr_code_rounded, size: 22),
+                            icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
                             label: const Text(
-                              'Designar con QR (Admin, Gestores, Supervisores)',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              'Designar Roles con QR',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
                             ),
                             onPressed: _showDesignateQrModal,
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 16),
                       ],
 
                       // Barra de Búsqueda de Personal
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: ThemeService.cardBg(context),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: ThemeService.cardBorder(context)),
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                                style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF0F172A)),
-                                decoration: InputDecoration(
-                                  hintText: 'Buscar personal por nombre o correo...',
-                                  hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
-                                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
-                                  suffixIcon: _searchQuery.isNotEmpty
-                                      ? IconButton(
-                                          icon: Icon(Icons.close_rounded, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                                          tooltip: 'Limpiar búsqueda',
-                                          onPressed: () {
-                                            _searchController.clear();
-                                            setState(() => _searchQuery = '');
-                                          },
-                                        )
-                                      : null,
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                ),
-                              ),
-                            ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: ThemeService.cardBg(context),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: ThemeService.cardBorder(context)),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                          style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                          decoration: InputDecoration(
+                            hintText: 'Buscar personal por nombre, DNI o correo...',
+                            hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                            prefixIcon: Icon(Icons.search_rounded, size: 20, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: Icon(Icons.close_rounded, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                                    tooltip: 'Limpiar búsqueda',
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
-                          if (isAdmin) ...[
-                            const SizedBox(width: 8),
-                            InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: _showDirectDeleteDialog,
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEF4444).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.25)),
-                                ),
-                                child: const Icon(Icons.person_remove_rounded, color: Color(0xFFEF4444), size: 22),
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
 
                       const SizedBox(height: 18),

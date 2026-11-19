@@ -36,7 +36,7 @@ class ShiftJourneyCard extends StatelessWidget {
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
         final dayName = days[dt.weekday - 1];
         final monthName = months[m - 1];
-        return '$dayName, $d $monthName $y';
+        return '$dayName, $d $monthName';
       }
     } catch (_) {}
     return dateStr;
@@ -293,29 +293,7 @@ class ShiftJourneyCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Botón Editar si está habilitado (Supervisores / Admins)
-                    if (onEdit != null) ...[
-                      const SizedBox(width: 5),
-                      InkWell(
-                        onTap: onEdit,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: ThemeService.primaryColor(context).withValues(alpha: isDark ? 0.2 : 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: ThemeService.primaryColor(context).withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.edit_calendar_rounded,
-                            size: 12.5,
-                            color: ThemeService.primaryColor(context),
-                          ),
-                        ),
-                      ),
-                    ],
+
                   ],
                 ),
 
@@ -488,7 +466,7 @@ class ShiftJourneyCard extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     checkIn != null
-                                        ? (checkIn.isManual ? 'Manual' : 'Escaneo QR')
+                                        ? (checkIn.isManual ? 'Manual' : 'QR')
                                         : 'Sin registro',
                                     style: TextStyle(
                                       fontSize: 9,
@@ -618,7 +596,7 @@ class ShiftJourneyCard extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     hasExit
-                                        ? (checkOut.isManual ? 'Manual' : 'Escaneo QR')
+                                        ? (checkOut.isManual ? 'Manual' : 'QR')
                                         : (isMissingCheckout ? 'Sin marcar' : 'Por marcar'),
                                     style: TextStyle(
                                       fontSize: 9.5,
@@ -659,7 +637,7 @@ class ShiftJourneyCard extends StatelessWidget {
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(
-                            'Jornada laboral: $durationStr trabajadas',
+                            'Tiempo trabajado: $durationStr',
                             style: const TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
