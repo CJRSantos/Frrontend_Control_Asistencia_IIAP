@@ -1465,7 +1465,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         _buildTabItem(
                           index: 0,
                           icon: Icons.info_outline_rounded,
-                          label: 'Info & Temario',
+                          label: 'Info',
                         ),
                         if (canProjectQr)
                           _buildTabItem(
