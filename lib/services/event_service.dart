@@ -287,7 +287,6 @@ class EventService {
     } catch (_) {}
 
     // Intentar guardar en backend
-    bool savedInBackend = false;
     try {
       final createPayload = {
         'title': title.trim(),

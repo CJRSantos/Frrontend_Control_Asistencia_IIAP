@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notification_service.dart';
-import '../services/storage_service.dart';
 import '../services/theme_service.dart';
 import '../services/wallpaper_service.dart';
-import '../models/user_model.dart';
 import '../utils/responsive.dart';
 import '../widgets/app_toast.dart';
-import '../widgets/app_cached_avatar.dart';
 import '../services/event_service.dart';
 
 class NotificationsSettingsScreen extends StatefulWidget {

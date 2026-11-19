@@ -166,7 +166,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               }
             }
             targetEventId ??= cleanCode;
-          } else if (hasEventIdParam && uri != null) {
+          } else if (hasEventIdParam) {
             targetEventId = uri.queryParameters['id'] ??
                 uri.queryParameters['event_id'] ??
                 uri.queryParameters['evento'];

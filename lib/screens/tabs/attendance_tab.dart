@@ -1549,7 +1549,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
                                     ? 'Administración Central • IIAP'
                                     : (isSupervisor
                                         ? 'Supervisión de Cuadrilla • IIAP'
-                                        : '${user?.role.displayName ?? "Gestión"} • IIAP'),
+                                        : '${user.role.displayName} • IIAP'),
                                 style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF10B981)),
                                 overflow: TextOverflow.ellipsis,
                               ),

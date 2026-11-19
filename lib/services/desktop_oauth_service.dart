@@ -69,12 +69,7 @@ class DesktopOAuthService {
 
       // Esperar la respuesta en el loopback con un timeout prudente de 2 minutos
       final Completer<String> codeCompleter = Completer<String>();
-      final activeServer = server;
-      if (activeServer == null) {
-        throw ApiException('No se pudo inicializar el servidor de autenticación local.');
-      }
-
-      final subscription = activeServer.listen((HttpRequest request) async {
+      final subscription = server.listen((HttpRequest request) async {
         final uri = request.uri;
         final params = uri.queryParameters;
 
