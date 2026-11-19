@@ -1569,17 +1569,15 @@ class _ProfileTabState extends State<ProfileTab> {
                 children: [
                   if (step == 1) ...[
                     Text(
-                      'Por seguridad de tu cuenta, te enviaremos un código de verificación de recuperación a tu correo institucional registrado:',
+                      'Enviaremos un código de verificación a tu correo institucional registrado:',
                       style: TextStyle(
                         fontSize: 12.5,
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // Tarjeta de Correo Destino (Solo lectura)
-                    const Text('Correo de confirmación:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -1606,11 +1604,11 @@ class _ProfileTabState extends State<ProfileTab> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Center(
                       child: TextButton.icon(
                         icon: const Icon(Icons.vpn_key_outlined, size: 16),
-                        label: const Text('¿Ya recibiste un código? Ingresar aquí', style: TextStyle(fontSize: 12)),
+                        label: const Text('¿Ya tienes un código? Ingresar aquí', style: TextStyle(fontSize: 12)),
                         onPressed: isSubmitting
                             ? null
                             : () {
@@ -1883,7 +1881,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         height: 18,
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
-                    : Text(step == 1 ? 'Enviar Código al Correo' : 'Actualizar Contraseña'),
+                    : Text(step == 1 ? 'Enviar Código' : 'Actualizar Contraseña'),
               ),
             ],
           );
@@ -1943,17 +1941,15 @@ class _ProfileTabState extends State<ProfileTab> {
                 children: [
                   if (step == 1) ...[
                     Text(
-                      'Se conservarán todas tus asistencias, fotos y permisos. Solo cambiará tu correo de acceso.',
+                      'Solo cambiará tu correo de acceso. Se conservan todas tus asistencias y permisos.',
                       style: TextStyle(
                         fontSize: 12.5,
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // Correo Actual (Solo lectura)
-                    const Text('Correo actual:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1980,27 +1976,18 @@ class _ProfileTabState extends State<ProfileTab> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // Nuevo Correo
-                    const Text('Nuevo correo electrónico *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
                     TextField(
                       controller: newEmailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'Ingresa tu nuevo correo electrónico',
+                        labelText: 'Nuevo correo electrónico',
+                        hintText: 'ejemplo@iiap.gob.pe',
                         prefixIcon: const Icon(Icons.alternate_email_rounded, size: 20),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Te enviaremos un código de seguridad de 6 dígitos a este nuevo correo.',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
                     ),
                   ] else ...[
@@ -2214,8 +2201,8 @@ class _ProfileTabState extends State<ProfileTab> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('¿Cerrar sesión institucional?'),
-        content: const Text('Tendrás que ingresar tus credenciales nuevamente para acceder.'),
+        title: const Text('¿Cerrar sesión?'),
+        content: const Text('¿Deseas salir de tu cuenta institucional?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
