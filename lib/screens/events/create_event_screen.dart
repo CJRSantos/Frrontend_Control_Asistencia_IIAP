@@ -106,7 +106,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     final initialStart = edit?.startDate ?? now.add(const Duration(hours: 1));
     _startDate = DateTime(initialStart.year, initialStart.month, initialStart.day);
 
-    final initialEnd = edit?.endDate ?? initialStart.add(const Duration(hours: 4));
+    final initialEnd = edit?.endDate ?? _startDate;
     _endDate = DateTime(initialEnd.year, initialEnd.month, initialEnd.day);
 
     _requiresAttendance = edit?.requiresAttendance ?? true;

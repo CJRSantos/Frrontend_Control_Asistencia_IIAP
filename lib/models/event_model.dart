@@ -333,13 +333,13 @@ class EventModel {
       attendeesList.sort((a, b) => a.registeredAt.compareTo(b.registeredAt));
     }
 
-    final start = json['start_date'] != null
+    var start = json['start_date'] != null
         ? (DateTime.tryParse(json['start_date'].toString())?.toLocal() ?? DateTime.now())
         : (json['startDate'] != null
             ? (DateTime.tryParse(json['startDate'].toString())?.toLocal() ?? DateTime.now())
             : DateTime.now());
 
-    final end = json['end_date'] != null
+    var end = json['end_date'] != null
         ? (DateTime.tryParse(json['end_date'].toString())?.toLocal() ?? start.add(const Duration(hours: 1)))
         : (json['endDate'] != null
             ? (DateTime.tryParse(json['endDate'].toString())?.toLocal() ?? start.add(const Duration(hours: 1)))
@@ -354,6 +354,37 @@ class EventModel {
           .whereType<Map<String, dynamic>>()
           .map((item) => EventShift.fromJson(item))
           .toList();
+    }
+
+    // Reconciliación con turnos programados (shifts):
+    // Si el evento tiene turnos activos (ej. Turno Noche 18:30 - 20:00), estos definen los horarios
+    // reales y oficiales previstos por el organizador. Si la serialización del backend generó un desfase
+    // horario (ej. desfase por conversión UTC en Perú sin zona horaria desalineada),
+    // sincronizamos la hora de inicio y fin con los turnos para total coherencia.
+    if (parsedShifts.isNotEmpty) {
+      final enabledShifts = parsedShifts.where((s) => s.enabled).toList();
+      final active = enabledShifts.isNotEmpty ? enabledShifts : parsedShifts;
+      if (active.isNotEmpty) {
+        final firstShift = active.first;
+        final lastShift = active.last;
+        final sParts = firstShift.startTime.split(':');
+        final eParts = lastShift.endTime.split(':');
+        if (sParts.length >= 2 && eParts.length >= 2) {
+          final sH = int.tryParse(sParts[0]);
+          final sM = int.tryParse(sParts[1]);
+          final eH = int.tryParse(eParts[0]);
+          final eM = int.tryParse(eParts[1]);
+          if (sH != null && sM != null && eH != null && eM != null) {
+            start = DateTime(start.year, start.month, start.day, sH, sM);
+            final sameDayEnd = DateTime(start.year, start.month, start.day, eH, eM);
+            if (end.difference(start).inHours <= 26 && eH >= sH) {
+              end = sameDayEnd;
+            } else {
+              end = DateTime(end.year, end.month, end.day, eH, eM);
+            }
+          }
+        }
+      }
     }
 
     final rawManagers = json['manager_ids'] ?? json['managerIds'];
