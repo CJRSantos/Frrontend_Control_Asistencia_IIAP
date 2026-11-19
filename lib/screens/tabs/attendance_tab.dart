@@ -1830,7 +1830,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
       child: Row(
         children: [
           buildItem(
-            label: 'Jornadas',
+            label: 'Total',
             value: '$total',
             icon: Icons.calendar_month_rounded,
             color: primaryColor,
@@ -1854,7 +1854,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
             color: _cardBorder(context).withValues(alpha: 0.4),
           ),
           buildItem(
-            label: 'Tardanzas',
+            label: 'Tardes',
             value: '$lateCount',
             icon: Icons.access_time_filled_rounded,
             color: lateCount > 0 ? const Color(0xFFF59E0B) : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
@@ -1866,7 +1866,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
             color: _cardBorder(context).withValues(alpha: 0.4),
           ),
           buildItem(
-            label: 'Sin salida',
+            label: 'Abiertas',
             value: '$missing',
             icon: Icons.warning_rounded,
             color: missing > 0 ? const Color(0xFFEF4444) : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
