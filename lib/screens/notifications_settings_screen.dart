@@ -38,7 +38,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   String _alertToneId = 'institucional';
 
   bool _isLoading = true;
-  bool _isTesting = false;
 
   @override
   void initState() {
@@ -582,154 +581,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
     ).then((_) => NotificationService.stopAudioPreview());
   }
 
-  void _showInfoModal() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = ThemeService.primaryColor(context);
-    final cardBg = ThemeService.cardBg(context);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? cardBg : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Responsive.constrained(
-            context,
-            maxTabletWidth: 500,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.85,
-              ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.shield_outlined,
-                          color: primaryColor,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Recordatorios Offline IIAP',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Sincronización Nativa con el Sistema',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: primaryColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    '• 100% Sin Internet: Las alertas se programan en el Administrador de Alarmas exactas del sistema operativo (Android AlarmManager / iOS BGTasks).\n\n'
-                    '• Fuera de la App: Se dispararán con precisión exacta incluso si la aplicación está cerrada o tu teléfono está en reposo profundo (Doze Mode).\n\n'
-                    '• Horarios Oficiales: Sincronizados con las horas de entrada matutina y vespertina oficiales del IIAP.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.5,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      icon: _isTesting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.send_rounded, size: 18),
-                      label: Text(
-                        _isTesting ? 'Enviando prueba...' : 'Enviar Alerta de Prueba Ahora',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      onPressed: _isTesting
-                          ? null
-                          : () async {
-                              Navigator.pop(ctx);
-                              _triggerTest();
-                            },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    },
-  );
-}
-
-  Future<void> _triggerTest() async {
-    setState(() => _isTesting = true);
-    try {
-      await NotificationService.triggerTestNotification();
-      if (_notifHapticEnabled) {
-        HapticFeedback.heavyImpact();
-      }
-      if (!mounted) return;
-      AppToast.show(
-        context,
-        title: '¡Notificación de prueba enviada!',
-        subtitle: 'Revisa la barra superior de tu dispositivo.',
-        icon: Icons.check_circle_rounded,
-        accentColor: ThemeService.primaryColor(context),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      AppToast.show(
-        context,
-        title: 'Error enviando prueba',
-        subtitle: '$e',
-        icon: Icons.error_outline_rounded,
-        accentColor: const Color(0xFFEF4444),
-      );
-    } finally {
-      if (mounted) setState(() => _isTesting = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -775,18 +626,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                 letterSpacing: -0.2,
               ),
             ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.info_outline_rounded,
-                  color: textWhite.withValues(alpha: 0.8),
-                  size: 22,
-                ),
-                tooltip: 'Información y Diagnóstico',
-                onPressed: _showInfoModal,
-              ),
-              const SizedBox(width: 8),
-            ],
           ),
           body: _isLoading
               ? Center(child: CircularProgressIndicator(color: primaryColor))
@@ -1071,7 +910,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                     child: _buildEventCard(
                                       title: 'Avisos de Convocatoria',
                                       badgeText: _leadMinutesBadgeText,
-                                      subtitle: 'Alerta previa de apertura de sala y a...',
+                                      subtitle: 'Alerta previa de apertura y acceso a la sala',
                                       icon: Icons.calendar_today_rounded,
                                       value: _notifEvents && _isMasterEnabled,
                                       onToggle: (val) => _toggleSetting('notif_events', val),
@@ -1107,7 +946,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                               _buildEventCard(
                                 title: 'Avisos de Convocatoria',
                                 badgeText: _leadMinutesBadgeText,
-                                subtitle: 'Alerta previa de apertura de sala y a...',
+                                subtitle: 'Alerta previa de apertura y acceso a la sala',
                                 icon: Icons.calendar_today_rounded,
                                 value: _notifEvents && _isMasterEnabled,
                                 onToggle: (val) => _toggleSetting('notif_events', val),
@@ -1186,8 +1025,8 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                 ],
                               ),
                               _buildSimpleCard(
-                                title: 'Prioridad Alta en Modo Reposo',
-                                subtitle: 'Omite optimizaciones de batería del SO para alarmas exactas',
+                                title: 'Alertas en segundo plano',
+                                subtitle: 'Garantiza sonido puntual incluso con pantalla apagada',
                                 icon: Icons.alarm_on_rounded,
                                 value: _notifHighPriorityDoze,
                                 onToggle: (val) => _toggleSetting('notif_high_priority_doze', val),
@@ -1228,8 +1067,8 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                 primaryColor: primaryColor,
                               ),
                               _buildSimpleCard(
-                                title: 'Prioridad Alta en Modo Reposo',
-                                subtitle: 'Omite optimizaciones de batería del SO para alarmas exactas',
+                                title: 'Alertas en segundo plano',
+                                subtitle: 'Garantiza sonido puntual incluso con pantalla apagada',
                                 icon: Icons.alarm_on_rounded,
                                 value: _notifHighPriorityDoze,
                                 onToggle: (val) => _toggleSetting('notif_high_priority_doze', val),
