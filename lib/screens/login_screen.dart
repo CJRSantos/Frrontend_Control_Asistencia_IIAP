@@ -304,15 +304,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
-                          Text(
-                            'Ingresa tus credenciales institucionales para acceder al registro de asistencias y escaneo de códigos QR.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.4,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                            ),
-                          ),
                         ],
                       ),
                     ),

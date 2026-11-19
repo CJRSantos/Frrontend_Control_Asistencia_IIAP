@@ -647,7 +647,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                               icon: Icons.edit_note_rounded,
                               color: const Color(0xFF10B981),
                               title: 'Editar Oficina y Área',
-                              subtitle: 'Actualizar la sede, oficina y área asignada',
+                              subtitle: 'Sede, oficina y área',
                               onTap: () {
                                 Navigator.of(ctx).pop();
                                 _showEditUserOfficeAreaDialog(u);
@@ -659,7 +659,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                                 icon: Icons.phonelink_erase_rounded,
                                 color: const Color(0xFFD97706),
                                 title: 'Desvincular Celular / Equipo',
-                                subtitle: 'Permitir que el usuario vincule un nuevo dispositivo',
+                                subtitle: 'Habilitar cambio de dispositivo',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _confirmUnbindDevice(u);
@@ -685,7 +685,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                                 icon: Icons.military_tech_rounded,
                                 color: const Color(0xFFD97706),
                                 title: 'Designar Admin / Presidente',
-                                subtitle: 'Otorga permisos de máxima autoridad institucional',
+                                subtitle: 'Control total del sistema',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.ADMIN);
@@ -697,7 +697,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                                 icon: Icons.event_available_rounded,
                                 color: const Color(0xFF2563EB),
                                 title: 'Designar Admin de Eventos / UO',
-                                subtitle: 'Gestión y control de eventos institucionales y UO',
+                                subtitle: 'Gestión completa de eventos',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.ADMIN_EVENTO);
@@ -709,7 +709,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                                 icon: Icons.campaign_rounded,
                                 color: const Color(0xFF0D9488),
                                 title: 'Designar Gestor de Eventos / UO',
-                                subtitle: 'Toma de asistencias y soporte en eventos',
+                                subtitle: 'Toma de asistencia en eventos',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.GESTOR_EVENTO);
@@ -721,7 +721,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                                 icon: Icons.verified_user_rounded,
                                 color: const Color(0xFF7C3AED),
                                 title: 'Designar Supervisor',
-                                subtitle: 'Supervisar y corregir marcas del personal asignado',
+                                subtitle: 'Supervisión y corrección de marcas',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.SUPERVISOR);
@@ -733,7 +733,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                                 icon: Icons.person_outline_rounded,
                                 color: const Color(0xFF64748B),
                                 title: 'Cambiar a Rol Colaborador',
-                                subtitle: 'Rol básico (solo marca y consulta su propia asistencia)',
+                                subtitle: 'Marcación de asistencia personal',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.USER);
@@ -758,7 +758,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                               icon: Icons.delete_outline_rounded,
                               color: const Color(0xFFEF4444),
                               title: 'Eliminar Cuenta',
-                              subtitle: 'Borra al colaborador; podrá registrarse nuevamente',
+                              subtitle: 'Dar de baja al colaborador',
                               isDanger: true,
                               onTap: () {
                                 Navigator.of(ctx).pop();
@@ -1116,7 +1116,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 if (isSuper)
                   _buildRoleQrTile(
                     title: 'Admin / Presidente Institucional',
-                    subtitle: 'Control administrativo, designa Admin y Gestores de eventos',
+                    subtitle: 'Control administrativo institucional',
                     icon: Icons.military_tech_rounded,
                     color: const Color(0xFFD97706),
                     onTap: () {
@@ -1135,7 +1135,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                   ),
                 _buildRoleQrTile(
                   title: 'Admin de Eventos / Unidad Organizativa',
-                  subtitle: 'CRUD total de eventos de su UO y gestión de participantes',
+                  subtitle: 'Gestión completa de eventos UO',
                   icon: Icons.event_available_rounded,
                   color: const Color(0xFF2563EB),
                   onTap: () {
@@ -1154,7 +1154,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 ),
                 _buildRoleQrTile(
                   title: 'Gestor de Eventos / UO',
-                  subtitle: 'Control operativo de eventos asignados, proyecta QR y asistencia',
+                  subtitle: 'Control y toma de asistencia',
                   icon: Icons.campaign_rounded,
                   color: const Color(0xFF0D9488),
                   onTap: () {
@@ -1173,7 +1173,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 ),
                 _buildRoleQrTile(
                   title: 'Supervisor de Asistencia',
-                  subtitle: 'Control y supervisión de marcas de entrada y salida',
+                  subtitle: 'Supervisión de marcas de asistencia',
                   icon: Icons.verified_user_rounded,
                   color: const Color(0xFF7C3AED),
                   onTap: () {
