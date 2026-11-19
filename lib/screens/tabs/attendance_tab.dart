@@ -194,10 +194,9 @@ class _AttendanceTabState extends State<AttendanceTab> {
 
     final quickReasons = [
       'Celular averiado',
-      'Olvido de celular',
       'Sin batería',
-      'Problema con la cámara / QR',
-      'Extravío de dispositivo',
+      'Cámara / QR',
+      'Olvido de celular',
     ];
 
     await showDialog(
@@ -237,7 +236,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
                     Container(
                       padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.12 : 0.08),
+                        color: ThemeService.primaryColor(context).withValues(alpha: isDark ? 0.12 : 0.08),
                         border: Border(bottom: BorderSide(color: borderCol, width: 0.8)),
                       ),
                       child: Row(
@@ -245,14 +244,14 @@ class _AttendanceTabState extends State<AttendanceTab> {
                           Container(
                             padding: const EdgeInsets.all(9),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.15),
+                              color: ThemeService.primaryColor(context).withValues(alpha: isDark ? 0.25 : 0.15),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                                color: ThemeService.primaryColor(context).withValues(alpha: 0.35),
                                 width: 1,
                               ),
                             ),
-                            child: const Icon(Icons.emergency_rounded, color: Color(0xFFF59E0B), size: 22),
+                            child: Icon(Icons.assignment_ind_rounded, color: ThemeService.primaryColor(context), size: 22),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -269,7 +268,7 @@ class _AttendanceTabState extends State<AttendanceTab> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Contingencia por Celular Averiado o Robado',
+                                  'Registro excepcional de asistencia',
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     color: textMuted,
@@ -278,11 +277,6 @@ class _AttendanceTabState extends State<AttendanceTab> {
                                 ),
                               ],
                             ),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.close_rounded, size: 20, color: textMuted),
-                            splashRadius: 18,
-                            onPressed: () => Navigator.of(ctx).pop(),
                           ),
                         ],
                       ),
@@ -297,26 +291,25 @@ class _AttendanceTabState extends State<AttendanceTab> {
                           children: [
                             // Banner informativo de auditoría
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.08 : 0.06),
-                                borderRadius: BorderRadius.circular(14),
+                                color: ThemeService.primaryColor(context).withValues(alpha: isDark ? 0.12 : 0.08),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
+                                  color: ThemeService.primaryColor(context).withValues(alpha: 0.25),
                                 ),
                               ),
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.info_outline_rounded, size: 17, color: Color(0xFFF59E0B)),
+                                  Icon(Icons.shield_outlined, size: 15, color: ThemeService.primaryColor(context)),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Registra la asistencia de emergencia para un colaborador que no puede escanear el QR. Esta marcación queda auditada con tu usuario.',
+                                      'Marcación auditada con tu cuenta de supervisor.',
                                       style: TextStyle(
-                                        fontSize: 11.5,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
                                         color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                                        height: 1.35,
                                       ),
                                     ),
                                   ),
@@ -324,11 +317,11 @@ class _AttendanceTabState extends State<AttendanceTab> {
                               ),
                             ),
 
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
 
                             // Campo DNI del Colaborador
                             const Text(
-                              'Documento / DNI del Colaborador *',
+                              'DNI del Colaborador *',
                               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 6),
@@ -634,10 +627,10 @@ class _AttendanceTabState extends State<AttendanceTab> {
 
                             TextField(
                               controller: obsController,
-                              maxLines: 2,
+                              maxLines: 1,
                               onChanged: (_) => setDialogState(() {}),
                               decoration: InputDecoration(
-                                hintText: 'Ej. Celular averiado / Olvido involuntario',
+                                hintText: 'O escribe otro motivo específico',
                                 hintStyle: TextStyle(
                                   fontSize: 12,
                                   color: isDark ? Colors.grey[500] : Colors.grey[400],

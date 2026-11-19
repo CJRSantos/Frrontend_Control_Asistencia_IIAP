@@ -2490,8 +2490,6 @@ class _DashboardTabState extends State<DashboardTab> {
         ),
         const SizedBox(height: 22),
         _buildSupervisorAttendanceActions(context, user),
-        const SizedBox(height: 22),
-        _buildSupervisorEventsSection(context, user, events),
         const SizedBox(height: 28),
       ],
     );
@@ -3068,81 +3066,7 @@ _buildCircularMuteBell(context),
     );
   }
 
-  Widget _buildSupervisorEventsSection(
-    BuildContext context,
-    UserModel user,
-    List<EventModel> events,
-  ) {
-    final activeOrUpcoming =
-        events.where((e) => e.endDate.isAfter(DateTime.now()) || e.isActiveNow).toList();
-    final featuredEvent = activeOrUpcoming.isNotEmpty
-        ? activeOrUpcoming.first
-        : (events.isNotEmpty ? events.first : null);
-    final activeCount = activeOrUpcoming.length;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            const Flexible(
-              child: Text(
-                'Eventos Institucionales',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.2),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F3224),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF176044)),
-              ),
-              child: Text(
-                '$activeCount Activo',
-                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
-              ),
-            ),
-            const Spacer(),
-            TextButton(
-              style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: EdgeInsets.zero),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const EventsListScreen()),
-                );
-              },
-              child: const Text('Ver Todos', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        if (featuredEvent != null) ...[
-          _buildFeaturedEventPhotoCard(context, featuredEvent),
-        ],
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF10B981),
-            side: const BorderSide(color: Color(0xFF176044)),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-          onPressed: () async {
-            final created = await Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CreateEventScreen()),
-            );
-            if (created == true) {
-              await EventService.getEvents(forceRefresh: true);
-            }
-          },
-          icon: const Icon(Icons.add_circle_outline_rounded, size: 17),
-          label: const Text('Crear Nuevo Evento Institucional', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-        ),
-      ],
-    );
-  }
 
   // ===========================================================================
   // 3. DASHBOARD DEL USUARIO / EMPLEADO REGULAR
