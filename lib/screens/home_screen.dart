@@ -244,6 +244,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               key: const ValueKey('tab_dashboard'),
               onNavigateToHistory: () => _selectTab(2),
               onNavigateToProfile: () => _selectTab(4),
+              onNavigateToEvents: () => _selectTab(1),
+              onNavigateToStaff: () => _selectTab(3),
             ),
             _activatedTabs.contains(1)
                 ? const EventsListScreen(key: ValueKey('tab_events'))
