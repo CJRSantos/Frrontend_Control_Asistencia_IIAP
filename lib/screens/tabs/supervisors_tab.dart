@@ -472,23 +472,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                       }
                     },
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 10),
+                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 10),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Barra de arrastre centrada
-                          Center(
-                            child: Container(
-                              width: 44,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-
                           // Tarjeta de perfil de usuario
                           Container(
                             padding: const EdgeInsets.all(14),
@@ -617,9 +604,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // SECCIÓN 1: GESTIÓN DE PERFIL Y EQUIPO
+                            // SECCIÓN 1: DATOS DEL COLABORADOR
                             Text(
-                              'DATOS Y EQUIPO',
+                              'DATOS DEL COLABORADOR',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -630,10 +617,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                             const SizedBox(height: 8),
 
                             _buildSheetActionTile(
-                              icon: Icons.edit_note_rounded,
+                              icon: Icons.business_rounded,
                               color: const Color(0xFF10B981),
-                              title: 'Editar Oficina y Área',
-                              subtitle: 'Asignar sede y dependencia',
+                              title: 'Oficina y Área',
+                              subtitle: 'Asignar sede y dependencia laboral',
                               onTap: () {
                                 Navigator.of(ctx).pop();
                                 _showEditUserOfficeAreaDialog(u);
@@ -643,9 +630,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                             if (isAdmin)
                               _buildSheetActionTile(
                                 icon: Icons.phonelink_erase_rounded,
-                                color: const Color(0xFFD97706),
-                                title: 'Desvincular Celular / Equipo',
-                                subtitle: 'Habilitar cambio de dispositivo',
+                                color: const Color(0xFFF59E0B),
+                                title: 'Desvincular Dispositivo',
+                                subtitle: 'Permite iniciar sesión en otro teléfono',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _confirmUnbindDevice(u);
@@ -654,9 +641,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
 
                             const SizedBox(height: 14),
 
-                            // SECCIÓN 2: ROLES Y PERMISOS
+                            // SECCIÓN 2: ROLES Y PRIVILEGIOS
                             Text(
-                              'ASIGNACIÓN DE ROLES Y PERMISOS',
+                              'ROLES Y PRIVILEGIOS',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -668,10 +655,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
 
                             if (isSuperAdmin && u.role != UserRole.ADMIN)
                               _buildSheetActionTile(
-                                icon: Icons.military_tech_rounded,
-                                color: const Color(0xFFD97706),
-                                title: 'Designar Admin / Presidente',
-                                subtitle: 'Control total del sistema',
+                                icon: Icons.admin_panel_settings_rounded,
+                                color: const Color(0xFFF59E0B),
+                                title: 'Admin / Presidente',
+                                subtitle: 'Control administrativo total del sistema',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.ADMIN);
@@ -681,9 +668,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                             if (isAdmin && u.role != UserRole.ADMIN_EVENTO)
                               _buildSheetActionTile(
                                 icon: Icons.event_available_rounded,
-                                color: const Color(0xFF2563EB),
-                                title: 'Designar Admin de Eventos / UO',
-                                subtitle: 'Gestión completa de eventos',
+                                color: const Color(0xFF3B82F6),
+                                title: 'Admin de Eventos',
+                                subtitle: 'Gestión y creación completa de eventos',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.ADMIN_EVENTO);
@@ -692,10 +679,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
 
                             if (isAdmin && u.role != UserRole.GESTOR_EVENTO)
                               _buildSheetActionTile(
-                                icon: Icons.campaign_rounded,
-                                color: const Color(0xFF0D9488),
-                                title: 'Designar Gestor de Eventos / UO',
-                                subtitle: 'Toma de asistencia en eventos',
+                                icon: Icons.qr_code_scanner_rounded,
+                                color: const Color(0xFF06B6D4),
+                                title: 'Gestor de Eventos',
+                                subtitle: 'Toma y escaneo de asistencia en eventos',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.GESTOR_EVENTO);
@@ -705,9 +692,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                             if (isAdmin && u.role != UserRole.SUPERVISOR)
                               _buildSheetActionTile(
                                 icon: Icons.verified_user_rounded,
-                                color: const Color(0xFF7C3AED),
-                                title: 'Designar Supervisor',
-                                subtitle: 'Supervisión y corrección de marcas',
+                                color: const Color(0xFF8B5CF6),
+                                title: 'Supervisor de Asistencia',
+                                subtitle: 'Supervisión de jornadas y marcaciones',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.SUPERVISOR);
@@ -716,10 +703,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
 
                             if (u.role != UserRole.USER)
                               _buildSheetActionTile(
-                                icon: Icons.person_outline_rounded,
+                                icon: Icons.person_rounded,
                                 color: const Color(0xFF64748B),
-                                title: 'Cambiar a Rol Colaborador',
-                                subtitle: 'Marcación de asistencia personal',
+                                title: 'Colaborador Regular',
+                                subtitle: 'Marcación estándar de jornada diaria',
                                 onTap: () {
                                   Navigator.of(ctx).pop();
                                   _changeUserRole(u, UserRole.USER);
@@ -728,9 +715,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
 
                             const SizedBox(height: 14),
 
-                            // SECCIÓN 3: ZONA DE PELIGRO
+                            // SECCIÓN 3: GESTIÓN DE CUENTA
                             Text(
-                              'ZONA DE RIESGO',
+                              'GESTIÓN DE CUENTA',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -741,10 +728,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                             const SizedBox(height: 8),
 
                             _buildSheetActionTile(
-                              icon: Icons.delete_outline_rounded,
+                              icon: Icons.person_remove_rounded,
                               color: const Color(0xFFEF4444),
-                              title: 'Eliminar Cuenta',
-                              subtitle: 'Dar de baja de la institución',
+                              title: 'Dar de Baja',
+                              subtitle: 'Eliminar cuenta institucional permanentemente',
                               isDanger: true,
                               onTap: () {
                                 Navigator.of(ctx).pop();
@@ -1010,10 +997,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 const SizedBox(height: 18),
                 if (isSuper)
                   _buildRoleQrTile(
-                    title: 'Admin / Presidente Institucional',
-                    subtitle: 'Control administrativo institucional',
-                    icon: Icons.military_tech_rounded,
-                    color: const Color(0xFFD97706),
+                    title: 'Admin Institucional',
+                    subtitle: 'Control administrativo general',
+                    icon: Icons.admin_panel_settings_rounded,
+                    color: const Color(0xFFF59E0B),
                     onTap: () {
                       Navigator.of(ctx).pop();
                       Navigator.of(context).push(
@@ -1029,10 +1016,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                     },
                   ),
                 _buildRoleQrTile(
-                  title: 'Admin de Eventos / UO',
-                  subtitle: 'Gestión y programación de eventos UO',
+                  title: 'Admin de Eventos',
+                  subtitle: 'Gestión y creación completa de eventos',
                   icon: Icons.event_available_rounded,
-                  color: const Color(0xFF2563EB),
+                  color: const Color(0xFF3B82F6),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
@@ -1048,10 +1035,10 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                   },
                 ),
                 _buildRoleQrTile(
-                  title: 'Gestor de Eventos / UO',
-                  subtitle: 'Registro y control de asistencia',
-                  icon: Icons.campaign_rounded,
-                  color: const Color(0xFF0D9488),
+                  title: 'Gestor de Eventos',
+                  subtitle: 'Control y toma de asistencia en eventos',
+                  icon: Icons.qr_code_scanner_rounded,
+                  color: const Color(0xFF06B6D4),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
@@ -1068,9 +1055,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 ),
                 _buildRoleQrTile(
                   title: 'Supervisor de Asistencia',
-                  subtitle: 'Supervisión de jornadas y marcas',
+                  subtitle: 'Supervisión de jornadas y marcaciones',
                   icon: Icons.verified_user_rounded,
-                  color: const Color(0xFF7C3AED),
+                  color: const Color(0xFF8B5CF6),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(

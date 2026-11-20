@@ -34,11 +34,15 @@ import 'dart:convert';
 class DashboardTab extends StatefulWidget {
   final VoidCallback? onNavigateToHistory;
   final VoidCallback? onNavigateToProfile;
+  final VoidCallback? onNavigateToEvents;
+  final VoidCallback? onNavigateToStaff;
 
   const DashboardTab({
     super.key,
     this.onNavigateToHistory,
     this.onNavigateToProfile,
+    this.onNavigateToEvents,
+    this.onNavigateToStaff,
   });
 
   @override
@@ -917,6 +921,33 @@ class _DashboardTabState extends State<DashboardTab> {
     final nameParts = user.fullName.trim().split(RegExp(r'\s+'));
     final firstName = nameParts.isNotEmpty ? nameParts.first : 'Jordan';
 
+    // Métricas en tiempo real de cuadrilla / colaboradores hoy
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final todayRecs = _allRecords.where((r) {
+      final dt = r.timestamp.toIso8601String();
+      return dt.startsWith(todayStr) || r.workDate == todayStr;
+    }).toList();
+
+    final uniqueUserIds = todayRecs.map((r) => r.userId).toSet();
+    final presentesCount = uniqueUserIds.length;
+    final totalAsignados = uniqueUserIds.length;
+
+    final onTimeUserIds = todayRecs
+        .where((r) => r.status == AttendanceStatus.ON_TIME)
+        .map((r) => r.userId)
+        .toSet();
+    final puntualesCount = onTimeUserIds.length;
+    final puntualidadPercent = presentesCount > 0
+        ? ((puntualesCount / presentesCount) * 100).round()
+        : 100;
+
+    final lateUserIds = todayRecs
+        .where((r) => r.status == AttendanceStatus.LATE)
+        .map((r) => r.userId)
+        .toSet();
+    final alertasCount = lateUserIds.length;
+    final tardanzasStr = '$alertasCount tard. / 0 faltas';
+
     final uoTitle = user.area.isNotEmpty
         ? user.area
         : (user.department?.isNotEmpty == true
@@ -931,7 +962,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
         const SizedBox(height: 18),
 
-        // 2. Tarjeta Bienvenida Admin Evento: [ 🛡️ ADMIN EVENTO ] [ ● En línea ]
+        // 2. Tarjeta Bienvenida Admin: [ 🛡️ ADMINISTRADOR ]
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -949,14 +980,10 @@ class _DashboardTabState extends State<DashboardTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Fila Superior de Badges
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 6,
-                runSpacing: 6,
+              // Fila Superior de Badges (Limpia, sin duplicar "En línea" ya presente en el header)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Badge Ámbar/Dorado: [ 🛡️ ADMIN EVENTO ]
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                     decoration: BoxDecoration(
@@ -983,49 +1010,12 @@ class _DashboardTabState extends State<DashboardTab> {
                       ],
                     ),
                   ),
-
-                  // Badge Dinámico: [ ● En línea ] / [ ● Desconectado ]
-                  ValueListenableBuilder<bool>(
-                    valueListenable: ConnectivityService.isOnlineNotifier,
-                    builder: (context, isOnline, _) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                        decoration: BoxDecoration(
-                          color: isOnline ? const Color(0xFF09291E) : const Color(0xFF2E1212),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isOnline ? const Color(0xFF135A40) : const Color(0xFF7F1D1D),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.circle,
-                              color: isOnline ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                              size: 6.5,
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              isOnline ? 'En línea' : 'Desconectado',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                                color: isOnline ? const Color(0xFF34D399) : const Color(0xFFEF4444),
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
                 ],
               ),
 
               const SizedBox(height: 14),
 
-              // Contenido: Squircle con Reloj verde/Foto + Hola, Jordan + Subtítulo
+              // Contenido: Squircle con Foto + Hola, Nombre + Subtítulo de Rol Exacto
               Row(
                 children: [
                   InkWell(
@@ -1086,9 +1076,13 @@ class _DashboardTabState extends State<DashboardTab> {
                           ),
                         ),
                         const SizedBox(height: 3),
-                        const Text(
-                          'Admin Evento / UO • Gestión Central',
-                          style: TextStyle(
+                        Text(
+                          user.isSuperAdmin
+                              ? 'Superadministrador • Sistema Central'
+                              : (user.isAdmin
+                                  ? 'Administrador Institucional • Gestión Central'
+                                  : 'Admin de Eventos • Sede Central'),
+                          style: const TextStyle(
                             color: Color(0xFF94A3B8),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -1102,7 +1096,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
               const SizedBox(height: 14),
 
-              // Sub-tarjeta Unidad Organizativa: 📍 Dir. General • Tecnologías de la Información / UO  🔄
+              // Sub-tarjeta Unidad Organizativa: 📍 Ubicación / Dependencia
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8.5),
                 decoration: BoxDecoration(
@@ -1122,6 +1116,7 @@ class _DashboardTabState extends State<DashboardTab> {
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1134,7 +1129,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
         const SizedBox(height: 22),
 
-        // 4. Control de Asistencia [ 🔒 SHA-256 ]
+        // 4. Control de Asistencia
         const Text(
           'Control de Asistencia',
           style: TextStyle(
@@ -1189,13 +1184,13 @@ class _DashboardTabState extends State<DashboardTab> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Proyecta el código QR oficial para registrar participantes',
+                        'Proyecta el código QR oficial del evento',
                         style: TextStyle(
                           fontSize: 11.5,
                           color: Color(0xFF8FA3AF),
                           height: 1.3,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -1209,7 +1204,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
         const SizedBox(height: 10),
 
-        // Tarjeta Escanear QR Asistente [CÁMARA]
+        // Tarjeta Escanear QR Asistente
         InkWell(
           onTap: () => _handleEscanearQr(context),
           borderRadius: BorderRadius.circular(20),
@@ -1251,13 +1246,13 @@ class _DashboardTabState extends State<DashboardTab> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Escanea credenciales o códigos QR de los participantes',
+                        'Escanea credenciales o códigos QR de asistentes',
                         style: TextStyle(
                           fontSize: 11.5,
                           color: Color(0xFF8FA3AF),
                           height: 1.3,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -1269,8 +1264,131 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
         ),
 
+        // 5. Monitoreo Institucional y Accesos para Admin IIAP (Llena el espacio de forma productiva y ejecutiva)
+        if (user.isAdmin) ...[
+          const SizedBox(height: 22),
+          _buildSupervisorCuadrillaSection(
+            context,
+            presentesCount: presentesCount,
+            totalAsignados: totalAsignados,
+            puntualidadPercent: puntualidadPercent,
+            puntualesCount: puntualesCount,
+            alertasCount: alertasCount,
+            tardanzasStr: tardanzasStr,
+          ),
+          const SizedBox(height: 20),
+          _buildAdminQuickShortcuts(context),
+        ],
+
         const SizedBox(height: 28),
       ],
+    );
+  }
+
+  Widget _buildAdminQuickShortcuts(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Accesos Institucionales',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildShortcutTile(
+                context: context,
+                icon: Icons.groups_rounded,
+                color: const Color(0xFF38BDF8),
+                title: 'Personal',
+                subtitle: 'Supervisión y roles',
+                onTap: () => widget.onNavigateToStaff?.call(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildShortcutTile(
+                context: context,
+                icon: Icons.access_time_filled_rounded,
+                color: const Color(0xFF34D399),
+                title: 'Asistencia',
+                subtitle: 'Jornadas del día',
+                onTap: () => widget.onNavigateToHistory?.call(),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShortcutTile({
+    required BuildContext context,
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: _cardBg(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _cardBorder(context), width: 1.1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withValues(alpha: 0.3)),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Color(0xFF8FA3AF),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
