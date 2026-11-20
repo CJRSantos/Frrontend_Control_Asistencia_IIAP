@@ -53,7 +53,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
   String? _errorMessage;
   Timer? _pollingTimer;
   Timer? _rotationResetTimer;
-  bool _isProjectorMode = false;
   int? _availableSlots;
   int? _maxSupervisors;
 
@@ -258,10 +257,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
       subtitle = 'Válido por 10 minutos • Límite institucional';
     }
 
-    if (_isProjectorMode) {
-      return _buildProjectorView(context, title, subtitle);
-    }
-
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isWide = screenWidth >= 780;
     final hasWallpaper = WallpaperService.currentWallpaper.hasWallpaper;
@@ -276,13 +271,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.fullscreen_rounded),
-            tooltip: 'Modo Proyector / Pantalla Completa',
-            onPressed: () {
-              setState(() => _isProjectorMode = true);
-            },
-          ),
           IconButton(
             icon: _isGeneratingNew
                 ? const SizedBox(
@@ -371,19 +359,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                 _buildIssuerBadge(isDark, currentUser),
                 const SizedBox(height: 18),
                 _buildRegenerateButton(),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: () => setState(() => _isProjectorMode = true),
-                  icon: const Icon(Icons.tv_rounded, size: 20),
-                  label: const Text(
-                    'Proyectar en Pantalla Gigante',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
               ],
             ],
           ),
@@ -576,7 +551,7 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                     ),
                     SizedBox(height: 14),
                     Text(
-                      'Generando código QR con SHA-256...',
+                      'Generando código QR...',
                       style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                     ),
                   ],
@@ -721,135 +696,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
         label: Text(
           _isGeneratingNew ? 'Generando nuevo código...' : 'Generar Nuevo Código QR',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-      ),
-    );
-  }
-
-  /// Vista de Pantalla Completa / Proyector (Monitores, Proyectores, iPads en Atril)
-  Widget _buildProjectorView(BuildContext context, String title, String subtitle) {
-    final projectorQrSize = Responsive.qrDisplaySize(context, isProjectorMode: true);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Badge Institucional de Proyección
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: const Color(0xFF334155)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.verified_user_rounded, color: Color(0xFF22C55E), size: 22),
-                          const SizedBox(width: 10),
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF22C55E).withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'SHA-256',
-                              style: TextStyle(
-                                color: Color(0xFF22C55E),
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // QR Gigante de Alta Nitidez
-                    Container(
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF22C55E).withValues(alpha: 0.35),
-                            blurRadius: 40,
-                            spreadRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: _qrData != null
-                          ? QrImageView(
-                              key: ValueKey('proj_${_qrData!.qrCode}'),
-                              data: _qrData!.qrCode,
-                              version: QrVersions.auto,
-                              size: projectorQrSize,
-                              backgroundColor: Colors.white,
-                              eyeStyle: const QrEyeStyle(
-                                eyeShape: QrEyeShape.square,
-                                color: Color(0xFF0F172A),
-                              ),
-                              dataModuleStyle: const QrDataModuleStyle(
-                                dataModuleShape: QrDataModuleShape.square,
-                                color: Color(0xFF0F172A),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Temporizador en modo proyector
-                    if (_qrData != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFF334155)),
-                        ),
-                        child: QrCountdownTimer(
-                          expiresAt: _qrData!.expiresAt,
-                          onExpired: () => _loadQr(forceNew: true),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Botón Salir de Modo Proyector
-            Positioned(
-              top: 16,
-              right: 16,
-              child: FloatingActionButton.small(
-                backgroundColor: const Color(0xFF334155),
-                foregroundColor: Colors.white,
-                tooltip: 'Salir de Pantalla Completa',
-                onPressed: () => setState(() => _isProjectorMode = false),
-                child: const Icon(Icons.close_rounded),
-              ),
-            ),
-          ],
         ),
       ),
     );
