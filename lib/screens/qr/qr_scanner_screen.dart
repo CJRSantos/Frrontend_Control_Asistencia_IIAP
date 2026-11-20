@@ -554,7 +554,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                         Icon(Icons.verified_rounded, size: 14, color: Color(0xFF16A34A)),
                         SizedBox(width: 5),
                         Text(
-                          'Código Criptográfico SHA-256 Verificado',
+                          'Código QR Verificado',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -824,11 +824,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
     final String manualDescription = widget.target == ScanTarget.eventAttendance
         ? 'Ingresa o pega el código QR, URL o ID del evento institucional:'
-        : 'Pega el Hash SHA-256 o código emitido por el Administrador / Supervisor:';
+        : 'Pega el código emitido por el Administrador / Supervisor:';
 
     final String manualHint = widget.target == ScanTarget.eventAttendance
         ? 'Pega el código o enlace QR del evento aquí...'
-        : 'Pega el código QR o Hash SHA-256 aquí...';
+        : 'Pega el código QR aquí...';
 
     showDialog(
       context: context,
@@ -995,7 +995,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'En Windows puedes registrar tu asistencia pegando el Hash SHA-256 o el enlace/código oficial del evento, o usando una lectora USB de códigos QR.',
+                        'En Windows puedes registrar tu asistencia pegando el código o enlace oficial del evento, o usando una lectora USB de códigos QR.',
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -1008,7 +1008,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                         controller: _windowsInputCtrl,
                         maxLines: 2,
                         decoration: InputDecoration(
-                          hintText: 'Pega el código QR, Hash SHA o URL del evento aquí...',
+                          hintText: 'Pega el código QR o URL del evento aquí...',
                           hintStyle: const TextStyle(fontSize: 12),
                           filled: true,
                           fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
@@ -1155,7 +1155,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                     ),
                     SizedBox(height: 18),
                     Text(
-                      'Validando código SHA-256 en el servidor...',
+                      'Validando código en el servidor...',
                       style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                   ],
