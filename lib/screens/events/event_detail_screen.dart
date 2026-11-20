@@ -297,15 +297,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       return;
     }
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => QrDisplayScreen(
-          mode: QrMode.roleAssignment,
-          targetRole: 'GESTOR_EVENTO',
-          targetEventId: _currentEvent.id,
-          customTitle: 'Designar Gestor del Evento',
-          customSubtitle: 'El usuario escaneará para asumir el control operativo de este evento',
-          isModalView: true,
-        ),
+      QrDisplayScreen.route(
+        mode: QrMode.roleAssignment,
+        targetRole: 'GESTOR_EVENTO',
+        targetEventId: _currentEvent.id,
+        customTitle: 'Designar Gestor del Evento',
+        customSubtitle: 'El usuario escaneará para asumir el control operativo de este evento',
+        isModalView: true,
       ),
     );
   }
