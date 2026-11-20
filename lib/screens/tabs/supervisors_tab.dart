@@ -249,6 +249,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
 
     return showDialog<bool>(
       context: sheetCtx,
+      useRootNavigator: true,
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: dialogBg,
         shape: RoundedRectangleBorder(
@@ -325,32 +326,25 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
         final cardBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC);
         final borderCol = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
         final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => Navigator.of(ctx).pop(),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {},
-              child: Container(
-            constraints: BoxConstraints(
-              maxWidth: 520,
-              maxHeight: MediaQuery.of(ctx).size.height * 0.90,
-            ),
-            decoration: BoxDecoration(
-              color: bgCol,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: borderCol, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 30,
-                  offset: const Offset(0, -6),
-                ),
-              ],
-            ),
-            child: SafeArea(
+
+        return Container(
+          constraints: BoxConstraints(
+            maxWidth: 520,
+            maxHeight: MediaQuery.of(ctx).size.height * 0.90,
+          ),
+          decoration: BoxDecoration(
+            color: bgCol,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: borderCol, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 30,
+                offset: const Offset(0, -6),
+              ),
+            ],
+          ),
+          child: SafeArea(
               top: false,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -595,12 +589,9 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                 ],
               ),
             ),
-          ),
-            ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
   }
 
   Widget _buildAdminUserActions(UserModel u) {
@@ -835,49 +826,38 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
       enableDrag: true,
       isDismissible: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => Navigator.of(sheetCtx).pop(),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {},
-            child: _ScheduleBottomSheet(
-              user: user,
-              initialSchedule: currentSchedule,
-              onSave: (updatedSchedule, tolLimitFormatted) async {
-                final messenger = ScaffoldMessenger.of(context);
-                await ScheduleService.saveSchedule(updatedSchedule);
+      builder: (sheetCtx) => _ScheduleBottomSheet(
+        user: user,
+        initialSchedule: currentSchedule,
+        onSave: (updatedSchedule, tolLimitFormatted) async {
+          final messenger = ScaffoldMessenger.of(context);
+          await ScheduleService.saveSchedule(updatedSchedule);
 
-                if (sheetCtx.mounted) {
-                  Navigator.of(sheetCtx).pop();
-                }
-                if (mounted) {
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Horario actualizado para ${user.fullName} (Límite: $tolLimitFormatted)',
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                            ),
-                          ),
-                        ],
+          if (sheetCtx.mounted) {
+            Navigator.of(sheetCtx).pop();
+          }
+          if (mounted) {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Horario actualizado para ${user.fullName} (Límite: $tolLimitFormatted)',
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                       ),
-                      backgroundColor: const Color(0xFF15803D),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                  );
-                }
-              },
-            ),
-          ),
-        ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF15803D),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            );
+          }
+        },
       ),
     );
   }
@@ -1272,57 +1252,20 @@ class _ScheduleBottomSheetState extends State<_ScheduleBottomSheet> {
     );
     _inFocus = FocusNode();
     _outFocus = FocusNode();
-
-    _inFocus.addListener(_onInFocusChange);
-    _outFocus.addListener(_onOutFocusChange);
   }
 
-  void _onInFocusChange() {
-    if (!_inFocus.hasFocus) {
-      if (_inController.text.trim().isEmpty) {
-        final inH12 = _checkInH % 12 == 0 ? 12 : _checkInH % 12;
-        _inController.text = '${inH12.toString().padLeft(2, '0')}:${_checkInM.toString().padLeft(2, '0')}';
-      } else {
-        _applyTimeInput(
-          raw: _inController.text,
-          isPm: _checkInH >= 12,
-          onParsed: (h, m) {
-            _checkInH = h;
-            _checkInM = m;
-          },
-        );
-        final inH12 = _checkInH % 12 == 0 ? 12 : _checkInH % 12;
-        _inController.text = '${inH12.toString().padLeft(2, '0')}:${_checkInM.toString().padLeft(2, '0')}';
-      }
-      if (mounted) setState(() {});
-    }
+  void _formatInController() {
+    final inH12 = _checkInH % 12 == 0 ? 12 : _checkInH % 12;
+    _inController.text = '${inH12.toString().padLeft(2, '0')}:${_checkInM.toString().padLeft(2, '0')}';
   }
 
-  void _onOutFocusChange() {
-    if (!_outFocus.hasFocus) {
-      if (_outController.text.trim().isEmpty) {
-        final outH12 = _checkOutH % 12 == 0 ? 12 : _checkOutH % 12;
-        _outController.text = '${outH12.toString().padLeft(2, '0')}:${_checkOutM.toString().padLeft(2, '0')}';
-      } else {
-        _applyTimeInput(
-          raw: _outController.text,
-          isPm: _checkOutH >= 12,
-          onParsed: (h, m) {
-            _checkOutH = h;
-            _checkOutM = m;
-          },
-        );
-        final outH12 = _checkOutH % 12 == 0 ? 12 : _checkOutH % 12;
-        _outController.text = '${outH12.toString().padLeft(2, '0')}:${_checkOutM.toString().padLeft(2, '0')}';
-      }
-      if (mounted) setState(() {});
-    }
+  void _formatOutController() {
+    final outH12 = _checkOutH % 12 == 0 ? 12 : _checkOutH % 12;
+    _outController.text = '${outH12.toString().padLeft(2, '0')}:${_checkOutM.toString().padLeft(2, '0')}';
   }
 
   @override
   void dispose() {
-    _inFocus.removeListener(_onInFocusChange);
-    _outFocus.removeListener(_onOutFocusChange);
     _inController.dispose();
     _outController.dispose();
     _inFocus.dispose();
@@ -1667,21 +1610,7 @@ class _ScheduleBottomSheetState extends State<_ScheduleBottomSheet> {
                                   },
                                   onEditingComplete: () {
                                     _inFocus.unfocus();
-                                    if (_inController.text.trim().isEmpty) {
-                                      final inH12 = _checkInH % 12 == 0 ? 12 : _checkInH % 12;
-                                      _inController.text = '${inH12.toString().padLeft(2, '0')}:${_checkInM.toString().padLeft(2, '0')}';
-                                    } else {
-                                      _applyTimeInput(
-                                        raw: _inController.text,
-                                        isPm: _checkInH >= 12,
-                                        onParsed: (h, m) {
-                                          _checkInH = h;
-                                          _checkInM = m;
-                                        },
-                                      );
-                                      final inH12 = _checkInH % 12 == 0 ? 12 : _checkInH % 12;
-                                      _inController.text = '${inH12.toString().padLeft(2, '0')}:${_checkInM.toString().padLeft(2, '0')}';
-                                    }
+                                    _formatInController();
                                     if (mounted) setState(() {});
                                   },
                                 ),
@@ -1801,21 +1730,7 @@ class _ScheduleBottomSheetState extends State<_ScheduleBottomSheet> {
                                   },
                                   onEditingComplete: () {
                                     _outFocus.unfocus();
-                                    if (_outController.text.trim().isEmpty) {
-                                      final outH12 = _checkOutH % 12 == 0 ? 12 : _checkOutH % 12;
-                                      _outController.text = '${outH12.toString().padLeft(2, '0')}:${_checkOutM.toString().padLeft(2, '0')}';
-                                    } else {
-                                      _applyTimeInput(
-                                        raw: _outController.text,
-                                        isPm: _checkOutH >= 12,
-                                        onParsed: (h, m) {
-                                          _checkOutH = h;
-                                          _checkOutM = m;
-                                        },
-                                      );
-                                      final outH12 = _checkOutH % 12 == 0 ? 12 : _checkOutH % 12;
-                                      _outController.text = '${outH12.toString().padLeft(2, '0')}:${_checkOutM.toString().padLeft(2, '0')}';
-                                    }
+                                    _formatOutController();
                                     if (mounted) setState(() {});
                                   },
                                 ),
