@@ -1010,6 +1010,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                             targetRole: 'ADMIN',
                             customTitle: 'Admin Institucional',
                             customSubtitle: 'Escanear con la app institucional',
+                            isModalView: true,
                           ),
                         ),
                       );
@@ -1029,6 +1030,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                           targetRole: 'ADMIN_EVENTO',
                           customTitle: 'Admin de Eventos',
                           customSubtitle: 'Escanear con la app institucional',
+                          isModalView: true,
                         ),
                       ),
                     );
@@ -1048,6 +1050,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                           targetRole: 'GESTOR_EVENTO',
                           customTitle: 'Gestor de Eventos',
                           customSubtitle: 'Escanear con la app institucional',
+                          isModalView: true,
                         ),
                       ),
                     );
@@ -1068,6 +1071,7 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                           customSubtitle: 'Escanear con la app institucional',
                           availableSlots: _availableSlots,
                           maxSupervisors: _maxSupervisors,
+                          isModalView: true,
                         ),
                       ),
                     );
