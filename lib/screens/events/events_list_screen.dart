@@ -45,6 +45,21 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
     if (mounted) setState(() => _isLoading = false);
   }
 
+  static Route<T> _fastRoute<T>(Widget page) {
+    return PageRouteBuilder<T>(
+      opaque: true,
+      transitionDuration: const Duration(milliseconds: 140),
+      reverseTransitionDuration: const Duration(milliseconds: 100),
+      pageBuilder: (_, __, ___) => page,
+      transitionsBuilder: (_, animation, __, child) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutQuad),
+          child: child,
+        );
+      },
+    );
+  }
+
   Color _getTypeColor(EventType type) {
     switch (type) {
       case EventType.CAPACITACION:
@@ -169,7 +184,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
               backgroundColor: ThemeService.primaryColor(context),
               onPressed: () async {
                 final created = await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CreateEventScreen()),
+                  _fastRoute(const CreateEventScreen()),
                 );
                 if (created == true) {
                   _loadEvents();
@@ -352,9 +367,7 @@ class _EventsListScreenState extends State<EventsListScreen> with SingleTickerPr
     return InkWell(
       onTap: () async {
         final result = await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => EventDetailScreen(event: event),
-          ),
+          _fastRoute(EventDetailScreen(event: event)),
         );
         if (result == true && mounted) {
           _loadEvents();

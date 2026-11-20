@@ -1475,9 +1475,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         const darkGreen = Color(0xFF064E3B);
         final themePrimary = ThemeService.primaryColor(context);
 
-        final bgColor = hasWallpaper
-            ? Colors.transparent
-            : ThemeService.scaffoldBg(context);
+        final bgColor = ThemeService.scaffoldBg(context);
         final cardBg = hasWallpaper
             ? ThemeService.cardBg(context).withValues(alpha: 0.85)
             : ThemeService.cardBg(context);

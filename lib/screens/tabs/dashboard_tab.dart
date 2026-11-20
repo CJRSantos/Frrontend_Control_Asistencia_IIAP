@@ -15,7 +15,6 @@ import '../../services/theme_service.dart';
 import '../../services/wallpaper_service.dart';
 import '../../services/offline_sync_service.dart';
 import '../../utils/responsive.dart';
-import '../../widgets/leaf_logo.dart';
 import '../events/create_event_screen.dart';
 import '../events/event_detail_screen.dart';
 import '../events/event_qr_display_screen.dart';
@@ -192,12 +191,25 @@ class _DashboardTabState extends State<DashboardTab> {
     }
   }
 
+  static Route<T> _fastRoute<T>(Widget page) {
+    return PageRouteBuilder<T>(
+      opaque: true,
+      transitionDuration: const Duration(milliseconds: 140),
+      reverseTransitionDuration: const Duration(milliseconds: 100),
+      pageBuilder: (_, __, ___) => page,
+      transitionsBuilder: (_, animation, __, child) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutQuad),
+          child: child,
+        );
+      },
+    );
+  }
+
   Future<void> _handleGenerarQrEvento(BuildContext context, EventModel? featuredEvent) async {
     if (featuredEvent != null) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => EventQrDisplayScreen(event: featuredEvent),
-        ),
+        _fastRoute(EventQrDisplayScreen(event: featuredEvent)),
       );
       return;
     }
@@ -211,9 +223,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
     if (events.length == 1) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => EventQrDisplayScreen(event: events.first),
-        ),
+        _fastRoute(EventQrDisplayScreen(event: events.first)),
       );
     } else if (events.length > 1) {
       _showEventSelectionModal(context, events);
@@ -326,15 +336,13 @@ class _DashboardTabState extends State<DashboardTab> {
                       onPressed: () async {
                         Navigator.of(ctx).pop();
                         final created = await Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const CreateEventScreen()),
+                          _fastRoute(const CreateEventScreen()),
                         );
                         if (created == true && context.mounted) {
                           final evs = await EventService.getEvents(forceRefresh: true);
                           if (evs.isNotEmpty && context.mounted) {
                             Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => EventQrDisplayScreen(event: evs.first),
-                              ),
+                              _fastRoute(EventQrDisplayScreen(event: evs.first)),
                             );
                           }
                         }
@@ -689,9 +697,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Future<void> _handleEscanearQr(BuildContext context) async {
     final res = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const QrScannerScreen(target: ScanTarget.attendance),
-      ),
+      _fastRoute(const QrScannerScreen(target: ScanTarget.attendance)),
     );
     if (res == true && mounted) {
       await _fetchAttendanceData();
@@ -929,76 +935,93 @@ class _DashboardTabState extends State<DashboardTab> {
 
         const SizedBox(height: 18),
 
-        // 2. Tarjeta Bienvenida Admin: Solo Foto y "Hola, Jhon"
+        // 2. Tarjeta Bienvenida: Diseño Stitch Moderno (Avatar Azul con Punto Verde + BIENVENIDO + Hola, Jhon)
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
             color: _cardBg(context),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: _cardBorder(context), width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: Colors.black.withValues(alpha: 0.25),
                 blurRadius: 14,
-                offset: const Offset(0, 5),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
             children: [
-              InkWell(
-                onTap: () => _openPhotoViewer(user),
-                borderRadius: BorderRadius.circular(16),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0D2520),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF176044), width: 1.2),
+              // Avatar Squircle Azul con inicial y punto verde indicador
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      (firstName.isNotEmpty
+                              ? firstName[0]
+                              : (user.fullName.isNotEmpty ? user.fullName[0] : 'U'))
+                          .toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: AppCachedAvatar(
-                          imageUrl: user.photoUrl,
-                          name: user.fullName,
-                          size: 54,
-                          borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -2,
+                    right: -2,
+                    child: Container(
+                      width: 15,
+                      height: 15,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _cardBg(context),
+                          width: 2.5,
                         ),
                       ),
                     ),
-                    Positioned(
-                      bottom: -2,
-                      right: -2,
-                      child: Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: _cardBg(context), width: 2),
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.check, size: 9, color: Colors.black),
-                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'BIENVENIDO',
+                      style: TextStyle(
+                        color: Color(0xFF10B981),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.4,
                       ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Hola, $firstName',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 23,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  'Hola, $firstName',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
-                  ),
                 ),
               ),
             ],
@@ -1904,16 +1927,6 @@ class _DashboardTabState extends State<DashboardTab> {
   Widget _buildGestorHeader(BuildContext context, UserModel user) {
     return Row(
       children: [
-        // Squircle con insignia verificada
-        Container(
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: _cardBg(context),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _cardBorder(context)),
-          ),
-          child: const Icon(Icons.verified_rounded, color: Color(0xFF34D399), size: 22),
-        ),
         const Spacer(),
         ValueListenableBuilder<bool>(
           valueListenable: ConnectivityService.isOnlineNotifier,
@@ -2020,15 +2033,6 @@ class _DashboardTabState extends State<DashboardTab> {
   Widget _buildSupervisorHeader(BuildContext context, UserModel user) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: _cardBg(context),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _cardBorder(context)),
-          ),
-          child: const LeafLogo(size: 22),
-        ),
         const Spacer(),
         ValueListenableBuilder<bool>(
           valueListenable: ConnectivityService.isOnlineNotifier,
@@ -2686,15 +2690,6 @@ _buildCircularMuteBell(context),
   Widget _buildUserTopHeader(BuildContext context, UserModel user) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: _cardBg(context),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _cardBorder(context)),
-          ),
-          child: const LeafLogo(size: 22),
-        ),
         const Spacer(),
         ValueListenableBuilder<bool>(
           valueListenable: ConnectivityService.isOnlineNotifier,
