@@ -1063,7 +1063,7 @@ class _DashboardTabState extends State<DashboardTab> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Proyecta el código QR oficial para registrar la asistencia de los participantes en el evento.',
+                'Crea el código QR para que los participantes registren su asistencia.',
                 style: TextStyle(
                   color: Color(0xFF8FA3AF),
                   fontSize: 12.5,
@@ -1150,7 +1150,7 @@ class _DashboardTabState extends State<DashboardTab> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Escanea credenciales institucionales o códigos QR de los participantes para validar su ingreso.',
+                'Escanea el código QR del asistente para validar su ingreso al evento.',
                 style: TextStyle(
                   color: Color(0xFF8FA3AF),
                   fontSize: 12.5,

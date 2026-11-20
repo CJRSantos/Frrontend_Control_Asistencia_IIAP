@@ -43,6 +43,41 @@ class QrDisplayScreen extends StatefulWidget {
     this.isModalView,
   });
 
+  static final Map<String, QrGeneratedResponse> _roleQrCache = {};
+
+  static Route<T> route<T>({
+    QrMode mode = QrMode.attendance,
+    String? targetRole,
+    String? targetEventId,
+    String? customTitle,
+    String? customSubtitle,
+    int? availableSlots,
+    int? maxSupervisors,
+    bool? isModalView,
+  }) {
+    return PageRouteBuilder<T>(
+      opaque: true,
+      transitionDuration: const Duration(milliseconds: 140),
+      reverseTransitionDuration: const Duration(milliseconds: 100),
+      pageBuilder: (_, __, ___) => QrDisplayScreen(
+        mode: mode,
+        targetRole: targetRole,
+        targetEventId: targetEventId,
+        customTitle: customTitle,
+        customSubtitle: customSubtitle,
+        availableSlots: availableSlots,
+        maxSupervisors: maxSupervisors,
+        isModalView: isModalView,
+      ),
+      transitionsBuilder: (_, animation, __, child) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutQuad),
+          child: child,
+        );
+      },
+    );
+  }
+
   @override
   State<QrDisplayScreen> createState() => _QrDisplayScreenState();
 }
@@ -63,10 +98,17 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     super.initState();
     _availableSlots = widget.availableSlots;
     _maxSupervisors = widget.maxSupervisors;
-    if (widget.mode == QrMode.attendance && AttendanceService.lastActiveQr != null) {
+
+    final cacheKey = '${widget.mode.name}_${widget.targetRole ?? ""}_${widget.targetEventId ?? ""}';
+    final cached = QrDisplayScreen._roleQrCache[cacheKey];
+    if (cached != null && cached.expiresAt.isAfter(DateTime.now())) {
+      _qrData = cached;
+      _isLoading = false;
+    } else if (widget.mode == QrMode.attendance && AttendanceService.lastActiveQr != null) {
       _qrData = AttendanceService.lastActiveQr;
       _isLoading = false;
     }
+
     StorageService.currentUserNotifier.addListener(_onUserRoleChanged);
     _loadQr(forceNew: false);
     _startPolling();
@@ -177,37 +219,19 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
         response = await AttendanceService.generateSupervisorQr();
       }
 
-      // Consultar cupos de supervisores en tiempo real si corresponde
-      if (widget.mode == QrMode.supervisorAssignment || widget.targetRole == 'SUPERVISOR') {
-        try {
-          final supData = await UsersService.getSupervisors();
-          if (supData.isNotEmpty) {
-            final list = supData['supervisors'] is List ? (supData['supervisors'] as List) : [];
-            final totalCount = (supData['total'] is int)
-                ? supData['total'] as int
-                : (supData['current_count'] is int ? supData['current_count'] as int : list.length);
-            final maxSup = (supData['max_limit'] is int)
-                ? supData['max_limit'] as int
-                : (supData['max_supervisors'] is int ? supData['max_supervisors'] as int : 3);
-            final avail = (supData['available_slots'] is int)
-                ? supData['available_slots'] as int
-                : (maxSup - totalCount).clamp(0, maxSup);
-            if (mounted) {
-              setState(() {
-                _availableSlots = avail;
-                _maxSupervisors = maxSup;
-              });
-            }
-          }
-        } catch (_) {}
-      }
-
       if (mounted) {
+        final cacheKey = '${widget.mode.name}_${widget.targetRole ?? ""}_${widget.targetEventId ?? ""}';
+        QrDisplayScreen._roleQrCache[cacheKey] = response;
         setState(() {
           _qrData = response;
           _isLoading = false;
           _isGeneratingNew = false;
         });
+      }
+
+      // Consultar cupos de supervisores en segundo plano sin demorar la visualización del QR
+      if (widget.mode == QrMode.supervisorAssignment || widget.targetRole == 'SUPERVISOR') {
+        _refreshSupervisorSlots();
       }
     } on ApiException catch (e) {
       if (e.statusCode == 400 || e.statusCode == 403) {
@@ -231,6 +255,28 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
         });
       }
     }
+  }
+
+  Future<void> _refreshSupervisorSlots() async {
+    try {
+      final supData = await UsersService.getSupervisors();
+      if (supData.isNotEmpty && mounted) {
+        final list = supData['supervisors'] is List ? (supData['supervisors'] as List) : [];
+        final totalCount = (supData['total'] is int)
+            ? supData['total'] as int
+            : (supData['current_count'] is int ? supData['current_count'] as int : list.length);
+        final maxSup = (supData['max_limit'] is int)
+            ? supData['max_limit'] as int
+            : (supData['max_supervisors'] is int ? supData['max_supervisors'] as int : 3);
+        final avail = (supData['available_slots'] is int)
+            ? supData['available_slots'] as int
+            : (maxSup - totalCount).clamp(0, maxSup);
+        setState(() {
+          _availableSlots = avail;
+          _maxSupervisors = maxSup;
+        });
+      }
+    } catch (_) {}
   }
 
 
@@ -769,9 +815,9 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                           borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF22C55E).withValues(alpha: 0.35),
-                              blurRadius: 40,
-                              spreadRadius: 4,
+                              color: const Color(0xFF22C55E).withValues(alpha: 0.25),
+                              blurRadius: 20,
+                              spreadRadius: 0,
                             ),
                           ],
                         ),
@@ -860,16 +906,26 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                 ),
               ),
 
-              // Botón X de Salir / Cerrar
+              // Botón X de Salir / Cerrar con respuesta táctil instantánea
               Positioned(
                 top: 16,
                 right: 16,
-                child: FloatingActionButton.small(
-                  backgroundColor: const Color(0xFF334155),
-                  foregroundColor: Colors.white,
-                  tooltip: 'Cerrar',
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.close_rounded),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(22),
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF334155),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.close_rounded, color: Colors.white, size: 22),
+                    ),
+                  ),
                 ),
               ),
             ],

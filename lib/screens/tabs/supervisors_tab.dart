@@ -1004,14 +1004,12 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                     onTap: () {
                       Navigator.of(ctx).pop();
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const QrDisplayScreen(
-                            mode: QrMode.roleAssignment,
-                            targetRole: 'ADMIN',
-                            customTitle: 'Admin Institucional',
-                            customSubtitle: 'Escanear con la app institucional',
-                            isModalView: true,
-                          ),
+                        QrDisplayScreen.route(
+                          mode: QrMode.roleAssignment,
+                          targetRole: 'ADMIN',
+                          customTitle: 'Admin Institucional',
+                          customSubtitle: 'Escanear con la app institucional',
+                          isModalView: true,
                         ),
                       );
                     },
@@ -1024,14 +1022,12 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const QrDisplayScreen(
-                          mode: QrMode.roleAssignment,
-                          targetRole: 'ADMIN_EVENTO',
-                          customTitle: 'Admin de Eventos',
-                          customSubtitle: 'Escanear con la app institucional',
-                          isModalView: true,
-                        ),
+                      QrDisplayScreen.route(
+                        mode: QrMode.roleAssignment,
+                        targetRole: 'ADMIN_EVENTO',
+                        customTitle: 'Admin de Eventos',
+                        customSubtitle: 'Escanear con la app institucional',
+                        isModalView: true,
                       ),
                     );
                   },
@@ -1044,14 +1040,12 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const QrDisplayScreen(
-                          mode: QrMode.roleAssignment,
-                          targetRole: 'GESTOR_EVENTO',
-                          customTitle: 'Gestor de Eventos',
-                          customSubtitle: 'Escanear con la app institucional',
-                          isModalView: true,
-                        ),
+                      QrDisplayScreen.route(
+                        mode: QrMode.roleAssignment,
+                        targetRole: 'GESTOR_EVENTO',
+                        customTitle: 'Gestor de Eventos',
+                        customSubtitle: 'Escanear con la app institucional',
+                        isModalView: true,
                       ),
                     );
                   },
@@ -1064,15 +1058,13 @@ class _SupervisorsTabState extends State<SupervisorsTab> {
                   onTap: () {
                     Navigator.of(ctx).pop();
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => QrDisplayScreen(
-                          mode: QrMode.supervisorAssignment,
-                          customTitle: 'Supervisor de Asistencia',
-                          customSubtitle: 'Escanear con la app institucional',
-                          availableSlots: _availableSlots,
-                          maxSupervisors: _maxSupervisors,
-                          isModalView: true,
-                        ),
+                      QrDisplayScreen.route(
+                        mode: QrMode.supervisorAssignment,
+                        customTitle: 'Supervisor de Asistencia',
+                        customSubtitle: 'Escanear con la app institucional',
+                        availableSlots: _availableSlots,
+                        maxSupervisors: _maxSupervisors,
+                        isModalView: true,
                       ),
                     );
                   },
