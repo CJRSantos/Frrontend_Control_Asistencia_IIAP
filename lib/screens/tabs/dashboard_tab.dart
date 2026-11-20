@@ -921,50 +921,17 @@ class _DashboardTabState extends State<DashboardTab> {
     final nameParts = user.fullName.trim().split(RegExp(r'\s+'));
     final firstName = nameParts.isNotEmpty ? nameParts.first : 'Jordan';
 
-    // Métricas en tiempo real de cuadrilla / colaboradores hoy
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-    final todayRecs = _allRecords.where((r) {
-      final dt = r.timestamp.toIso8601String();
-      return dt.startsWith(todayStr) || r.workDate == todayStr;
-    }).toList();
-
-    final uniqueUserIds = todayRecs.map((r) => r.userId).toSet();
-    final presentesCount = uniqueUserIds.length;
-    final totalAsignados = uniqueUserIds.length;
-
-    final onTimeUserIds = todayRecs
-        .where((r) => r.status == AttendanceStatus.ON_TIME)
-        .map((r) => r.userId)
-        .toSet();
-    final puntualesCount = onTimeUserIds.length;
-    final puntualidadPercent = presentesCount > 0
-        ? ((puntualesCount / presentesCount) * 100).round()
-        : 100;
-
-    final lateUserIds = todayRecs
-        .where((r) => r.status == AttendanceStatus.LATE)
-        .map((r) => r.userId)
-        .toSet();
-    final alertasCount = lateUserIds.length;
-    final tardanzasStr = '$alertasCount tard. / 0 faltas';
-
-    final uoTitle = user.area.isNotEmpty
-        ? user.area
-        : (user.department?.isNotEmpty == true
-            ? user.department!
-            : 'Dir. General • Tecnologías de la Información / UO');
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Header Superior: Squircle Verificado + IIAP OFICIAL [● EN LÍNEA] + Campana + Avatar Clickable
+        // 1. Header Superior: Squircle Verificado + [● EN LÍNEA] + Campana
         _buildGestorHeader(context, user),
 
         const SizedBox(height: 18),
 
-        // 2. Tarjeta Bienvenida Admin: [ 🛡️ ADMINISTRADOR ]
+        // 2. Tarjeta Bienvenida Admin: Solo Foto y "Hola, Jhon"
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: _cardBg(context),
             borderRadius: BorderRadius.circular(22),
@@ -977,150 +944,61 @@ class _DashboardTabState extends State<DashboardTab> {
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Row(
             children: [
-              // Fila Superior de Badges (Limpia, sin duplicar "En línea" ya presente en el header)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2E1C0A),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF854D0E), width: 1.1),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.shield_rounded, color: Color(0xFFFBBF24), size: 13.5),
-                        const SizedBox(width: 5),
-                        Text(
-                          user.isSuperAdmin
-                              ? 'SUPERADMIN'
-                              : (user.isAdmin ? 'ADMINISTRADOR' : 'ADMIN EVENTO'),
-                          style: const TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFFFBBF24),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 14),
-
-              // Contenido: Squircle con Foto + Hola, Nombre + Subtítulo de Rol Exacto
-              Row(
-                children: [
-                  InkWell(
-                    onTap: () => _openPhotoViewer(user),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0D2520),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFF176044), width: 1.2),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(15),
-                            child: AppCachedAvatar(
-                              imageUrl: user.photoUrl,
-                              name: user.fullName,
-                              size: 56,
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -2,
-                          right: -2,
-                          child: Container(
-                            width: 14,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: _cardBg(context), width: 2),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.check, size: 9, color: Colors.black),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Hola, $firstName',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 19,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          user.isSuperAdmin
-                              ? 'Superadministrador • Sistema Central'
-                              : (user.isAdmin
-                                  ? 'Administrador Institucional • Gestión Central'
-                                  : 'Admin de Eventos • Sede Central'),
-                          style: const TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 14),
-
-              // Sub-tarjeta Unidad Organizativa: 📍 Ubicación / Dependencia
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0E1A1E),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF1B2E36)),
-                ),
-                child: Row(
+              InkWell(
+                onTap: () => _openPhotoViewer(user),
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    const Icon(Icons.location_on_rounded, size: 15, color: Color(0xFF34D399)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        uoTitle,
-                        style: const TextStyle(
-                          color: Color(0xFFCBD5E1),
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D2520),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF176044), width: 1.2),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: AppCachedAvatar(
+                          imageUrl: user.photoUrl,
+                          name: user.fullName,
+                          size: 54,
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -2,
+                      right: -2,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: _cardBg(context), width: 2),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.check, size: 9, color: Colors.black),
+                        ),
                       ),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'Hola, $firstName',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ),
             ],
@@ -1129,7 +1007,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
         const SizedBox(height: 22),
 
-        // 4. Control de Asistencia
+        // 3. Control de Asistencia
         const Text(
           'Control de Asistencia',
           style: TextStyle(
@@ -1140,255 +1018,182 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
-        // Tarjeta Generar QR de Evento
-        InkWell(
-          onTap: () => _handleGenerarQrEvento(context, featuredEvent),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _cardBg(context),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _cardBorder(context), width: 1.2),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F2D24),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF176044)),
-                  ),
-                  child: const Icon(
-                    Icons.qr_code_2_rounded,
-                    color: Color(0xFF10B981),
-                    size: 26,
-                  ),
+        // Hero Card 1: Generar QR de Evento
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: _cardBg(context),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: _cardBorder(context), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F2D24),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF176044)),
                 ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: const Icon(
+                  Icons.qr_code_2_rounded,
+                  color: Color(0xFF10B981),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Generar QR de Evento',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 17.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Proyecta el código QR oficial para registrar la asistencia de los participantes en el evento.',
+                style: TextStyle(
+                  color: Color(0xFF8FA3AF),
+                  fontSize: 12.5,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: const Color(0xFF091417),
+                    elevation: 3,
+                    shadowColor: const Color(0xFF10B981).withValues(alpha: 0.35),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  onPressed: () => _handleGenerarQrEvento(context, featuredEvent),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Icon(Icons.qr_code_rounded, size: 20, color: Color(0xFF091417)),
                       Text(
-                        'Generar QR de Evento',
-                        overflow: TextOverflow.ellipsis,
+                        'Generar QR',
                         style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: Color(0xFF091417),
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Proyecta el código QR oficial del evento',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: Color(0xFF8FA3AF),
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      Icon(Icons.arrow_forward_rounded, size: 20, color: Color(0xFF091417)),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 22),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
 
-        // Tarjeta Escanear QR Asistente
-        InkWell(
-          onTap: () => _handleEscanearQr(context),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _cardBg(context),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _cardBorder(context), width: 1.2),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D2530),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF15485E)),
-                  ),
-                  child: const Icon(
-                    Icons.qr_code_scanner_rounded,
-                    color: Color(0xFF38BDF8),
-                    size: 26,
-                  ),
+        // Hero Card 2: Escanear QR Asistente
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: _cardBg(context),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: _cardBorder(context), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D2530),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF15485E)),
                 ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: const Icon(
+                  Icons.qr_code_scanner_rounded,
+                  color: Color(0xFF38BDF8),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Escanear QR Asistente',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 17.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Escanea credenciales institucionales o códigos QR de los participantes para validar su ingreso.',
+                style: TextStyle(
+                  color: Color(0xFF8FA3AF),
+                  fontSize: 12.5,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF38BDF8),
+                    foregroundColor: const Color(0xFF091417),
+                    elevation: 3,
+                    shadowColor: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  onPressed: () => _handleEscanearQr(context),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Icon(Icons.camera_alt_outlined, size: 20, color: Color(0xFF091417)),
                       Text(
-                        'Escanear QR Asistente',
-                        overflow: TextOverflow.ellipsis,
+                        'Escanear',
                         style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: Color(0xFF091417),
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Escanea credenciales o códigos QR de asistentes',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: Color(0xFF8FA3AF),
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      Icon(Icons.arrow_forward_rounded, size: 20, color: Color(0xFF091417)),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 22),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
 
-        // 5. Monitoreo Institucional y Accesos para Admin IIAP (Llena el espacio de forma productiva y ejecutiva)
-        if (user.isAdmin) ...[
-          const SizedBox(height: 22),
-          _buildSupervisorCuadrillaSection(
-            context,
-            presentesCount: presentesCount,
-            totalAsignados: totalAsignados,
-            puntualidadPercent: puntualidadPercent,
-            puntualesCount: puntualesCount,
-            alertasCount: alertasCount,
-            tardanzasStr: tardanzasStr,
-          ),
-          const SizedBox(height: 20),
-          _buildAdminQuickShortcuts(context),
-        ],
-
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
       ],
-    );
-  }
-
-  Widget _buildAdminQuickShortcuts(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'Accesos Institucionales',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: 0.2,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildShortcutTile(
-                context: context,
-                icon: Icons.groups_rounded,
-                color: const Color(0xFF38BDF8),
-                title: 'Personal',
-                subtitle: 'Supervisión y roles',
-                onTap: () => widget.onNavigateToStaff?.call(),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildShortcutTile(
-                context: context,
-                icon: Icons.access_time_filled_rounded,
-                color: const Color(0xFF34D399),
-                title: 'Asistencia',
-                subtitle: 'Jornadas del día',
-                onTap: () => widget.onNavigateToHistory?.call(),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildShortcutTile({
-    required BuildContext context,
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: _cardBg(context),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _cardBorder(context), width: 1.1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(9),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 10.5,
-                      color: Color(0xFF8FA3AF),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -2109,82 +1914,46 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
           child: const Icon(Icons.verified_rounded, color: Color(0xFF34D399), size: 22),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 6,
-                runSpacing: 2,
+        const Spacer(),
+        ValueListenableBuilder<bool>(
+          valueListenable: ConnectivityService.isOnlineNotifier,
+          builder: (context, isOnline, _) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+              decoration: BoxDecoration(
+                color: isOnline ? const Color(0xFF0D2821) : const Color(0xFF2E1515),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isOnline ? const Color(0xFF165942) : const Color(0xFF5A2020),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'IIAP OFICIAL',
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: isOnline ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      shape: BoxShape.circle,
                     ),
                   ),
-                  ValueListenableBuilder<bool>(
-                    valueListenable: ConnectivityService.isOnlineNotifier,
-                    builder: (context, isOnline, _) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                        decoration: BoxDecoration(
-                          color: isOnline ? const Color(0xFF0D2821) : const Color(0xFF2E1515),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isOnline ? const Color(0xFF165942) : const Color(0xFF5A2020),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: isOnline ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              isOnline ? 'EN LÍNEA' : 'OFFLINE',
-                              style: TextStyle(
-                                color: isOnline ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                  const SizedBox(width: 5),
+                  Text(
+                    isOnline ? 'EN LÍNEA' : 'OFFLINE',
+                    style: TextStyle(
+                      color: isOnline ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 2),
-              const Text(
-                'Inicio',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF8FA3AF),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
-
         const SizedBox(width: 8),
-
-        // Campana interactiva con modo silencio
         _buildCircularMuteBell(context),
       ],
     );
@@ -2249,10 +2018,6 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Widget _buildSupervisorHeader(BuildContext context, UserModel user) {
-    final sede = user.area.isNotEmpty
-        ? user.area
-        : (user.department?.isNotEmpty == true ? user.department! : 'Sede Regional Loreto');
-
     return Row(
       children: [
         Container(
@@ -2264,58 +2029,7 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
           child: const LeafLogo(size: 22),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  const Text(
-                    'IIAP',
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F3224),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: const Color(0xFF176044)),
-                    ),
-                    child: const Text(
-                      'OFICIAL',
-                      style: TextStyle(
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF10B981),
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                sede,
-                style: const TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF8FA3AF),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
+        const Spacer(),
         ValueListenableBuilder<bool>(
           valueListenable: ConnectivityService.isOnlineNotifier,
           builder: (context, isOnline, _) {
@@ -2980,21 +2694,6 @@ _buildCircularMuteBell(context),
             border: Border.all(color: _cardBorder(context)),
           ),
           child: const LeafLogo(size: 22),
-        ),
-        const SizedBox(width: 10),
-        const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'IIAP',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5, height: 1.1),
-            ),
-            Text(
-              'OFICIAL',
-              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF10B981), letterSpacing: 1.2, height: 1.2),
-            ),
-          ],
         ),
         const Spacer(),
         ValueListenableBuilder<bool>(
