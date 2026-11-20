@@ -29,6 +29,7 @@ class QrDisplayScreen extends StatefulWidget {
   final String? customSubtitle;
   final int? availableSlots;
   final int? maxSupervisors;
+  final bool? isModalView;
 
   const QrDisplayScreen({
     super.key,
@@ -39,6 +40,7 @@ class QrDisplayScreen extends StatefulWidget {
     this.customSubtitle,
     this.availableSlots,
     this.maxSupervisors,
+    this.isModalView,
   });
 
   @override
@@ -255,6 +257,11 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     } else {
       title = 'Designar Supervisor';
       subtitle = 'Válido por 10 minutos • Límite institucional';
+    }
+
+    final isModal = widget.isModalView ?? (widget.mode != QrMode.attendance);
+    if (isModal) {
+      return _buildCleanModalView(context, title, subtitle);
     }
 
     final screenWidth = MediaQuery.sizeOf(context).width;
@@ -696,6 +703,177 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
         label: Text(
           _isGeneratingNew ? 'Generando nuevo código...' : 'Generar Nuevo Código QR',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+      ),
+    );
+  }
+
+  /// Vista limpia de pantalla completa / modal para designación de roles
+  Widget _buildCleanModalView(BuildContext context, String title, String subtitle) {
+    final projectorQrSize = Responsive.qrDisplaySize(context, isProjectorMode: true);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      body: SafeArea(
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onVerticalDragEnd: (details) {
+            if (details.primaryVelocity != null && details.primaryVelocity! > 250) {
+              Navigator.of(context).pop();
+            }
+          },
+          child: Stack(
+            children: [
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Badge superior con título e ícono (sin SHA-256)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: const Color(0xFF334155)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.verified_user_rounded, color: Color(0xFF22C55E), size: 22),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Tarjeta QR Blanca Nítida
+                      Container(
+                        padding: const EdgeInsets.all(28),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF22C55E).withValues(alpha: 0.35),
+                              blurRadius: 40,
+                              spreadRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: _isLoading
+                            ? SizedBox(
+                                width: projectorQrSize,
+                                height: projectorQrSize,
+                                child: const Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF16A34A)),
+                                      ),
+                                      SizedBox(height: 14),
+                                      Text(
+                                        'Generando código QR...',
+                                        style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : _errorMessage != null
+                                ? SizedBox(
+                                    width: projectorQrSize,
+                                    height: projectorQrSize,
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.error_outline_rounded, size: 40, color: Color(0xFFEF4444)),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            _errorMessage!,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          AppButton(
+                                            text: 'Reintentar',
+                                            height: 36,
+                                            width: 110,
+                                            onPressed: () => _loadQr(forceNew: true),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : _qrData != null
+                                    ? QrImageView(
+                                        key: ValueKey('modal_${_qrData!.qrCode}'),
+                                        data: _qrData!.qrCode,
+                                        version: QrVersions.auto,
+                                        size: projectorQrSize,
+                                        backgroundColor: Colors.white,
+                                        eyeStyle: const QrEyeStyle(
+                                          eyeShape: QrEyeShape.square,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                        dataModuleStyle: const QrDataModuleStyle(
+                                          dataModuleShape: QrDataModuleShape.square,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Temporizador de cuenta regresiva
+                      if (_qrData != null && !_isLoading && _errorMessage == null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFF334155)),
+                          ),
+                          child: QrCountdownTimer(
+                            expiresAt: _qrData!.expiresAt,
+                            onExpired: () => _loadQr(forceNew: true),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Botón X de Salir / Cerrar
+              Positioned(
+                top: 16,
+                right: 16,
+                child: FloatingActionButton.small(
+                  backgroundColor: const Color(0xFF334155),
+                  foregroundColor: Colors.white,
+                  tooltip: 'Cerrar',
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Icon(Icons.close_rounded),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

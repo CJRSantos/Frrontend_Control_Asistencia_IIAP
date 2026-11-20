@@ -304,6 +304,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           targetEventId: _currentEvent.id,
           customTitle: 'Designar Gestor del Evento',
           customSubtitle: 'El usuario escaneará para asumir el control operativo de este evento',
+          isModalView: true,
         ),
       ),
     );
